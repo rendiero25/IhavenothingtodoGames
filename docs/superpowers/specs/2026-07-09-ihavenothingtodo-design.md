@@ -41,8 +41,9 @@ game acak) dan Daily Gauntlet (tantangan harian deterministik ala Wordle).
 - Semua pengunjung di tanggal yang sama mendapat rangkaian dan tantangan yang
   identik — tanpa server.
 - 5 nyawa berlaku untuk seluruh rangkaian (bukan per game).
-- Skor tiap game digabung menjadi skor akhir + share-card khusus harian
-  (menampilkan tanggal, agar teman bisa membandingkan hari yang sama).
+- Skor akhir = penjumlahan skor kelima game; share-card khusus harian juga
+  menampilkan rincian skor per game dan tanggal, agar teman bisa membandingkan
+  hari yang sama.
 - Selesai/gagal → bisa diulang kapan saja (tidak ada penguncian "sudah main
   hari ini", karena tidak ada penyimpanan).
 
