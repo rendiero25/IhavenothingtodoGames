@@ -63,7 +63,7 @@ Konvensi commit: `feat:`/`test:`/`chore:` singkat, satu commit per task (atau pe
 **Files:**
 - Create: `package.json`, `vite.config.ts`, `tsconfig.json`, `index.html`, `.gitignore`, `public/favicon.svg`, `src/main.tsx`, `src/App.tsx`, `src/styles/global.css`, `src/vite-env.d.ts`
 
-- [ ] **Step 1: Inisialisasi npm dan install dependency**
+- [x] **Step 1: Inisialisasi npm dan install dependency**
 
 ```bash
 npm init -y
@@ -71,7 +71,7 @@ npm i react react-dom react-router-dom motion lucide-react
 npm i -D vite @vitejs/plugin-react typescript tailwindcss @tailwindcss/vite vitest @types/react @types/react-dom
 ```
 
-- [ ] **Step 2: Set scripts di package.json**
+- [x] **Step 2: Set scripts di package.json**
 
 Edit `package.json`, ganti field `scripts` menjadi:
 
@@ -88,7 +88,7 @@ Edit `package.json`, ganti field `scripts` menjadi:
 
 Tambahkan juga `"type": "module"` di level atas package.json bila belum ada.
 
-- [ ] **Step 3: Tulis file konfigurasi**
+- [x] **Step 3: Tulis file konfigurasi**
 
 `vite.config.ts`:
 
@@ -134,7 +134,7 @@ dist
 *.local
 ```
 
-- [ ] **Step 4: Tulis index.html dan favicon**
+- [x] **Step 4: Tulis index.html dan favicon**
 
 `index.html`:
 
@@ -167,7 +167,7 @@ dist
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path d="M32 6C15 6 6 20 6 34c0 16 12 24 26 24s26-8 26-24C58 20 49 6 32 6Z" fill="#E4572E"/><circle cx="24" cy="32" r="4" fill="#26201A"/><circle cx="40" cy="32" r="4" fill="#26201A"/><path d="M26 44q6 5 12 0" stroke="#26201A" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
 ```
 
-- [ ] **Step 5: Tulis entry React minimal**
+- [x] **Step 5: Tulis entry React minimal**
 
 `src/vite-env.d.ts`:
 
@@ -204,13 +204,13 @@ createRoot(document.getElementById('root')!).render(
 );
 ```
 
-- [ ] **Step 6: Verifikasi dev server dan build**
+- [x] **Step 6: Verifikasi dev server dan build**
 
 Run: `npm run dev` — buka http://localhost:5173, harus tampil "ihavenothingtodo — scaffold OK". Hentikan server.
 Run: `npm run build`
 Expected: exit 0, folder `dist/` terbentuk.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add -A
@@ -223,7 +223,7 @@ git commit -m "chore: scaffold Vite + React + TS + Tailwind v4"
 - Modify: `src/styles/global.css`, `src/App.tsx`, `src/main.tsx`
 - Create: `src/pages/Home.tsx`, `src/pages/Play.tsx`, `src/pages/Daily.tsx`, `src/pages/NotFound.tsx`
 
-- [ ] **Step 1: Tulis token desain di global.css**
+- [x] **Step 1: Tulis token desain di global.css**
 
 Ganti isi `src/styles/global.css` dengan:
 
@@ -269,7 +269,7 @@ body {
 }
 ```
 
-- [ ] **Step 2: Buat placeholder pages dan routing**
+- [x] **Step 2: Buat placeholder pages dan routing**
 
 `src/pages/Home.tsx` (placeholder — versi final di Task 19):
 
@@ -342,12 +342,12 @@ createRoot(document.getElementById('root')!).render(
 );
 ```
 
-- [ ] **Step 3: Verifikasi**
+- [x] **Step 3: Verifikasi**
 
 Run: `npm run build`
 Expected: exit 0. Lalu `npm run dev`: `/` tampil "home" dengan font Lilita One di latar krem; `/x` tampil "404".
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A
@@ -359,7 +359,7 @@ git commit -m "feat: design tokens + routing skeleton"
 **Files:**
 - Create: `src/core/rng.ts`, `src/core/rng.test.ts`
 
-- [ ] **Step 1: Tulis failing test**
+- [x] **Step 1: Tulis failing test**
 
 `src/core/rng.test.ts`:
 
@@ -427,12 +427,12 @@ describe('randInt & pick', () => {
 });
 ```
 
-- [ ] **Step 2: Run test, pastikan gagal**
+- [x] **Step 2: Run test, pastikan gagal**
 
 Run: `npm test`
 Expected: FAIL — `Cannot find module './rng'` (atau setara).
 
-- [ ] **Step 3: Implementasi**
+- [x] **Step 3: Implementasi**
 
 `src/core/rng.ts`:
 
@@ -476,12 +476,12 @@ export function pick<T>(rand: () => number, arr: readonly T[]): T {
 }
 ```
 
-- [ ] **Step 4: Run test, pastikan lulus**
+- [x] **Step 4: Run test, pastikan lulus**
 
 Run: `npm test`
 Expected: PASS semua.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/core/rng.ts src/core/rng.test.ts
@@ -496,7 +496,7 @@ git commit -m "feat: seeded RNG core (mulberry32, hashString, shuffle)"
 
 Kamus ID adalah source of truth; tipe `DictKey` diturunkan darinya, dan `en` bertipe `Record<DictKey, string>` sehingga key yang hilang/lebih jadi error compile. Test runtime tetap ada sebagai pengaman.
 
-- [ ] **Step 1: Tulis failing test**
+- [x] **Step 1: Tulis failing test**
 
 `src/i18n/dict.test.ts`:
 
@@ -520,12 +520,12 @@ describe('kelengkapan i18n', () => {
 });
 ```
 
-- [ ] **Step 2: Run test, pastikan gagal**
+- [x] **Step 2: Run test, pastikan gagal**
 
 Run: `npm test`
 Expected: FAIL — module `./dict` belum ada.
 
-- [ ] **Step 3: Tulis dictionary**
+- [x] **Step 3: Tulis dictionary**
 
 `src/i18n/dict.ts`:
 
@@ -651,12 +651,12 @@ const en: Record<DictKey, string> = {
 export const dictionaries: Record<Locale, Record<DictKey, string>> = { id, en };
 ```
 
-- [ ] **Step 4: Run test, pastikan lulus**
+- [x] **Step 4: Run test, pastikan lulus**
 
 Run: `npm test`
 Expected: PASS.
 
-- [ ] **Step 5: Tulis provider + hook**
+- [x] **Step 5: Tulis provider + hook**
 
 `src/i18n/index.tsx`:
 
@@ -739,12 +739,12 @@ createRoot(document.getElementById('root')!).render(
 );
 ```
 
-- [ ] **Step 6: Verifikasi build + test**
+- [x] **Step 6: Verifikasi build + test**
 
 Run: `npm run build && npm test`
 Expected: keduanya exit 0.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/i18n src/main.tsx
@@ -758,7 +758,7 @@ git commit -m "feat: i18n ID/EN dengan completeness test"
 
 Registry dimulai dengan array kosong yang di-append oleh setiap task game (Task 11-18). `loadEngine` memakai dynamic import agar tiap game jadi chunk terpisah.
 
-- [ ] **Step 1: Tulis types**
+- [x] **Step 1: Tulis types**
 
 `src/games/types.ts`:
 
@@ -847,7 +847,7 @@ export interface GameMeta {
 }
 ```
 
-- [ ] **Step 2: Tulis canvas utils**
+- [x] **Step 2: Tulis canvas utils**
 
 `src/games/canvas.ts`:
 
@@ -927,7 +927,7 @@ export function centerText(
 }
 ```
 
-- [ ] **Step 3: Tulis registry (kosong dulu)**
+- [x] **Step 3: Tulis registry (kosong dulu)**
 
 `src/games/registry.ts`:
 
@@ -955,12 +955,12 @@ export async function loadEngine(id: GameId): Promise<GameEngine> {
 }
 ```
 
-- [ ] **Step 4: Verifikasi typecheck**
+- [x] **Step 4: Verifikasi typecheck**
 
 Run: `npm run build`
 Expected: exit 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/games
@@ -979,7 +979,7 @@ git commit -m "feat: kontrak GameEngine, canvas utils, registry"
 
 Tidak ada file audio — semua SFX disintesis oscillator. AudioContext dibuat setelah gesture pertama (kebijakan autoplay browser). Mute dipersist di localStorage.
 
-- [ ] **Step 1: Implementasi**
+- [x] **Step 1: Implementasi**
 
 `src/core/sound.ts`:
 
@@ -1083,7 +1083,7 @@ class Sfx {
 export const sfx = new Sfx();
 ```
 
-- [ ] **Step 2: Unlock audio pada gesture pertama**
+- [x] **Step 2: Unlock audio pada gesture pertama**
 
 Modify `src/App.tsx` — tambahkan efek unlock:
 
@@ -1118,7 +1118,7 @@ export default function App() {
 }
 ```
 
-- [ ] **Step 3: Verifikasi + commit**
+- [x] **Step 3: Verifikasi + commit**
 
 Run: `npm run build`
 Expected: exit 0.
@@ -1133,7 +1133,7 @@ git commit -m "feat: SFX WebAudio sintetis dengan mute persist"
 **Files:**
 - Create: `src/core/score.ts`, `src/core/score.test.ts`
 
-- [ ] **Step 1: Tulis failing test**
+- [x] **Step 1: Tulis failing test**
 
 `src/core/score.test.ts`:
 
@@ -1176,12 +1176,12 @@ describe('formatDuration', () => {
 });
 ```
 
-- [ ] **Step 2: Run test, pastikan gagal**
+- [x] **Step 2: Run test, pastikan gagal**
 
 Run: `npm test`
 Expected: FAIL — module `./score` belum ada.
 
-- [ ] **Step 3: Implementasi**
+- [x] **Step 3: Implementasi**
 
 `src/core/score.ts`:
 
@@ -1213,12 +1213,12 @@ export function formatDuration(ms: number): string {
 }
 ```
 
-- [ ] **Step 4: Run test, pastikan lulus**
+- [x] **Step 4: Run test, pastikan lulus**
 
 Run: `npm test`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/core/score.ts src/core/score.test.ts
@@ -1232,7 +1232,7 @@ git commit -m "feat: combo multiplier, tier gelar, format durasi"
 
 Kelas dasar semua engine: game loop RAF dengan dt ter-clamp, akuntansi skor/combo/level, nyawa (mistakes vs startLives), batas waktu ronde (roundMs, untuk Daily Gauntlet), dan emisi GameResult. Engine turunan hanya mengimplementasikan `setup/update/draw/teardown`.
 
-- [ ] **Step 1: Implementasi**
+- [x] **Step 1: Implementasi**
 
 `src/games/base.ts`:
 
@@ -1365,7 +1365,7 @@ export abstract class BaseEngine implements GameEngine {
 }
 ```
 
-- [ ] **Step 2: Verifikasi typecheck + commit**
+- [x] **Step 2: Verifikasi typecheck + commit**
 
 Run: `npm run build`
 Expected: exit 0.
@@ -1380,7 +1380,7 @@ git commit -m "feat: BaseEngine (loop, nyawa, skor, roundMs)"
 **Files:**
 - Create: `src/components/ChunkyButton.tsx`, `src/components/LivesBar.tsx`, `src/components/Mascot.tsx`, `src/components/Header.tsx`, `src/components/GameCard.tsx`
 
-- [ ] **Step 1: ChunkyButton**
+- [x] **Step 1: ChunkyButton**
 
 `src/components/ChunkyButton.tsx`:
 
@@ -1423,7 +1423,7 @@ export function ChunkyButton({ color = 'coral', size = 'md', className = '', ...
 }
 ```
 
-- [ ] **Step 2: LivesBar**
+- [x] **Step 2: LivesBar**
 
 `src/components/LivesBar.tsx`:
 
@@ -1456,7 +1456,7 @@ export function LivesBar({ lives, max = 5 }: { lives: number; max?: number }) {
 }
 ```
 
-- [ ] **Step 3: Mascot**
+- [x] **Step 3: Mascot**
 
 `src/components/Mascot.tsx`:
 
@@ -1532,7 +1532,7 @@ export function Mascot({ expression = 'happy', size = 120 }: { expression?: Expr
 }
 ```
 
-- [ ] **Step 4: Header**
+- [x] **Step 4: Header**
 
 `src/components/Header.tsx`:
 
@@ -1583,7 +1583,7 @@ export function Header() {
 }
 ```
 
-- [ ] **Step 5: GameCard**
+- [x] **Step 5: GameCard**
 
 `src/components/GameCard.tsx`:
 
@@ -1638,7 +1638,7 @@ export function GameCard({ meta }: { meta: GameMeta }) {
 }
 ```
 
-- [ ] **Step 6: Verifikasi + commit**
+- [x] **Step 6: Verifikasi + commit**
 
 Run: `npm run build`
 Expected: exit 0 (komponen belum dipakai halaman — cukup typecheck).
@@ -1656,7 +1656,7 @@ git commit -m "feat: komponen UI dasar (ChunkyButton, LivesBar, Mascot, Header, 
 
 GameShell = "mesin arcade": frame navy, canvas, HUD (nyawa, skor pixel-font, combo), countdown 3-2-1, pause (tombol + auto saat tab hidden), beforeunload saat run aktif. Hasil diteruskan ke `onFinish` — layar hasil diurus pemanggil (Task 11).
 
-- [ ] **Step 1: Implementasi GameShell**
+- [x] **Step 1: Implementasi GameShell**
 
 `src/shell/GameShell.tsx`:
 
@@ -1840,7 +1840,7 @@ export function GameShell({ gameId, seed, startLives, roundMs, onFinish, onQuit 
 }
 ```
 
-- [ ] **Step 2: Halaman Play (sementara, tanpa GameOver — dilengkapi Task 11)**
+- [x] **Step 2: Halaman Play (sementara, tanpa GameOver — dilengkapi Task 11)**
 
 `src/pages/Play.tsx`:
 
@@ -1894,7 +1894,7 @@ export default function Play() {
 }
 ```
 
-- [ ] **Step 3: Verifikasi + commit**
+- [x] **Step 3: Verifikasi + commit**
 
 Run: `npm run build`
 Expected: exit 0. (`/play/apapun` belum bisa dimainkan karena registry kosong — normal sampai Task 12.)
@@ -1910,7 +1910,7 @@ git commit -m "feat: GameShell (HUD, countdown, pause, beforeunload) + Play page
 - Create: `src/core/receipt.ts`, `src/core/receipt.test.ts`, `src/shell/GameOver.tsx`
 - Modify: `src/pages/Play.tsx`
 
-- [ ] **Step 1: Tulis failing test untuk receiptLines**
+- [x] **Step 1: Tulis failing test untuk receiptLines**
 
 `src/core/receipt.test.ts`:
 
@@ -1965,12 +1965,12 @@ describe('receiptLines', () => {
 });
 ```
 
-- [ ] **Step 2: Run test, pastikan gagal**
+- [x] **Step 2: Run test, pastikan gagal**
 
 Run: `npm test`
 Expected: FAIL — module `./receipt` belum ada.
 
-- [ ] **Step 3: Implementasi receipt**
+- [x] **Step 3: Implementasi receipt**
 
 `src/core/receipt.ts`:
 
@@ -2084,12 +2084,12 @@ export async function shareReceipt(dataUrl: string, filename: string, text: stri
 
 Catatan: `receiptLines` pure (bisa dites di node); `renderReceiptPng`/`downloadDataUrl`/`shareReceipt` menyentuh DOM dan hanya dipakai dari komponen.
 
-- [ ] **Step 4: Run test, pastikan lulus**
+- [x] **Step 4: Run test, pastikan lulus**
 
 Run: `npm test`
 Expected: PASS.
 
-- [ ] **Step 5: Layar GameOver**
+- [x] **Step 5: Layar GameOver**
 
 `src/shell/GameOver.tsx`:
 
@@ -2201,7 +2201,7 @@ export function GameOver(props: GameOverProps) {
 }
 ```
 
-- [ ] **Step 6: Integrasikan ke Play**
+- [x] **Step 6: Integrasikan ke Play**
 
 Ganti `src/pages/Play.tsx`:
 
@@ -2289,7 +2289,7 @@ export function todayKey(d = new Date()): string {
 }
 ```
 
-- [ ] **Step 7: Verifikasi + commit**
+- [x] **Step 7: Verifikasi + commit**
 
 Run: `npm run build && npm test`
 Expected: keduanya exit 0.
@@ -2311,7 +2311,7 @@ Pola seragam tiap task game: (1) test logika murni gagal → (2) implement `logi
 - Create: `src/games/tap-panic/logic.ts`, `src/games/tap-panic/logic.test.ts`, `src/games/tap-panic/engine.ts`
 - Modify: `src/games/registry.ts`
 
-- [ ] **Step 1: Failing test**
+- [x] **Step 1: Failing test**
 
 `src/games/tap-panic/logic.test.ts`:
 
@@ -2342,9 +2342,9 @@ describe('kurva kesulitan tap-panic', () => {
 });
 ```
 
-- [ ] **Step 2: Run test — FAIL** (`npm test`, module `./logic` belum ada)
+- [x] **Step 2: Run test — FAIL** (`npm test`, module `./logic` belum ada)
 
-- [ ] **Step 3: Implementasi logic**
+- [x] **Step 3: Implementasi logic**
 
 `src/games/tap-panic/logic.ts`:
 
@@ -2375,9 +2375,9 @@ export function targetPoints(remaining: number): number {
 }
 ```
 
-- [ ] **Step 4: Run test — PASS** (`npm test`)
+- [x] **Step 4: Run test — PASS** (`npm test`)
 
-- [ ] **Step 5: Implementasi engine**
+- [x] **Step 5: Implementasi engine**
 
 `src/games/tap-panic/engine.ts`:
 
@@ -2482,7 +2482,7 @@ export class TapPanicEngine extends BaseEngine {
 }
 ```
 
-- [ ] **Step 6: Daftarkan di registry**
+- [x] **Step 6: Daftarkan di registry**
 
 Di `src/games/registry.ts`, tambahkan ke array `GAMES`:
 
@@ -2511,7 +2511,7 @@ dan ke object `loaders`:
 
 Run: `npm run dev`, buka `/play/tap-panic`. Checklist: countdown jalan → target muncul & mengecil → tap menambah skor → target lolos mengurangi hati → 5 kali lolos = game over → layar GameOver tampil + receipt bisa diunduh → "Main lagi" mengulang dari nol.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/games/tap-panic src/games/registry.ts
@@ -2524,7 +2524,7 @@ git commit -m "feat: game Tap Panic (refleks)"
 - Create: `src/games/quick-math/logic.ts`, `src/games/quick-math/logic.test.ts`, `src/games/quick-math/engine.ts`
 - Modify: `src/games/registry.ts`
 
-- [ ] **Step 1: Failing test**
+- [x] **Step 1: Failing test**
 
 `src/games/quick-math/logic.test.ts`:
 
@@ -2561,9 +2561,9 @@ describe('quick-math', () => {
 });
 ```
 
-- [ ] **Step 2: Run test — FAIL** (`npm test`)
+- [x] **Step 2: Run test — FAIL** (`npm test`)
 
-- [ ] **Step 3: Implementasi logic**
+- [x] **Step 3: Implementasi logic**
 
 `src/games/quick-math/logic.ts`:
 
@@ -2602,9 +2602,9 @@ export function makeQuestion(rand: () => number, level: number): MathQ {
 }
 ```
 
-- [ ] **Step 4: Run test — PASS** (`npm test`)
+- [x] **Step 4: Run test — PASS** (`npm test`)
 
-- [ ] **Step 5: Implementasi engine**
+- [x] **Step 5: Implementasi engine**
 
 `src/games/quick-math/engine.ts`:
 
@@ -2692,7 +2692,7 @@ export class QuickMathEngine extends BaseEngine {
 }
 ```
 
-- [ ] **Step 6: Daftarkan di registry**
+- [x] **Step 6: Daftarkan di registry**
 
 Entri `GAMES`:
 
@@ -2719,7 +2719,7 @@ Loader:
 
 - [ ] **Step 7: Playtest** — `/play/quick-math`: soal tampil, timer bar menyusut, jawaban benar/salah bereaksi, panah kiri/kanan bekerja.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/games/quick-math src/games/registry.ts
@@ -2732,7 +2732,7 @@ git commit -m "feat: game Hitung Kilat (matematika)"
 - Create: `src/games/simon/logic.ts`, `src/games/simon/logic.test.ts`, `src/games/simon/engine.ts`
 - Modify: `src/games/registry.ts`
 
-- [ ] **Step 1: Failing test**
+- [x] **Step 1: Failing test**
 
 `src/games/simon/logic.test.ts`:
 
@@ -2762,9 +2762,9 @@ describe('simon', () => {
 });
 ```
 
-- [ ] **Step 2: Run test — FAIL** (`npm test`)
+- [x] **Step 2: Run test — FAIL** (`npm test`)
 
-- [ ] **Step 3: Implementasi logic**
+- [x] **Step 3: Implementasi logic**
 
 `src/games/simon/logic.ts`:
 
@@ -2778,9 +2778,9 @@ export function playbackMs(round: number): number {
 }
 ```
 
-- [ ] **Step 4: Run test — PASS** (`npm test`)
+- [x] **Step 4: Run test — PASS** (`npm test`)
 
-- [ ] **Step 5: Implementasi engine**
+- [x] **Step 5: Implementasi engine**
 
 `src/games/simon/engine.ts`:
 
@@ -2904,7 +2904,7 @@ export class SimonEngine extends BaseEngine {
 }
 ```
 
-- [ ] **Step 6: Daftarkan di registry**
+- [x] **Step 6: Daftarkan di registry**
 
 Entri `GAMES`:
 
@@ -2931,7 +2931,7 @@ Loader:
 
 - [ ] **Step 7: Playtest** — `/play/simon`: urutan diputar, pad merespons, salah tekan mengurangi nyawa dan urutan diputar ulang, benar semua memperpanjang urutan.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/games/simon src/games/registry.ts
@@ -2944,7 +2944,7 @@ git commit -m "feat: game Simon Gabut (memori)"
 - Create: `src/games/missing-number/logic.ts`, `src/games/missing-number/logic.test.ts`, `src/games/missing-number/engine.ts`
 - Modify: `src/games/registry.ts`
 
-- [ ] **Step 1: Failing test**
+- [x] **Step 1: Failing test**
 
 `src/games/missing-number/logic.test.ts`:
 
@@ -2976,9 +2976,9 @@ describe('missing-number', () => {
 });
 ```
 
-- [ ] **Step 2: Run test — FAIL** (`npm test`)
+- [x] **Step 2: Run test — FAIL** (`npm test`)
 
-- [ ] **Step 3: Implementasi logic**
+- [x] **Step 3: Implementasi logic**
 
 `src/games/missing-number/logic.ts`:
 
@@ -3048,9 +3048,9 @@ export function makeNumQ(rand: () => number, level: number): NumQ {
 }
 ```
 
-- [ ] **Step 4: Run test — PASS** (`npm test`)
+- [x] **Step 4: Run test — PASS** (`npm test`)
 
-- [ ] **Step 5: Implementasi engine**
+- [x] **Step 5: Implementasi engine**
 
 `src/games/missing-number/engine.ts`:
 
@@ -3145,7 +3145,7 @@ export class MissingNumberEngine extends BaseEngine {
 }
 ```
 
-- [ ] **Step 6: Daftarkan di registry**
+- [x] **Step 6: Daftarkan di registry**
 
 Entri `GAMES`:
 
@@ -3172,7 +3172,7 @@ Loader:
 
 - [ ] **Step 7: Playtest** — `/play/missing-number`: deret tampil dengan satu `?`, tiga opsi bisa dipilih, timeout mengurangi nyawa.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/games/missing-number src/games/registry.ts
@@ -3189,7 +3189,7 @@ git commit -m "feat: game Angka Hilang (logika)"
 - Create: `src/games/word-scramble/words-id.ts`, `src/games/word-scramble/words-en.ts`, `src/games/word-scramble/logic.ts`, `src/games/word-scramble/logic.test.ts`, `src/games/word-scramble/engine.ts`
 - Modify: `src/games/registry.ts`
 
-- [ ] **Step 1: Failing test**
+- [x] **Step 1: Failing test**
 
 `src/games/word-scramble/logic.test.ts`:
 
@@ -3246,9 +3246,9 @@ describe('logic kata-acak', () => {
 });
 ```
 
-- [ ] **Step 2: Run test — FAIL** (`npm test`)
+- [x] **Step 2: Run test — FAIL** (`npm test`)
 
-- [ ] **Step 3: Tulis kamus kata**
+- [x] **Step 3: Tulis kamus kata**
 
 `src/games/word-scramble/words-id.ts`:
 
@@ -3294,7 +3294,7 @@ export const WORDS_EN: readonly string[] = [
 ];
 ```
 
-- [ ] **Step 4: Implementasi logic**
+- [x] **Step 4: Implementasi logic**
 
 `src/games/word-scramble/logic.ts`:
 
@@ -3325,9 +3325,9 @@ export function scramble(rand: () => number, word: string): string[] {
 }
 ```
 
-- [ ] **Step 5: Run test — PASS** (`npm test`)
+- [x] **Step 5: Run test — PASS** (`npm test`)
 
-- [ ] **Step 6: Implementasi engine**
+- [x] **Step 6: Implementasi engine**
 
 `src/games/word-scramble/engine.ts`:
 
@@ -3452,7 +3452,7 @@ export class WordScrambleEngine extends BaseEngine {
 }
 ```
 
-- [ ] **Step 7: Daftarkan di registry**
+- [x] **Step 7: Daftarkan di registry**
 
 Entri `GAMES`:
 
@@ -3479,7 +3479,7 @@ Loader:
 
 - [ ] **Step 8: Playtest** — `/play/word-scramble`: kata sesuai bahasa aktif (ganti toggle ID/EN lalu mulai ulang), tap huruf benar mengisi slot, salah tap reset + kurangi nyawa, ketik via keyboard juga jalan.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/games/word-scramble src/games/registry.ts
@@ -3492,7 +3492,7 @@ git commit -m "feat: game Kata Acak (kata) + kamus ID/EN"
 - Create: `src/games/bubble-sniper/logic.ts`, `src/games/bubble-sniper/logic.test.ts`, `src/games/bubble-sniper/engine.ts`
 - Modify: `src/games/registry.ts`
 
-- [ ] **Step 1: Failing test**
+- [x] **Step 1: Failing test**
 
 `src/games/bubble-sniper/logic.test.ts`:
 
@@ -3524,9 +3524,9 @@ describe('kurva bubble-sniper', () => {
 });
 ```
 
-- [ ] **Step 2: Run test — FAIL** (`npm test`)
+- [x] **Step 2: Run test — FAIL** (`npm test`)
 
-- [ ] **Step 3: Implementasi logic**
+- [x] **Step 3: Implementasi logic**
 
 `src/games/bubble-sniper/logic.ts`:
 
@@ -3561,9 +3561,9 @@ export function hitPoints(level: number): number {
 }
 ```
 
-- [ ] **Step 4: Run test — PASS** (`npm test`)
+- [x] **Step 4: Run test — PASS** (`npm test`)
 
-- [ ] **Step 5: Implementasi engine**
+- [x] **Step 5: Implementasi engine**
 
 `src/games/bubble-sniper/engine.ts`:
 
@@ -3673,7 +3673,7 @@ export class BubbleSniperEngine extends BaseEngine {
 }
 ```
 
-- [ ] **Step 6: Daftarkan di registry**
+- [x] **Step 6: Daftarkan di registry**
 
 Entri `GAMES`:
 
@@ -3700,7 +3700,7 @@ Loader:
 
 - [ ] **Step 7: Playtest** — `/play/bubble-sniper`: gelembung melintas berkelok, tap meledakkan, lolos = nyawa hilang, level naik mempercepat.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/games/bubble-sniper src/games/registry.ts
@@ -3713,7 +3713,7 @@ git commit -m "feat: game Bubble Sniper (aim)"
 - Create: `src/games/dodge/logic.ts`, `src/games/dodge/logic.test.ts`, `src/games/dodge/engine.ts`
 - Modify: `src/games/registry.ts`
 
-- [ ] **Step 1: Failing test**
+- [x] **Step 1: Failing test**
 
 `src/games/dodge/logic.test.ts`:
 
@@ -3738,9 +3738,9 @@ describe('dodge', () => {
 });
 ```
 
-- [ ] **Step 2: Run test — FAIL** (`npm test`)
+- [x] **Step 2: Run test — FAIL** (`npm test`)
 
-- [ ] **Step 3: Implementasi logic**
+- [x] **Step 3: Implementasi logic**
 
 `src/games/dodge/logic.ts`:
 
@@ -3766,9 +3766,9 @@ export function circleRectOverlap(cx: number, cy: number, r: number, rect: Rect)
 }
 ```
 
-- [ ] **Step 4: Run test — PASS** (`npm test`)
+- [x] **Step 4: Run test — PASS** (`npm test`)
 
-- [ ] **Step 5: Implementasi engine**
+- [x] **Step 5: Implementasi engine**
 
 `src/games/dodge/engine.ts`:
 
@@ -3865,7 +3865,7 @@ export class DodgeEngine extends BaseEngine {
 }
 ```
 
-- [ ] **Step 6: Daftarkan di registry**
+- [x] **Step 6: Daftarkan di registry**
 
 Entri `GAMES`:
 
@@ -3892,7 +3892,7 @@ Loader:
 
 - [ ] **Step 7: Playtest** — `/play/dodge`: bola mengikuti jari/panah, balok jatuh makin rapat, tabrakan mengurangi nyawa + blink invulnerable.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/games/dodge src/games/registry.ts
@@ -3905,7 +3905,7 @@ git commit -m "feat: game Ngindar! (ketangkasan)"
 - Create: `src/games/beat-tap/logic.ts`, `src/games/beat-tap/logic.test.ts`, `src/games/beat-tap/engine.ts`
 - Modify: `src/games/registry.ts`
 
-- [ ] **Step 1: Failing test**
+- [x] **Step 1: Failing test**
 
 `src/games/beat-tap/logic.test.ts`:
 
@@ -3939,9 +3939,9 @@ describe('beat-tap', () => {
 });
 ```
 
-- [ ] **Step 2: Run test — FAIL** (`npm test`)
+- [x] **Step 2: Run test — FAIL** (`npm test`)
 
-- [ ] **Step 3: Implementasi logic**
+- [x] **Step 3: Implementasi logic**
 
 `src/games/beat-tap/logic.ts`:
 
@@ -3971,9 +3971,9 @@ export function judge(deltaMs: number): Judgement | null {
 }
 ```
 
-- [ ] **Step 4: Run test — PASS** (`npm test`)
+- [x] **Step 4: Run test — PASS** (`npm test`)
 
-- [ ] **Step 5: Implementasi engine**
+- [x] **Step 5: Implementasi engine**
 
 `src/games/beat-tap/engine.ts`:
 
@@ -4099,7 +4099,7 @@ export class BeatTapEngine extends BaseEngine {
 }
 ```
 
-- [ ] **Step 6: Daftarkan di registry**
+- [x] **Step 6: Daftarkan di registry**
 
 Entri `GAMES`:
 
@@ -4126,7 +4126,7 @@ Loader:
 
 - [ ] **Step 7: Playtest** — `/play/beat-tap`: nada turun mengikuti tempo, timing dinilai perfect/good, nada lolos mengurangi nyawa, BPM naik seiring level.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/games/beat-tap src/games/registry.ts
@@ -4143,7 +4143,7 @@ git commit -m "feat: game Ketuk Beat (ritme)"
 - Modify: `src/core/daily.ts`
 - Create: `src/core/daily.test.ts`
 
-- [ ] **Step 1: Failing test**
+- [x] **Step 1: Failing test**
 
 `src/core/daily.test.ts`:
 
@@ -4180,9 +4180,9 @@ describe('daily', () => {
 });
 ```
 
-- [ ] **Step 2: Run test — FAIL** (`npm test` — fungsi selain `todayKey` belum ada)
+- [x] **Step 2: Run test — FAIL** (`npm test` — fungsi selain `todayKey` belum ada)
 
-- [ ] **Step 3: Lengkapi implementasi**
+- [x] **Step 3: Lengkapi implementasi**
 
 Ganti `src/core/daily.ts`:
 
@@ -4209,9 +4209,9 @@ export function stageSeed(key: string, index: number): number {
 }
 ```
 
-- [ ] **Step 4: Run test — PASS** (`npm test`)
+- [x] **Step 4: Run test — PASS** (`npm test`)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/core/daily.ts src/core/daily.test.ts
@@ -4223,7 +4223,7 @@ git commit -m "feat: daily lineup deterministik (seed tanggal)"
 **Files:**
 - Modify: `src/pages/Home.tsx`, `src/pages/Play.tsx`
 
-- [ ] **Step 1: Home final**
+- [x] **Step 1: Home final**
 
 Ganti `src/pages/Home.tsx`:
 
@@ -4311,7 +4311,7 @@ export default function Home() {
 }
 ```
 
-- [ ] **Step 2: Tampilkan cara main di halaman Play**
+- [x] **Step 2: Tampilkan cara main di halaman Play**
 
 Di `src/pages/Play.tsx`, tepat setelah `<GameShell ... />` (di dalam cabang `else`), bungkus dengan fragment dan tambahkan:
 
@@ -4331,7 +4331,7 @@ Di `src/pages/Play.tsx`, tepat setelah `<GameShell ... />` (di dalam cabang `els
         </>
 ```
 
-- [ ] **Step 3: Verifikasi + commit**
+- [x] **Step 3: Verifikasi + commit**
 
 Run: `npm run dev` — landing: tombol raksasa melempar ke game acak; kartu daily menampilkan 5 nama game hari ini; grid 8 game jalan; toggle ID/EN mengganti semua teks.
 
@@ -4347,7 +4347,7 @@ git commit -m "feat: landing page (roulette, kartu daily, grid game)"
 
 Aturan: 5 stage dari `dailyLineup(todayKey())`, tiap stage `roundMs = 45_000`, nyawa dibawa antar stage (`startLives = sisa`), skor akhir = jumlah. `endReason === 'lives'` menghentikan gauntlet lebih awal.
 
-- [ ] **Step 1: Implementasi**
+- [x] **Step 1: Implementasi**
 
 Ganti `src/pages/Daily.tsx`:
 
@@ -4511,7 +4511,7 @@ export default function Daily() {
 
 Run: `npm run dev`, buka `/daily`. Checklist: intro menampilkan 5 game hari ini → tiap stage maksimum 45 detik → nyawa dibawa antar stage → nyawa habis di stage mana pun mengakhiri gauntlet → selesai 5 stage menampilkan `daily.clear` + receipt berisi 5 baris skor + total → dua run di tanggal sama menghasilkan urutan & soal identik (seed deterministik).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/pages/Daily.tsx
@@ -4524,7 +4524,7 @@ git commit -m "feat: Daily Gauntlet (5 stage, nyawa dibawa, receipt harian)"
 - Create: `src/core/idle.ts`
 - Modify: `src/pages/Home.tsx`, `src/pages/NotFound.tsx`, `src/shell/GameOver.tsx`, `src/shell/GameShell.tsx`
 
-- [ ] **Step 1: Hook idle**
+- [x] **Step 1: Hook idle**
 
 `src/core/idle.ts`:
 
@@ -4558,7 +4558,7 @@ export function useIdle(yawnMs = 20_000, sleepMs = 45_000): IdleState {
 }
 ```
 
-- [ ] **Step 2: Maskot ikut gabut di Home**
+- [x] **Step 2: Maskot ikut gabut di Home**
 
 Di `src/pages/Home.tsx`:
 
@@ -4585,7 +4585,7 @@ Di dalam komponen `Home`, sebelum `return`:
 
 Ganti `<Mascot expression="happy" size={110} />` menjadi `<Mascot expression={expression} size={110} />`.
 
-- [ ] **Step 3: NotFound final**
+- [x] **Step 3: NotFound final**
 
 Ganti `src/pages/NotFound.tsx`:
 
@@ -4617,7 +4617,7 @@ export default function NotFound() {
 }
 ```
 
-- [ ] **Step 4: Confetti saat rekor sesi**
+- [x] **Step 4: Confetti saat rekor sesi**
 
 Di `src/shell/GameOver.tsx`, tambahkan komponen di bawah import:
 
@@ -4643,7 +4643,7 @@ function Confetti() {
 
 dan render `{props.sessionBest && <Confetti />}` sebagai elemen pertama di dalam `motion.div` utama.
 
-- [ ] **Step 5: Maskot kaget saat nyawa hilang (di GameShell)**
+- [x] **Step 5: Maskot kaget saat nyawa hilang (di GameShell)**
 
 Di `src/shell/GameShell.tsx`:
 
@@ -4680,7 +4680,7 @@ Ganti elemen `<LivesBar lives={lives} max={startLives} />` di top bar menjadi:
 
 Run: `npm run dev`, di DevTools aktifkan emulasi `prefers-reduced-motion: reduce` — semua transisi CSS praktis instan (rule global di `global.css`). Cek juga maskot: diamkan Home 20 detik (menguap) lalu 45 detik (tidur + title tab "zzz…"), dan saat main, maskot kecil di HUD kaget ketika nyawa hilang.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/core/idle.ts src/pages/Home.tsx src/pages/NotFound.tsx src/shell/GameOver.tsx src/shell/GameShell.tsx
@@ -4692,7 +4692,7 @@ git commit -m "feat: maskot idle + reaksi HUD, 404, confetti rekor sesi"
 **Files:**
 - Create: `vercel.json`, `README.md`
 
-- [ ] **Step 1: SPA rewrite**
+- [x] **Step 1: SPA rewrite**
 
 `vercel.json`:
 
@@ -4704,7 +4704,7 @@ git commit -m "feat: maskot idle + reaksi HUD, 404, confetti rekor sesi"
 
 (Alternatif Cloudflare Pages: buat `public/_redirects` berisi `/* /index.html 200`.)
 
-- [ ] **Step 2: README**
+- [x] **Step 2: README**
 
 `README.md`:
 
@@ -4749,7 +4749,7 @@ Expected: test PASS semua, build exit 0. Di preview, jalani checklist akhir:
 7. Pindah tab saat main → otomatis pause; kembali → resume via tombol.
 8. Refresh saat main memunculkan konfirmasi browser.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add vercel.json README.md
@@ -4764,7 +4764,4 @@ git commit -m "chore: deploy config + README"
 - Angka keseimbangan game (kecepatan, floor, poin) boleh di-tune saat playtest; test kurva menguji arah & batas, bukan angka keramat — bila menyetel angka, perbarui test-nya sekalian.
 - Jangan menambah dependency di luar daftar Task 1 tanpa alasan kuat.
 - Semua UI baru harus memakai token warna/font dari `global.css` — jangan hardcode hex baru di komponen (kecuali palet ARCADE di canvas).
-
-
-
 
