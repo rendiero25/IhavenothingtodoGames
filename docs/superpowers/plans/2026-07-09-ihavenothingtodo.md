@@ -979,7 +979,7 @@ git commit -m "feat: kontrak GameEngine, canvas utils, registry"
 
 Tidak ada file audio — semua SFX disintesis oscillator. AudioContext dibuat setelah gesture pertama (kebijakan autoplay browser). Mute dipersist di localStorage.
 
-- [ ] **Step 1: Implementasi**
+- [x] **Step 1: Implementasi**
 
 `src/core/sound.ts`:
 
@@ -1083,7 +1083,7 @@ class Sfx {
 export const sfx = new Sfx();
 ```
 
-- [ ] **Step 2: Unlock audio pada gesture pertama**
+- [x] **Step 2: Unlock audio pada gesture pertama**
 
 Modify `src/App.tsx` — tambahkan efek unlock:
 
@@ -1118,7 +1118,7 @@ export default function App() {
 }
 ```
 
-- [ ] **Step 3: Verifikasi + commit**
+- [x] **Step 3: Verifikasi + commit**
 
 Run: `npm run build`
 Expected: exit 0.
@@ -1133,7 +1133,7 @@ git commit -m "feat: SFX WebAudio sintetis dengan mute persist"
 **Files:**
 - Create: `src/core/score.ts`, `src/core/score.test.ts`
 
-- [ ] **Step 1: Tulis failing test**
+- [x] **Step 1: Tulis failing test**
 
 `src/core/score.test.ts`:
 
@@ -1176,12 +1176,12 @@ describe('formatDuration', () => {
 });
 ```
 
-- [ ] **Step 2: Run test, pastikan gagal**
+- [x] **Step 2: Run test, pastikan gagal**
 
 Run: `npm test`
 Expected: FAIL — module `./score` belum ada.
 
-- [ ] **Step 3: Implementasi**
+- [x] **Step 3: Implementasi**
 
 `src/core/score.ts`:
 
@@ -1213,12 +1213,12 @@ export function formatDuration(ms: number): string {
 }
 ```
 
-- [ ] **Step 4: Run test, pastikan lulus**
+- [x] **Step 4: Run test, pastikan lulus**
 
 Run: `npm test`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/core/score.ts src/core/score.test.ts
@@ -1232,7 +1232,7 @@ git commit -m "feat: combo multiplier, tier gelar, format durasi"
 
 Kelas dasar semua engine: game loop RAF dengan dt ter-clamp, akuntansi skor/combo/level, nyawa (mistakes vs startLives), batas waktu ronde (roundMs, untuk Daily Gauntlet), dan emisi GameResult. Engine turunan hanya mengimplementasikan `setup/update/draw/teardown`.
 
-- [ ] **Step 1: Implementasi**
+- [x] **Step 1: Implementasi**
 
 `src/games/base.ts`:
 
@@ -1365,7 +1365,7 @@ export abstract class BaseEngine implements GameEngine {
 }
 ```
 
-- [ ] **Step 2: Verifikasi typecheck + commit**
+- [x] **Step 2: Verifikasi typecheck + commit**
 
 Run: `npm run build`
 Expected: exit 0.
@@ -1380,7 +1380,7 @@ git commit -m "feat: BaseEngine (loop, nyawa, skor, roundMs)"
 **Files:**
 - Create: `src/components/ChunkyButton.tsx`, `src/components/LivesBar.tsx`, `src/components/Mascot.tsx`, `src/components/Header.tsx`, `src/components/GameCard.tsx`
 
-- [ ] **Step 1: ChunkyButton**
+- [x] **Step 1: ChunkyButton**
 
 `src/components/ChunkyButton.tsx`:
 
@@ -1423,7 +1423,7 @@ export function ChunkyButton({ color = 'coral', size = 'md', className = '', ...
 }
 ```
 
-- [ ] **Step 2: LivesBar**
+- [x] **Step 2: LivesBar**
 
 `src/components/LivesBar.tsx`:
 
@@ -1456,7 +1456,7 @@ export function LivesBar({ lives, max = 5 }: { lives: number; max?: number }) {
 }
 ```
 
-- [ ] **Step 3: Mascot**
+- [x] **Step 3: Mascot**
 
 `src/components/Mascot.tsx`:
 
@@ -1532,7 +1532,7 @@ export function Mascot({ expression = 'happy', size = 120 }: { expression?: Expr
 }
 ```
 
-- [ ] **Step 4: Header**
+- [x] **Step 4: Header**
 
 `src/components/Header.tsx`:
 
@@ -1583,7 +1583,7 @@ export function Header() {
 }
 ```
 
-- [ ] **Step 5: GameCard**
+- [x] **Step 5: GameCard**
 
 `src/components/GameCard.tsx`:
 
@@ -1638,7 +1638,7 @@ export function GameCard({ meta }: { meta: GameMeta }) {
 }
 ```
 
-- [ ] **Step 6: Verifikasi + commit**
+- [x] **Step 6: Verifikasi + commit**
 
 Run: `npm run build`
 Expected: exit 0 (komponen belum dipakai halaman — cukup typecheck).
@@ -1656,7 +1656,7 @@ git commit -m "feat: komponen UI dasar (ChunkyButton, LivesBar, Mascot, Header, 
 
 GameShell = "mesin arcade": frame navy, canvas, HUD (nyawa, skor pixel-font, combo), countdown 3-2-1, pause (tombol + auto saat tab hidden), beforeunload saat run aktif. Hasil diteruskan ke `onFinish` — layar hasil diurus pemanggil (Task 11).
 
-- [ ] **Step 1: Implementasi GameShell**
+- [x] **Step 1: Implementasi GameShell**
 
 `src/shell/GameShell.tsx`:
 
@@ -1840,7 +1840,7 @@ export function GameShell({ gameId, seed, startLives, roundMs, onFinish, onQuit 
 }
 ```
 
-- [ ] **Step 2: Halaman Play (sementara, tanpa GameOver — dilengkapi Task 11)**
+- [x] **Step 2: Halaman Play (sementara, tanpa GameOver — dilengkapi Task 11)**
 
 `src/pages/Play.tsx`:
 
@@ -1894,7 +1894,7 @@ export default function Play() {
 }
 ```
 
-- [ ] **Step 3: Verifikasi + commit**
+- [x] **Step 3: Verifikasi + commit**
 
 Run: `npm run build`
 Expected: exit 0. (`/play/apapun` belum bisa dimainkan karena registry kosong — normal sampai Task 12.)
@@ -1910,7 +1910,7 @@ git commit -m "feat: GameShell (HUD, countdown, pause, beforeunload) + Play page
 - Create: `src/core/receipt.ts`, `src/core/receipt.test.ts`, `src/shell/GameOver.tsx`
 - Modify: `src/pages/Play.tsx`
 
-- [ ] **Step 1: Tulis failing test untuk receiptLines**
+- [x] **Step 1: Tulis failing test untuk receiptLines**
 
 `src/core/receipt.test.ts`:
 
@@ -1965,12 +1965,12 @@ describe('receiptLines', () => {
 });
 ```
 
-- [ ] **Step 2: Run test, pastikan gagal**
+- [x] **Step 2: Run test, pastikan gagal**
 
 Run: `npm test`
 Expected: FAIL — module `./receipt` belum ada.
 
-- [ ] **Step 3: Implementasi receipt**
+- [x] **Step 3: Implementasi receipt**
 
 `src/core/receipt.ts`:
 
@@ -2084,12 +2084,12 @@ export async function shareReceipt(dataUrl: string, filename: string, text: stri
 
 Catatan: `receiptLines` pure (bisa dites di node); `renderReceiptPng`/`downloadDataUrl`/`shareReceipt` menyentuh DOM dan hanya dipakai dari komponen.
 
-- [ ] **Step 4: Run test, pastikan lulus**
+- [x] **Step 4: Run test, pastikan lulus**
 
 Run: `npm test`
 Expected: PASS.
 
-- [ ] **Step 5: Layar GameOver**
+- [x] **Step 5: Layar GameOver**
 
 `src/shell/GameOver.tsx`:
 
@@ -2201,7 +2201,7 @@ export function GameOver(props: GameOverProps) {
 }
 ```
 
-- [ ] **Step 6: Integrasikan ke Play**
+- [x] **Step 6: Integrasikan ke Play**
 
 Ganti `src/pages/Play.tsx`:
 
@@ -2289,7 +2289,7 @@ export function todayKey(d = new Date()): string {
 }
 ```
 
-- [ ] **Step 7: Verifikasi + commit**
+- [x] **Step 7: Verifikasi + commit**
 
 Run: `npm run build && npm test`
 Expected: keduanya exit 0.
@@ -4764,6 +4764,5 @@ git commit -m "chore: deploy config + README"
 - Angka keseimbangan game (kecepatan, floor, poin) boleh di-tune saat playtest; test kurva menguji arah & batas, bukan angka keramat — bila menyetel angka, perbarui test-nya sekalian.
 - Jangan menambah dependency di luar daftar Task 1 tanpa alasan kuat.
 - Semua UI baru harus memakai token warna/font dari `global.css` — jangan hardcode hex baru di komponen (kecuali palet ARCADE di canvas).
-
 
 
