@@ -1,7 +1,7 @@
 import { BaseEngine } from '../base';
 import { ARCADE, pointerPos } from '../canvas';
 import { sfx } from '../../core/sound';
-import { decoyChance, spawnInterval, targetPoints, targetTtl } from './logic';
+import { decoyChance, spawnInterval, targetHitRadius, targetPoints, targetTtl } from './logic';
 import type { TapTarget } from './logic';
 
 export class TapPanicEngine extends BaseEngine {
@@ -10,11 +10,13 @@ export class TapPanicEngine extends BaseEngine {
   private onPointer = (e: PointerEvent) => {
     if (!this.isRunning) return;
     const { x, y } = pointerPos(this.canvas, e, this.w, this.h);
+    const bounds = this.canvas.getBoundingClientRect();
     for (let i = this.targets.length - 1; i >= 0; i--) {
       const t = this.targets[i];
       const remaining = 1 - t.age / t.ttl;
       const r = t.r0 * (0.35 + 0.65 * remaining);
-      if ((x - t.x) ** 2 + (y - t.y) ** 2 <= (r + 6) ** 2) {
+      const hitRadius = targetHitRadius(r, bounds.width, bounds.height);
+      if ((x - t.x) ** 2 + (y - t.y) ** 2 <= hitRadius ** 2) {
         this.targets.splice(i, 1);
         if (t.decoy) {
           sfx.play('bad');

@@ -1,0 +1,15 @@
+export const WORDS_ID: readonly string[] = [
+  'buku', 'meja', 'kopi', 'susu', 'nasi', 'ayam', 'ikan', 'sapi', 'daun', 'laut',
+  'kota', 'desa', 'toko', 'uang', 'topi', 'baju', 'main', 'lari', 'pagi', 'sore',
+  'kata', 'roti', 'keju', 'gula', 'asin', 'biru', 'tari', 'lagu',
+  'makan', 'minum', 'tidur', 'kursi', 'pintu', 'jalan', 'bunga', 'pohon', 'hujan',
+  'panas', 'bulan', 'rumah', 'kamar', 'dapur', 'lampu', 'radio', 'musik', 'warna',
+  'merah', 'hijau', 'hitam', 'putih', 'cepat', 'besar', 'kecil', 'murah', 'mahal',
+  'takut', 'malas', 'rajin', 'gabut', 'teman', 'pasar', 'taman', 'mimpi', 'siang',
+  'malam', 'besok', 'waktu', 'menit', 'detik', 'angka', 'huruf', 'pesta', 'badut',
+  'telur', 'garam', 'manis', 'pahit', 'pedas', 'salju', 'sedih',
+  'dingin', 'langit', 'gunung', 'pantai', 'sungai', 'lambat', 'tinggi', 'pendek',
+  'senang', 'berani', 'pintar', 'kantor', 'kertas', 'pensil', 'sepatu', 'celana',
+  'lompat', 'renang', 'cerita', 'kuning',
+  'jendela', 'pelangi', 'bintang', 'kemarin', 'dongeng', 'sekolah', 'sahabat', 'terbang',
+];

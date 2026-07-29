@@ -28,6 +28,16 @@ export function pointerPos(
   return { x: ((e.clientX - r.left) * w) / r.width, y: ((e.clientY - r.top) * h) / r.height };
 }
 
+export function minimumTouchRadius(
+  displayWidth: number,
+  displayHeight: number,
+  logicalWidth = 480,
+  logicalHeight = 720,
+): number {
+  const scale = Math.min(displayWidth / logicalWidth, displayHeight / logicalHeight);
+  return scale > 0 && Number.isFinite(scale) ? 22 / scale : 22;
+}
+
 export interface Rect {
   x: number;
   y: number;

@@ -1,3 +1,5 @@
+import { minimumTouchRadius } from '../canvas';
+
 export interface TapTarget {
   x: number;
   y: number;
@@ -21,4 +23,12 @@ export function decoyChance(level: number): number {
 
 export function targetPoints(remaining: number): number {
   return 20 + Math.round(30 * remaining);
+}
+
+export function targetHitRadius(
+  visualRadius: number,
+  displayWidth: number,
+  displayHeight: number,
+): number {
+  return Math.max(visualRadius + 6, minimumTouchRadius(displayWidth, displayHeight));
 }

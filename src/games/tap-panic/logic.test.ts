@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { decoyChance, spawnInterval, targetPoints, targetTtl } from './logic';
+import {
+  decoyChance,
+  spawnInterval,
+  targetHitRadius,
+  targetPoints,
+  targetTtl,
+} from './logic';
 
 describe('kurva kesulitan tap-panic', () => {
   it('interval spawn menurun dengan floor 450', () => {
@@ -21,4 +27,17 @@ describe('kurva kesulitan tap-panic', () => {
     expect(targetPoints(0)).toBe(20);
     expect(targetPoints(0.5)).toBe(35);
   });
+  it.each([
+    [320, 266, 399, 39.699],
+    [375, 321, 481.5, 32.897],
+    [430, 376, 564, 28.085],
+  ])(
+    'target terkecil tetap punya hit area 44px pada viewport mobile %spx',
+    (_viewportWidth, displayWidth, displayHeight, expectedRadius) => {
+      expect(targetHitRadius(42 * 0.35, displayWidth, displayHeight)).toBeCloseTo(
+        expectedRadius,
+        3,
+      );
+    },
+  );
 });
