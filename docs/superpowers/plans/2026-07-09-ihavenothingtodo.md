@@ -63,7 +63,7 @@ Konvensi commit: `feat:`/`test:`/`chore:` singkat, satu commit per task (atau pe
 **Files:**
 - Create: `package.json`, `vite.config.ts`, `tsconfig.json`, `index.html`, `.gitignore`, `public/favicon.svg`, `src/main.tsx`, `src/App.tsx`, `src/styles/global.css`, `src/vite-env.d.ts`
 
-- [ ] **Step 1: Inisialisasi npm dan install dependency**
+- [x] **Step 1: Inisialisasi npm dan install dependency**
 
 ```bash
 npm init -y
@@ -71,7 +71,7 @@ npm i react react-dom react-router-dom motion lucide-react
 npm i -D vite @vitejs/plugin-react typescript tailwindcss @tailwindcss/vite vitest @types/react @types/react-dom
 ```
 
-- [ ] **Step 2: Set scripts di package.json**
+- [x] **Step 2: Set scripts di package.json**
 
 Edit `package.json`, ganti field `scripts` menjadi:
 
@@ -88,7 +88,7 @@ Edit `package.json`, ganti field `scripts` menjadi:
 
 Tambahkan juga `"type": "module"` di level atas package.json bila belum ada.
 
-- [ ] **Step 3: Tulis file konfigurasi**
+- [x] **Step 3: Tulis file konfigurasi**
 
 `vite.config.ts`:
 
@@ -134,7 +134,7 @@ dist
 *.local
 ```
 
-- [ ] **Step 4: Tulis index.html dan favicon**
+- [x] **Step 4: Tulis index.html dan favicon**
 
 `index.html`:
 
@@ -167,7 +167,7 @@ dist
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path d="M32 6C15 6 6 20 6 34c0 16 12 24 26 24s26-8 26-24C58 20 49 6 32 6Z" fill="#E4572E"/><circle cx="24" cy="32" r="4" fill="#26201A"/><circle cx="40" cy="32" r="4" fill="#26201A"/><path d="M26 44q6 5 12 0" stroke="#26201A" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
 ```
 
-- [ ] **Step 5: Tulis entry React minimal**
+- [x] **Step 5: Tulis entry React minimal**
 
 `src/vite-env.d.ts`:
 
@@ -204,13 +204,13 @@ createRoot(document.getElementById('root')!).render(
 );
 ```
 
-- [ ] **Step 6: Verifikasi dev server dan build**
+- [x] **Step 6: Verifikasi dev server dan build**
 
 Run: `npm run dev` — buka http://localhost:5173, harus tampil "ihavenothingtodo — scaffold OK". Hentikan server.
 Run: `npm run build`
 Expected: exit 0, folder `dist/` terbentuk.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add -A
@@ -223,7 +223,7 @@ git commit -m "chore: scaffold Vite + React + TS + Tailwind v4"
 - Modify: `src/styles/global.css`, `src/App.tsx`, `src/main.tsx`
 - Create: `src/pages/Home.tsx`, `src/pages/Play.tsx`, `src/pages/Daily.tsx`, `src/pages/NotFound.tsx`
 
-- [ ] **Step 1: Tulis token desain di global.css**
+- [x] **Step 1: Tulis token desain di global.css**
 
 Ganti isi `src/styles/global.css` dengan:
 
@@ -269,7 +269,7 @@ body {
 }
 ```
 
-- [ ] **Step 2: Buat placeholder pages dan routing**
+- [x] **Step 2: Buat placeholder pages dan routing**
 
 `src/pages/Home.tsx` (placeholder — versi final di Task 19):
 
@@ -342,12 +342,12 @@ createRoot(document.getElementById('root')!).render(
 );
 ```
 
-- [ ] **Step 3: Verifikasi**
+- [x] **Step 3: Verifikasi**
 
 Run: `npm run build`
 Expected: exit 0. Lalu `npm run dev`: `/` tampil "home" dengan font Lilita One di latar krem; `/x` tampil "404".
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A
@@ -359,7 +359,7 @@ git commit -m "feat: design tokens + routing skeleton"
 **Files:**
 - Create: `src/core/rng.ts`, `src/core/rng.test.ts`
 
-- [ ] **Step 1: Tulis failing test**
+- [x] **Step 1: Tulis failing test**
 
 `src/core/rng.test.ts`:
 
@@ -427,12 +427,12 @@ describe('randInt & pick', () => {
 });
 ```
 
-- [ ] **Step 2: Run test, pastikan gagal**
+- [x] **Step 2: Run test, pastikan gagal**
 
 Run: `npm test`
 Expected: FAIL — `Cannot find module './rng'` (atau setara).
 
-- [ ] **Step 3: Implementasi**
+- [x] **Step 3: Implementasi**
 
 `src/core/rng.ts`:
 
@@ -476,12 +476,12 @@ export function pick<T>(rand: () => number, arr: readonly T[]): T {
 }
 ```
 
-- [ ] **Step 4: Run test, pastikan lulus**
+- [x] **Step 4: Run test, pastikan lulus**
 
 Run: `npm test`
 Expected: PASS semua.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/core/rng.ts src/core/rng.test.ts
@@ -496,7 +496,7 @@ git commit -m "feat: seeded RNG core (mulberry32, hashString, shuffle)"
 
 Kamus ID adalah source of truth; tipe `DictKey` diturunkan darinya, dan `en` bertipe `Record<DictKey, string>` sehingga key yang hilang/lebih jadi error compile. Test runtime tetap ada sebagai pengaman.
 
-- [ ] **Step 1: Tulis failing test**
+- [x] **Step 1: Tulis failing test**
 
 `src/i18n/dict.test.ts`:
 
@@ -520,12 +520,12 @@ describe('kelengkapan i18n', () => {
 });
 ```
 
-- [ ] **Step 2: Run test, pastikan gagal**
+- [x] **Step 2: Run test, pastikan gagal**
 
 Run: `npm test`
 Expected: FAIL — module `./dict` belum ada.
 
-- [ ] **Step 3: Tulis dictionary**
+- [x] **Step 3: Tulis dictionary**
 
 `src/i18n/dict.ts`:
 
@@ -651,12 +651,12 @@ const en: Record<DictKey, string> = {
 export const dictionaries: Record<Locale, Record<DictKey, string>> = { id, en };
 ```
 
-- [ ] **Step 4: Run test, pastikan lulus**
+- [x] **Step 4: Run test, pastikan lulus**
 
 Run: `npm test`
 Expected: PASS.
 
-- [ ] **Step 5: Tulis provider + hook**
+- [x] **Step 5: Tulis provider + hook**
 
 `src/i18n/index.tsx`:
 
@@ -739,12 +739,12 @@ createRoot(document.getElementById('root')!).render(
 );
 ```
 
-- [ ] **Step 6: Verifikasi build + test**
+- [x] **Step 6: Verifikasi build + test**
 
 Run: `npm run build && npm test`
 Expected: keduanya exit 0.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/i18n src/main.tsx
@@ -758,7 +758,7 @@ git commit -m "feat: i18n ID/EN dengan completeness test"
 
 Registry dimulai dengan array kosong yang di-append oleh setiap task game (Task 11-18). `loadEngine` memakai dynamic import agar tiap game jadi chunk terpisah.
 
-- [ ] **Step 1: Tulis types**
+- [x] **Step 1: Tulis types**
 
 `src/games/types.ts`:
 
@@ -847,7 +847,7 @@ export interface GameMeta {
 }
 ```
 
-- [ ] **Step 2: Tulis canvas utils**
+- [x] **Step 2: Tulis canvas utils**
 
 `src/games/canvas.ts`:
 
@@ -927,7 +927,7 @@ export function centerText(
 }
 ```
 
-- [ ] **Step 3: Tulis registry (kosong dulu)**
+- [x] **Step 3: Tulis registry (kosong dulu)**
 
 `src/games/registry.ts`:
 
@@ -955,12 +955,12 @@ export async function loadEngine(id: GameId): Promise<GameEngine> {
 }
 ```
 
-- [ ] **Step 4: Verifikasi typecheck**
+- [x] **Step 4: Verifikasi typecheck**
 
 Run: `npm run build`
 Expected: exit 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/games
@@ -4764,7 +4764,6 @@ git commit -m "chore: deploy config + README"
 - Angka keseimbangan game (kecepatan, floor, poin) boleh di-tune saat playtest; test kurva menguji arah & batas, bukan angka keramat — bila menyetel angka, perbarui test-nya sekalian.
 - Jangan menambah dependency di luar daftar Task 1 tanpa alasan kuat.
 - Semua UI baru harus memakai token warna/font dari `global.css` — jangan hardcode hex baru di komponen (kecuali palet ARCADE di canvas).
-
 
 
 
