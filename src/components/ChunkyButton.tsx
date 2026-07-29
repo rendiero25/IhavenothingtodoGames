@@ -5,7 +5,7 @@ type Size = 'md' | 'lg' | 'xl';
 
 const COLORS: Record<Color, string> = {
   coral: 'bg-coral text-cream',
-  teal: 'bg-teal text-cream',
+  teal: 'bg-teal-dark text-cream',
   amber: 'bg-amber text-ink',
   pink: 'bg-pink text-cream',
   ink: 'bg-ink text-cream',

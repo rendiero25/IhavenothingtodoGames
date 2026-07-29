@@ -17,11 +17,12 @@ export interface GameShellProps {
   seed: number;
   startLives: number;
   roundMs?: number;
+  wide?: boolean;
   onFinish: (result: GameResult) => void;
   onQuit: () => void;
 }
 
-export function GameShell({ gameId, seed, startLives, roundMs, onFinish, onQuit }: GameShellProps) {
+export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onFinish, onQuit }: GameShellProps) {
   const { locale, t } = useI18n();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<GameEngine | null>(null);
@@ -173,7 +174,7 @@ export function GameShell({ gameId, seed, startLives, roundMs, onFinish, onQuit 
   };
 
   return (
-    <div className="mx-auto w-full max-w-md px-4 select-none">
+    <div className={`mx-auto w-full px-4 select-none ${wide ? 'max-w-xl' : 'max-w-md'}`}>
       <div className="flex items-center justify-between py-3">
         <button onClick={onQuit} aria-label={t('shell.quit')} className="rounded-full border-[3px] border-ink bg-paper p-1.5 cursor-pointer">
           <X size={18} />
