@@ -5,9 +5,10 @@ import { useI18n } from '../i18n';
 import { sfx } from '../core/sound';
 import { comboMultiplier } from '../core/score';
 import { loadEngine } from '../games/registry';
-import type { GameEngine, GameId, GameResult } from '../games/types';
+import type { GameEngine, GameId, GameOptions, GameResult } from '../games/types';
 import { LivesBar } from '../components/LivesBar';
 import { ChunkyButton } from '../components/ChunkyButton';
+import { Mascot } from '../components/Mascot';
 
 type Phase = 'loading' | 'countdown' | 'playing' | 'paused' | 'over';
 
@@ -24,30 +25,73 @@ export function GameShell({ gameId, seed, startLives, roundMs, onFinish, onQuit 
   const { locale, t } = useI18n();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<GameEngine | null>(null);
+  const optionsRef = useRef<GameOptions | null>(null);
   const phaseRef = useRef<Phase>('loading');
+  const localeRef = useRef(locale);
+  const onFinishRef = useRef(onFinish);
+  const shockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [phase, setPhaseState] = useState<Phase>('loading');
   const [lives, setLives] = useState(startLives);
   const [score, setScore] = useState(0);
   const [combo, setCombo] = useState(0);
   const [count, setCount] = useState(3);
+  const [shocked, setShocked] = useState(false);
 
   const setPhase = useCallback((p: Phase) => {
     phaseRef.current = p;
     setPhaseState(p);
   }, []);
 
+  const cancelShockTimer = useCallback(() => {
+    if (shockTimerRef.current !== null) {
+      clearTimeout(shockTimerRef.current);
+      shockTimerRef.current = null;
+    }
+  }, []);
+
+  const triggerShock = useCallback(() => {
+    cancelShockTimer();
+    setShocked(true);
+    shockTimerRef.current = setTimeout(() => {
+      shockTimerRef.current = null;
+      setShocked(false);
+    }, 800);
+  }, [cancelShockTimer]);
+
+  useEffect(() => {
+    onFinishRef.current = onFinish;
+  }, [onFinish]);
+
+  useEffect(() => {
+    localeRef.current = locale;
+    if (optionsRef.current) {
+      // Preserve the active stage. Engines read this shared options object:
+      // rendered labels update on the next frame and generated content uses the new locale.
+      optionsRef.current.locale = locale;
+    }
+  }, [locale]);
+
   useEffect(() => {
     let alive = true;
     let engine: GameEngine | null = null;
+    let options: GameOptions | null = null;
     const timers: ReturnType<typeof setTimeout>[] = [];
+
+    cancelShockTimer();
+    setShocked(false);
+    setLives(startLives);
+    setScore(0);
+    setCombo(0);
+    setCount(3);
+    setPhase('loading');
 
     void loadEngine(gameId).then(async (e) => {
       if (!alive || !canvasRef.current) return;
       engine = e;
       engineRef.current = e;
-      e.init(canvasRef.current, {
+      options = {
         seed,
-        locale,
+        locale: localeRef.current,
         startLives,
         roundMs,
         callbacks: {
@@ -58,14 +102,17 @@ export function GameShell({ gameId, seed, startLives, roundMs, onFinish, onQuit 
           onLifeLost: () => {
             sfx.play('life');
             setLives((l) => Math.max(0, l - 1));
+            triggerShock();
           },
           onGameOver: (result) => {
             sfx.play('over');
             setPhase('over');
-            timers.push(setTimeout(() => onFinish(result), 700));
+            timers.push(setTimeout(() => onFinishRef.current(result), 700));
           },
         },
-      });
+      };
+      optionsRef.current = options;
+      e.init(canvasRef.current, options);
       await document.fonts.ready;
       if (!alive) return;
       setPhase('countdown');
@@ -90,11 +137,12 @@ export function GameShell({ gameId, seed, startLives, roundMs, onFinish, onQuit 
     return () => {
       alive = false;
       timers.forEach(clearTimeout);
+      cancelShockTimer();
       engine?.destroy();
       engineRef.current = null;
+      if (optionsRef.current === options) optionsRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameId, seed]);
+  }, [cancelShockTimer, gameId, roundMs, seed, setPhase, startLives, triggerShock]);
 
   useEffect(() => {
     const onHide = () => {
@@ -130,7 +178,10 @@ export function GameShell({ gameId, seed, startLives, roundMs, onFinish, onQuit 
         <button onClick={onQuit} aria-label={t('shell.quit')} className="rounded-full border-[3px] border-ink bg-paper p-1.5 cursor-pointer">
           <X size={18} />
         </button>
-        <LivesBar lives={lives} max={startLives} />
+        <div className="flex items-center gap-2">
+          <Mascot expression={shocked ? 'shock' : 'happy'} size={34} />
+          <LivesBar lives={lives} max={startLives} />
+        </div>
         <button
           onClick={togglePause}
           disabled={phase !== 'playing' && phase !== 'paused'}

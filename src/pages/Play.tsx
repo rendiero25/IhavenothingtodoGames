@@ -54,14 +54,19 @@ export default function Play() {
           onHome={() => nav('/')}
         />
       ) : (
-        <GameShell
-          key={runId}
-          gameId={meta.id as GameId}
-          seed={seed}
-          startLives={5}
-          onFinish={onFinish}
-          onQuit={() => nav('/')}
-        />
+        <>
+          <GameShell
+            key={runId}
+            gameId={meta.id as GameId}
+            seed={seed}
+            startLives={5}
+            onFinish={onFinish}
+            onQuit={() => nav('/')}
+          />
+          <p className="mx-auto max-w-md px-6 pb-8 pt-3 text-center text-sm text-ink-soft">
+            {meta.howTo[locale]}
+          </p>
+        </>
       )}
     </div>
   );

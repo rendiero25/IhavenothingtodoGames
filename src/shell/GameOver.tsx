@@ -1,11 +1,29 @@
 import { useMemo, useState } from 'react';
 import { Download, Share2 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { useI18n } from '../i18n';
 import { formatDuration, titleKeyFor } from '../core/score';
 import { downloadDataUrl, receiptLines, renderReceiptPng, shareReceipt } from '../core/receipt';
 import type { ReceiptEntry } from '../core/receipt';
 import { ChunkyButton } from '../components/ChunkyButton';
+
+function Confetti() {
+  const colors = ['#E4572E', '#0FA47F', '#F2A007', '#E0447C'];
+  return (
+    <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
+      {Array.from({ length: 18 }, (_, i) => (
+        <motion.span
+          key={i}
+          initial={{ y: -24, rotate: 0, opacity: 1 }}
+          animate={{ y: '105vh', rotate: 360 + i * 40, opacity: [1, 1, 0.5] }}
+          transition={{ duration: 2.2 + (i % 5) * 0.3, ease: 'easeIn' }}
+          className="absolute block h-3 w-3"
+          style={{ left: `${(i * 100) / 18}vw`, backgroundColor: colors[i % 4] }}
+        />
+      ))}
+    </div>
+  );
+}
 
 export interface GameOverProps {
   mode: 'free' | 'daily';
@@ -24,6 +42,7 @@ export interface GameOverProps {
 
 export function GameOver(props: GameOverProps) {
   const { t } = useI18n();
+  const reduceMotion = useReducedMotion();
   const [shared, setShared] = useState(false);
 
   const dataUrl = useMemo(() => {
@@ -50,6 +69,7 @@ export function GameOver(props: GameOverProps) {
       animate={{ opacity: 1, y: 0 }}
       className="mx-auto w-full max-w-md px-4 pb-10 text-center"
     >
+      {props.sessionBest && !reduceMotion && <Confetti />}
       <h2 className="font-display text-4xl mt-2">{props.heading}</h2>
       {props.sessionBest && (
         <p className="font-display text-teal text-lg mt-1">{t('over.sessionBest')}</p>
@@ -72,9 +92,13 @@ export function GameOver(props: GameOverProps) {
       <motion.img
         src={dataUrl}
         alt="Boredom Receipt"
-        initial={{ rotate: -2 }}
-        animate={{ rotate: 2 }}
-        transition={{ repeat: Infinity, repeatType: 'reverse', duration: 2.2 }}
+        initial={reduceMotion ? false : { rotate: -2 }}
+        animate={reduceMotion ? { rotate: 0 } : { rotate: 2 }}
+        transition={
+          reduceMotion
+            ? { duration: 0 }
+            : { repeat: Infinity, repeatType: 'reverse', duration: 2.2 }
+        }
         className="mx-auto mt-6 w-56 border-[3px] border-ink shadow-[0_6px_0_0_var(--color-ink)]"
       />
       <div className="flex flex-wrap justify-center gap-3 mt-6">
