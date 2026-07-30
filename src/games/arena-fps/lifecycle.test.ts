@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { planContextRestore } from './engine';
+import { FpsEngine, planContextRestore } from './engine';
 import { EngineLifecycle, WebGlContextRecovery } from './lifecycle';
 import { createArenaScene, selectMotionProfile, selectRenderQuality } from './scene';
 
@@ -98,6 +98,45 @@ describe('EngineLifecycle', () => {
     target.dispatchEvent(new Event('webglcontextrestored'));
 
     expect(calls).toEqual([]);
+  });
+
+  it('FpsEngine.destroy melepas listener context sebelum memaksa context loss', () => {
+    const calls: string[] = [];
+    class RecordingTarget extends EventTarget {
+      override removeEventListener(
+        type: string,
+        callback: EventListenerOrEventListenerObject | null,
+        options?: boolean | EventListenerOptions,
+      ): void {
+        calls.push(`remove:${type}`);
+        super.removeEventListener(type, callback, options);
+      }
+    }
+    const target = new RecordingTarget();
+    const recovery = new WebGlContextRecovery(target, {
+      pause: () => false,
+      restore: () => undefined,
+      resume: () => undefined,
+      fatal: () => undefined,
+    });
+    recovery.attach();
+    const engine = new FpsEngine();
+    Object.assign(engine as unknown as Record<string, unknown>, {
+      contextRecovery: recovery,
+      renderer: {
+        dispose: () => calls.push('renderer:dispose'),
+        forceContextLoss: () => calls.push('renderer:forceContextLoss'),
+      },
+    });
+
+    engine.destroy();
+
+    expect(calls).toEqual([
+      'remove:webglcontextlost',
+      'remove:webglcontextrestored',
+      'renderer:dispose',
+      'renderer:forceContextLoss',
+    ]);
   });
 
   it('memulihkan wave aktif tetapi mempertahankan jeda antar-wave kosong', () => {
