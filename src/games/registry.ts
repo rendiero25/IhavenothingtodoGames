@@ -132,6 +132,7 @@ const loaders: Partial<Record<GameId, () => Promise<GameEngine>>> = {
   'bubble-sniper': () => import('./bubble-sniper/engine').then((m) => new m.BubbleSniperEngine()),
   dodge: () => import('./dodge/engine').then((m) => new m.DodgeEngine()),
   'beat-tap': () => import('./beat-tap/engine').then((m) => new m.BeatTapEngine()),
+  'arena-fps': () => import('./arena-fps/engine').then((m) => new m.FpsEngine()),
 };
 
 export function getMeta(id: string): GameMeta | undefined {

@@ -1,3 +1,4 @@
+import type { EndReason, GameResult } from '../types';
 import { WEAPONS, type FpsState, type WeaponId } from './config';
 
 export type { AmmoState, EnemyKind, EnemySpawn, FpsState, WeaponId, WeaponSpec } from './config';
@@ -79,4 +80,43 @@ export function registerHit(state: FpsState, headshot: boolean, killed: boolean,
 export function damagePlayer(state: FpsState, nowMs: number): FpsState {
   if (state.lives <= 0 || nowMs < state.invulnerableUntil) return state;
   return { ...state, lives: state.lives - 1, invulnerableUntil: nowMs + 1000, combo: 0 };
+}
+
+export function favoriteWeaponIndex(shots: FpsState['shotsByWeapon']): number {
+  const counts = [shots.pistol, shots.rifle, shots.shotgun];
+  return counts.indexOf(Math.max(...counts));
+}
+
+export function refillWaveReserves(state: FpsState): FpsState {
+  return {
+    ...state,
+    loadout: {
+      ...state.loadout,
+      rifle: { ...state.loadout.rifle, reserve: WEAPONS.rifle.reserve },
+      shotgun: { ...state.loadout.shotgun, reserve: WEAPONS.shotgun.reserve },
+    },
+  };
+}
+
+export function buildFpsResult(
+  state: FpsState,
+  wave: number,
+  elapsed: number,
+  endReason: EndReason,
+): GameResult {
+  return {
+    score: state.score,
+    bestCombo: state.bestCombo,
+    levelReached: wave,
+    durationMs: Math.round(elapsed),
+    livesLeft: state.lives,
+    endReason,
+    stats: {
+      kills: state.kills,
+      accuracy: state.shots === 0 ? 0 : Math.round((state.hits / state.shots) * 100),
+      headshots: state.headshots,
+      wave,
+      favoriteWeapon: favoriteWeaponIndex(state.shotsByWeapon),
+    },
+  };
 }

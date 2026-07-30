@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { GAMES, getMeta } from './registry';
+import { GAMES, getMeta, loadEngine } from './registry';
 
 describe('arena-fps registry', () => {
   it('terdaftar sekali sebagai shooter landscape', () => {
@@ -9,5 +9,11 @@ describe('arena-fps registry', () => {
       icon: 'crosshair',
       viewport: 'landscape',
     });
+  });
+
+  it('memuat FpsEngine secara lazy untuk arena-fps', async () => {
+    const engine = await loadEngine('arena-fps');
+
+    expect(engine.constructor.name).toBe('FpsEngine');
   });
 });
