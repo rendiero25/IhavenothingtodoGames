@@ -22,6 +22,36 @@ export interface GameShellProps {
   onQuit: () => void;
 }
 
+interface SessionLifecycle {
+  isAlive(): boolean;
+  schedule(callback: () => void, delayMs: number): void;
+  stop(): boolean;
+}
+
+export function createSessionLifecycle(): SessionLifecycle {
+  let alive = true;
+  const timers = new Set<ReturnType<typeof setTimeout>>();
+
+  return {
+    isAlive: () => alive,
+    schedule: (callback, delayMs) => {
+      if (!alive) return;
+      const timer = setTimeout(() => {
+        timers.delete(timer);
+        if (alive) callback();
+      }, delayMs);
+      timers.add(timer);
+    },
+    stop: () => {
+      const wasAlive = alive;
+      alive = false;
+      timers.forEach(clearTimeout);
+      timers.clear();
+      return wasAlive;
+    },
+  };
+}
+
 export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onFinish, onQuit }: GameShellProps) {
   const { locale, t } = useI18n();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -76,16 +106,22 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
   }, [locale]);
 
   useEffect(() => {
-    let alive = true;
     let engine: GameEngine | null = null;
     let options: GameOptions | null = null;
-    const timers: ReturnType<typeof setTimeout>[] = [];
+    const lifecycle = createSessionLifecycle();
     const fail = () => {
-      engine?.destroy();
+      const wasAlive = lifecycle.stop();
+      cancelShockTimer();
+      const failedEngine = engine;
       engine = null;
       engineRef.current = null;
       if (optionsRef.current === options) optionsRef.current = null;
-      if (alive) setPhase('error');
+      try {
+        failedEngine?.destroy();
+      } catch {
+        // A broken engine must not prevent the recoverable fallback.
+      }
+      if (wasAlive) setPhase('error');
     };
 
     cancelShockTimer();
@@ -98,7 +134,7 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
 
     void loadEngine(gameId).then(async (e) => {
       engine = e;
-      if (!alive || !canvasRef.current) {
+      if (!lifecycle.isAlive() || !canvasRef.current) {
         fail();
         return;
       }
@@ -110,18 +146,21 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
         roundMs,
         callbacks: {
           onScore: (s, c) => {
+            if (!lifecycle.isAlive()) return;
             setScore(s);
             setCombo(c);
           },
           onLifeLost: () => {
+            if (!lifecycle.isAlive()) return;
             sfx.play('life');
             setLives((l) => Math.max(0, l - 1));
             triggerShock();
           },
           onGameOver: (result) => {
+            if (!lifecycle.isAlive()) return;
             sfx.play('over');
             setPhase('over');
-            timers.push(setTimeout(() => onFinishRef.current(result), 700));
+            lifecycle.schedule(() => onFinishRef.current(result), 700);
           },
           onFatalError: () => {
             fail();
@@ -131,31 +170,32 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
       optionsRef.current = options;
       e.init(canvasRef.current, options);
       await document.fonts.ready;
-      if (!alive || !engine) return;
+      if (!lifecycle.isAlive() || !engine) return;
       setPhase('countdown');
       for (let i = 3; i >= 1; i--) {
-        timers.push(
-          setTimeout(() => {
+        lifecycle.schedule(
+          () => {
             setCount(i);
             sfx.play('tick');
-          }, (3 - i) * 700),
+          },
+          (3 - i) * 700,
         );
       }
-      timers.push(
-        setTimeout(() => {
-          if (!alive || !engine) return;
+      lifecycle.schedule(
+        () => {
+          if (!engine) return;
           setPhase('playing');
           sfx.play('coin');
           engine.start();
-        }, 2100),
+        },
+        2100,
       );
     }).catch(() => {
       fail();
     });
 
     return () => {
-      alive = false;
-      timers.forEach(clearTimeout);
+      lifecycle.stop();
       cancelShockTimer();
       engine?.destroy();
       engineRef.current = null;
