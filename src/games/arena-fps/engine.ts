@@ -4,7 +4,7 @@ import { sfx } from '../../core/sound';
 import type { EndReason, GameEngine, GameOptions } from '../types';
 import { WEAPONS, type EnemyKind, type EnemySpawn, type FpsState, type WeaponId } from './config';
 import { InputController } from './input';
-import { EngineLifecycle } from './lifecycle';
+import { EngineLifecycle, WebGlContextRecovery } from './lifecycle';
 import {
   buildFpsResult,
   createFpsState,
@@ -36,14 +36,15 @@ interface EnemyRuntime {
   strafeSign: -1 | 1;
 }
 
-export class ContextRecoveryGate {
-  private attempted = false;
-
-  begin(): 'restore' | 'fatal' {
-    if (this.attempted) return 'fatal';
-    this.attempted = true;
-    return 'restore';
-  }
+export function planContextRestore(
+  wave: number,
+  activeEnemyCount: number,
+  nextWaveAt: number | null,
+): { wave: number; respawnWave: boolean } {
+  return {
+    wave,
+    respawnWave: !(activeEnemyCount === 0 && nextWaveAt !== null),
+  };
 }
 
 const PLAYER_SPEED = 5;
@@ -95,10 +96,7 @@ export class FpsEngine implements GameEngine {
   private shakeUntil = 0;
   private quality: RenderQuality = { lowPower: false, maxPixelRatio: 2 };
   private motion: MotionProfile = selectMotionProfile(false);
-  private readonly contextRecovery = new ContextRecoveryGate();
-  private contextListenersAttached = false;
-  private awaitingContextRestore = false;
-  private resumeAfterContextRestore = false;
+  private contextRecovery: WebGlContextRecovery | null = null;
   private paused = true;
   private finished = false;
   private destroyed = false;
@@ -138,8 +136,18 @@ export class FpsEngine implements GameEngine {
     this.lifecycle = new EngineLifecycle();
     this.input.attach();
     this.lifecycle.track(() => this.input?.destroy());
-    this.attachContextListeners();
-    this.lifecycle.track(() => this.detachContextListeners());
+    this.contextRecovery = new WebGlContextRecovery(canvas, {
+      pause: () => {
+        const resumeAfterRestore = !this.paused;
+        this.pause();
+        return resumeAfterRestore;
+      },
+      restore: () => this.rebuildArenaAfterContextRestore(),
+      resume: () => this.resume(),
+      fatal: (error) => this.failContextRecovery(error),
+    });
+    this.contextRecovery.attach();
+    this.lifecycle.track(() => this.contextRecovery?.destroy());
 
     const resize = (): void => {
       if (!this.arena) return;
@@ -184,7 +192,7 @@ export class FpsEngine implements GameEngine {
     if (this.destroyed) return;
     this.destroyed = true;
     this.paused = true;
-    this.detachContextListeners();
+    this.contextRecovery?.destroy();
     this.lifecycle?.destroy();
     this.input?.destroy();
     for (const object of this.enemyPool) disposeObject(object);
@@ -199,6 +207,7 @@ export class FpsEngine implements GameEngine {
     this.arena = null;
     this.input = null;
     this.lifecycle = null;
+    this.contextRecovery = null;
     this.raycaster = null;
     this.state = null;
   }
@@ -460,46 +469,9 @@ export class FpsEngine implements GameEngine {
     this.opts.callbacks.onGameOver(buildFpsResult(this.state, this.wave, this.elapsed, endReason));
   }
 
-  private readonly onContextLost = (event: Event): void => {
-    event.preventDefault();
-    if (this.destroyed || this.finished) return;
-    if (this.contextRecovery.begin() === 'fatal') {
-      this.failContextRecovery();
-      return;
-    }
-
-    this.awaitingContextRestore = true;
-    this.resumeAfterContextRestore = !this.paused;
-    this.pause();
-  };
-
-  private readonly onContextRestored = (): void => {
-    if (!this.awaitingContextRestore || this.destroyed || this.finished) return;
-    try {
-      this.rebuildArenaAfterContextRestore();
-      this.awaitingContextRestore = false;
-      if (this.resumeAfterContextRestore) this.resume();
-    } catch {
-      this.failContextRecovery();
-    }
-  };
-
-  private attachContextListeners(): void {
-    if (!this.canvas || this.contextListenersAttached) return;
-    this.canvas.addEventListener('webglcontextlost', this.onContextLost);
-    this.canvas.addEventListener('webglcontextrestored', this.onContextRestored);
-    this.contextListenersAttached = true;
-  }
-
-  private detachContextListeners(): void {
-    if (!this.canvas || !this.contextListenersAttached) return;
-    this.canvas.removeEventListener('webglcontextlost', this.onContextLost);
-    this.canvas.removeEventListener('webglcontextrestored', this.onContextRestored);
-    this.contextListenersAttached = false;
-  }
-
   private rebuildArenaAfterContextRestore(): void {
     if (!this.renderer || !this.opts || !this.state || !this.canvas) throw new Error('WEBGL_CONTEXT_LOST');
+    const recoveryPlan = planContextRestore(this.wave, this.enemies.size, this.nextWaveAt);
 
     this.arena?.dispose();
     for (const object of this.enemyPool) disposeObject(object);
@@ -517,19 +489,18 @@ export class FpsEngine implements GameEngine {
     const width = Math.max(1, this.canvas.clientWidth || this.canvas.width);
     const height = Math.max(1, this.canvas.clientHeight || this.canvas.height);
     this.arena.resize(width, height, window.devicePixelRatio || 1);
-    this.spawnWave(this.wave);
+    if (recoveryPlan.respawnWave) this.spawnWave(recoveryPlan.wave);
     this.arena.updateHud(this.state, this.wave);
     this.arena.render();
     this.lastFrameAt = null;
   }
 
-  private failContextRecovery(): void {
+  private failContextRecovery(error: Error): void {
     if (this.finished || this.destroyed) return;
     this.finished = true;
     this.paused = true;
-    this.awaitingContextRestore = false;
     this.input?.setPaused(true);
     this.lifecycle?.destroy();
-    this.opts?.callbacks.onFatalError?.(new Error('WEBGL_CONTEXT_LOST'));
+    this.opts?.callbacks.onFatalError?.(error);
   }
 }

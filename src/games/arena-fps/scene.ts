@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { EnemySpawn, FpsState } from './config';
+import { touchLayout, type TouchRect } from './input';
 
 export interface ArenaScene {
   scene: THREE.Scene;
@@ -389,6 +390,11 @@ function createHud(canvas: HTMLCanvasElement): HudRuntime | null {
   roots.touch.visible = isMobile;
 
   const resize = (width: number, height: number): void => {
+    const layout = touchLayout(width, height);
+    const center = (rect: TouchRect): { x: number; y: number } => ({
+      x: rect.x + rect.width / 2,
+      y: height - rect.y - rect.height / 2,
+    });
     hudCamera.left = 0;
     hudCamera.right = width;
     hudCamera.top = height;
@@ -410,13 +416,19 @@ function createHud(canvas: HTMLCanvasElement): HudRuntime | null {
       ammoPanel.mesh.position.set(width - 188, isMobile ? 154 : 55, 1);
     }
 
-    joystick.position.set(76, 76, 1);
-    aimZone.scale.set(width * 0.55, Math.max(44, height * 0.72), 1);
-    aimZone.position.set(width * 0.725, height * 0.64, 0);
+    const joystickCenter = center(layout.joystick);
+    joystick.scale.set(layout.joystick.width, layout.joystick.height, 1);
+    joystick.position.set(joystickCenter.x, joystickCenter.y, 1);
+    const aimCenter = center(layout.aim);
+    aimZone.scale.set(layout.aim.width, layout.aim.height, 1);
+    aimZone.position.set(aimCenter.x, aimCenter.y, 0);
+    const actionRects = [layout.switch, layout.reload, layout.fire];
     for (const [index, button] of buttons.entries()) {
-      const x = width - 250 + index * 100;
-      button.position.set(x, 50, 2);
-      labelMeshes[index]?.position.set(x, 50, 3);
+      const rect = actionRects[index];
+      const actionCenter = center(rect);
+      button.scale.set(rect.width, rect.height, 1);
+      button.position.set(actionCenter.x, actionCenter.y, 2);
+      labelMeshes[index]?.position.set(actionCenter.x, actionCenter.y, 3);
     }
   };
 

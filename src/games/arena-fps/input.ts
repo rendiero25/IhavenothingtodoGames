@@ -27,7 +27,6 @@ const KEY_ACTIONS: Readonly<Record<string, InputAction>> = {
 };
 
 const TOUCH_WEAPONS: readonly WeaponId[] = ['pistol', 'rifle', 'shotgun'];
-const TOUCH_BUTTON_SIZE = 100;
 
 export function actionForKey(code: string): InputAction | null {
   return KEY_ACTIONS[code] ?? null;
@@ -35,12 +34,50 @@ export function actionForKey(code: string): InputAction | null {
 
 export type TouchZone = 'move' | 'aim' | 'fire' | 'reload' | 'switch';
 
+export interface TouchRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface TouchLayout {
+  move: TouchRect;
+  aim: TouchRect;
+  switch: TouchRect;
+  reload: TouchRect;
+  fire: TouchRect;
+  joystick: TouchRect;
+}
+
+export function touchLayout(width: number, height: number): TouchLayout {
+  const actionSize = Math.min(100, Math.max(44, width / 8));
+  const actionY = Math.max(0, height - actionSize);
+  const actionStart = Math.max(0, width - actionSize * 3);
+  const joystickSize = Math.max(44, Math.min(88, actionStart * 0.47));
+  const joystickX = Math.max(0, Math.min(32, (actionStart - joystickSize) / 2));
+  const joystickY = Math.max(0, height - joystickSize - 32);
+
+  return {
+    move: { x: 0, y: 0, width: actionStart, height },
+    aim: { x: actionStart, y: 0, width: actionSize * 3, height: actionY },
+    switch: { x: actionStart, y: actionY, width: actionSize, height: actionSize },
+    reload: { x: actionStart + actionSize, y: actionY, width: actionSize, height: actionSize },
+    fire: { x: actionStart + actionSize * 2, y: actionY, width: actionSize, height: actionSize },
+    joystick: { x: joystickX, y: joystickY, width: joystickSize, height: joystickSize },
+  };
+}
+
+function contains(rect: TouchRect, x: number, y: number): boolean {
+  return x >= rect.x && x < rect.x + rect.width && y >= rect.y && y < rect.y + rect.height;
+}
+
 export function touchZone(x: number, y: number, width: number, height: number): TouchZone {
-  if (x <= width * 0.45) return 'move';
-  if (y < height * 0.72) return 'aim';
-  if (x >= width - TOUCH_BUTTON_SIZE) return 'fire';
-  if (x >= width - TOUCH_BUTTON_SIZE * 2) return 'reload';
-  if (x >= width - TOUCH_BUTTON_SIZE * 3) return 'switch';
+  const layout = touchLayout(width, height);
+  if (contains(layout.switch, x, y)) return 'switch';
+  if (contains(layout.reload, x, y)) return 'reload';
+  if (contains(layout.fire, x, y)) return 'fire';
+  if (contains(layout.move, x, y)) return 'move';
   return 'aim';
 }
 

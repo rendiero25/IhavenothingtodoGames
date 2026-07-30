@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { actionForKey, InputController, touchZone } from './input';
+import { actionForKey, InputController, touchLayout, touchZone } from './input';
 
 describe('actionForKey', () => {
   it('memisahkan joystick, aim, fire, reload, dan switch', () => {
@@ -9,6 +9,31 @@ describe('actionForKey', () => {
     expect(touchZone(640, 390, 800, 450)).toBe('reload');
     expect(touchZone(540, 390, 800, 450)).toBe('switch');
   });
+
+  it.each([320, 360, 375, 800])(
+    'menjaga pusat tombol touch aktif dan minimal 44px pada lebar %i',
+    (width) => {
+      const layout = touchLayout(width, 450);
+
+      for (const zone of ['switch', 'reload', 'fire'] as const) {
+        const rect = layout[zone];
+        expect(rect.width).toBeGreaterThanOrEqual(44);
+        expect(rect.height).toBeGreaterThanOrEqual(44);
+        expect(touchZone(rect.x + rect.width / 2, rect.y + rect.height / 2, width, 450)).toBe(zone);
+      }
+
+      expect(layout.aim.x).toBe(layout.move.width);
+      expect(layout.aim.y + layout.aim.height).toBe(layout.switch.y);
+      expect(
+        touchZone(
+          layout.aim.x + layout.aim.width / 2,
+          layout.aim.y + layout.aim.height / 2,
+          width,
+          450,
+        ),
+      ).toBe('aim');
+    },
+  );
 
   it('memetakan keyboard ke aksi FPS', () => {
     expect(actionForKey('KeyW')).toEqual({ kind: 'move', axis: 'forward', value: 1 });

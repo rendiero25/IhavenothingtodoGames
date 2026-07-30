@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ContextRecoveryGate } from './engine';
-import { EngineLifecycle } from './lifecycle';
+import { planContextRestore } from './engine';
+import { EngineLifecycle, WebGlContextRecovery } from './lifecycle';
 import { createArenaScene, selectMotionProfile, selectRenderQuality } from './scene';
 
 describe('EngineLifecycle', () => {
@@ -19,11 +19,90 @@ describe('EngineLifecycle', () => {
     expect(calls).toEqual(['cancel', 'listener']);
   });
 
-  it('mengizinkan tepat satu percobaan recovery context', () => {
-    const recovery = new ContextRecoveryGate();
+  it('context loss pertama prevent default, pause, restore, lalu resume', () => {
+    const target = new EventTarget();
+    const calls: string[] = [];
+    const recovery = new WebGlContextRecovery(target, {
+      pause: () => {
+        calls.push('pause');
+        return true;
+      },
+      restore: () => calls.push('restore'),
+      resume: () => calls.push('resume'),
+      fatal: () => calls.push('fatal'),
+    });
+    recovery.attach();
+    const loss = new Event('webglcontextlost', { cancelable: true });
 
-    expect(recovery.begin()).toBe('restore');
-    expect(recovery.begin()).toBe('fatal');
+    target.dispatchEvent(loss);
+    target.dispatchEvent(new Event('webglcontextrestored'));
+
+    expect(loss.defaultPrevented).toBe(true);
+    expect(calls).toEqual(['pause', 'restore', 'resume']);
+  });
+
+  it('restoration failure memanggil fatal tanpa resume', () => {
+    const target = new EventTarget();
+    const calls: string[] = [];
+    const recovery = new WebGlContextRecovery(target, {
+      pause: () => true,
+      restore: () => {
+        calls.push('restore');
+        throw new Error('restore failed');
+      },
+      resume: () => calls.push('resume'),
+      fatal: (error) => calls.push(error.message),
+    });
+    recovery.attach();
+
+    target.dispatchEvent(new Event('webglcontextlost', { cancelable: true }));
+    target.dispatchEvent(new Event('webglcontextrestored'));
+
+    expect(calls).toEqual(['restore', 'WEBGL_CONTEXT_LOST']);
+  });
+
+  it('context loss kedua memanggil fatal', () => {
+    const target = new EventTarget();
+    const calls: string[] = [];
+    const recovery = new WebGlContextRecovery(target, {
+      pause: () => false,
+      restore: () => undefined,
+      resume: () => calls.push('resume'),
+      fatal: (error) => calls.push(error.message),
+    });
+    recovery.attach();
+
+    target.dispatchEvent(new Event('webglcontextlost', { cancelable: true }));
+    target.dispatchEvent(new Event('webglcontextrestored'));
+    target.dispatchEvent(new Event('webglcontextlost', { cancelable: true }));
+
+    expect(calls).toEqual(['WEBGL_CONTEXT_LOST']);
+  });
+
+  it('cleanup mencegah context event menjalankan callback', () => {
+    const target = new EventTarget();
+    const calls: string[] = [];
+    const recovery = new WebGlContextRecovery(target, {
+      pause: () => {
+        calls.push('pause');
+        return true;
+      },
+      restore: () => calls.push('restore'),
+      resume: () => calls.push('resume'),
+      fatal: () => calls.push('fatal'),
+    });
+    recovery.attach();
+    recovery.destroy();
+
+    target.dispatchEvent(new Event('webglcontextlost', { cancelable: true }));
+    target.dispatchEvent(new Event('webglcontextrestored'));
+
+    expect(calls).toEqual([]);
+  });
+
+  it('memulihkan wave aktif tetapi mempertahankan jeda antar-wave kosong', () => {
+    expect(planContextRestore(4, 3, null)).toEqual({ wave: 4, respawnWave: true });
+    expect(planContextRestore(4, 0, 8200)).toEqual({ wave: 4, respawnWave: false });
   });
 });
 
