@@ -191,7 +191,8 @@ export class InputController {
 
     if (event.button === 0) {
       this.firing = true;
-      void this.canvas.requestPointerLock?.();
+      const pointerLock = this.canvas.requestPointerLock?.();
+      void pointerLock?.catch(() => undefined);
       return;
     }
 

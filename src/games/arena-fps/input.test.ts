@@ -83,4 +83,31 @@ describe('actionForKey', () => {
     switchTouch(4);
     expect(controller.snapshot().weaponRequested).toBe('pistol');
   });
+
+  it('menangani penolakan pointer lock tanpa menghentikan fire desktop', () => {
+    let rejectionHandled = false;
+    const pointerLock = {
+      catch: () => {
+        rejectionHandled = true;
+        return pointerLock;
+      },
+    };
+    const canvas = {
+      setPointerCapture: () => undefined,
+      requestPointerLock: () => pointerLock,
+    } as unknown as HTMLCanvasElement;
+    const controller = new InputController(canvas);
+    const handlers = controller as unknown as { onPointerDown(event: PointerEvent): void };
+    const click = {
+      button: 0,
+      pointerId: 1,
+      pointerType: 'mouse',
+      preventDefault: () => undefined,
+    } as unknown as PointerEvent;
+
+    handlers.onPointerDown(click);
+
+    expect(rejectionHandled).toBe(true);
+    expect(controller.snapshot().firing).toBe(true);
+  });
 });
