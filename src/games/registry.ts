@@ -8,6 +8,7 @@ export const GAMES: GameMeta[] = [
     category: 'reflex',
     icon: 'zap',
     accent: 'coral',
+    viewport: 'portrait',
     name: { id: 'Tap Panic', en: 'Tap Panic' },
     tagline: { id: 'Tap sebelum lingkarannya kabur.', en: 'Tap before the circle vanishes.' },
     howTo: {
@@ -20,6 +21,7 @@ export const GAMES: GameMeta[] = [
     category: 'math',
     icon: 'calculator',
     accent: 'teal',
+    viewport: 'portrait',
     name: { id: 'Hitung Kilat', en: 'Flash Math' },
     tagline: { id: 'Benar atau salah? Mikir cepat!', en: 'True or false? Think fast!' },
     howTo: {
@@ -32,6 +34,7 @@ export const GAMES: GameMeta[] = [
     category: 'memory',
     icon: 'brain',
     accent: 'pink',
+    viewport: 'portrait',
     name: { id: 'Simon Gabut', en: 'Simon Says Nothing' },
     tagline: { id: 'Hafalkan urutannya. Terus. Terus.', en: 'Memorize the sequence. Again. And again.' },
     howTo: {
@@ -44,6 +47,7 @@ export const GAMES: GameMeta[] = [
     category: 'logic',
     icon: 'hash',
     accent: 'amber',
+    viewport: 'portrait',
     name: { id: 'Angka Hilang', en: 'Missing Number' },
     tagline: { id: 'Deretnya bolong satu. Isi!', en: 'One number is missing. Fill it!' },
     howTo: {
@@ -56,6 +60,7 @@ export const GAMES: GameMeta[] = [
     category: 'word',
     icon: 'type',
     accent: 'pink',
+    viewport: 'portrait',
     name: { id: 'Kata Acak', en: 'Word Jumble' },
     tagline: { id: 'Susun hurufnya sebelum otakmu nyerah.', en: 'Unscramble before your brain gives up.' },
     howTo: {
@@ -68,6 +73,7 @@ export const GAMES: GameMeta[] = [
     category: 'aim',
     icon: 'target',
     accent: 'teal',
+    viewport: 'portrait',
     name: { id: 'Bubble Sniper', en: 'Bubble Sniper' },
     tagline: { id: 'Tembak gelembungnya. Jangan yang pink.', en: 'Pop the bubbles. Not the pink ones.' },
     howTo: {
@@ -80,6 +86,7 @@ export const GAMES: GameMeta[] = [
     category: 'dexterity',
     icon: 'move',
     accent: 'amber',
+    viewport: 'portrait',
     name: { id: 'Ngindar!', en: 'Dodge!' },
     tagline: { id: 'Geser, hindar, bertahan hidup.', en: 'Slide, dodge, survive.' },
     howTo: {
@@ -92,11 +99,25 @@ export const GAMES: GameMeta[] = [
     category: 'rhythm',
     icon: 'music',
     accent: 'coral',
+    viewport: 'portrait',
     name: { id: 'Ketuk Beat', en: 'Beat Tap' },
     tagline: { id: 'Tap pas di ringnya. Rasakan iramanya.', en: 'Tap right on the ring. Feel the beat.' },
     howTo: {
       id: 'Tap layar (atau spasi) tepat saat nada menyentuh ring. Nada lolos = nyawa hilang.',
       en: 'Tap (or press space) exactly when a note hits the ring. Missed notes cost a life.',
+    },
+  },
+  {
+    id: 'arena-fps',
+    category: 'shooter',
+    icon: 'crosshair',
+    accent: 'coral',
+    viewport: 'landscape',
+    name: { id: 'Arena Gabut', en: 'Boredom Arena' },
+    tagline: { id: 'Lima nyawa. Tiga senjata. Banyak masalah.', en: 'Five lives. Three weapons. Many problems.' },
+    howTo: {
+      id: 'WASD/joystick untuk bergerak, bidik, tembak manual, R untuk reload, 1-3 untuk ganti senjata.',
+      en: 'Move with WASD/joystick, aim, fire manually, press R to reload, and 1-3 to switch weapons.',
     },
   },
 ];

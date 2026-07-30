@@ -4,13 +4,13 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useI18n } from '../i18n';
 import { sfx } from '../core/sound';
 import { comboMultiplier } from '../core/score';
-import { loadEngine } from '../games/registry';
+import { getMeta, loadEngine } from '../games/registry';
 import type { GameEngine, GameId, GameOptions, GameResult } from '../games/types';
 import { LivesBar } from '../components/LivesBar';
 import { ChunkyButton } from '../components/ChunkyButton';
 import { Mascot } from '../components/Mascot';
 
-type Phase = 'loading' | 'countdown' | 'playing' | 'paused' | 'over';
+type Phase = 'loading' | 'countdown' | 'playing' | 'paused' | 'over' | 'error';
 
 export interface GameShellProps {
   gameId: GameId;
@@ -37,6 +37,9 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
   const [combo, setCombo] = useState(0);
   const [count, setCount] = useState(3);
   const [shocked, setShocked] = useState(false);
+  const landscape = getMeta(gameId)?.viewport === 'landscape';
+  const shellWidth = landscape ? 'max-w-5xl' : wide ? 'max-w-xl' : 'max-w-md';
+  const canvasAspect = landscape ? '16 / 9' : '2 / 3';
 
   const setPhase = useCallback((p: Phase) => {
     phaseRef.current = p;
@@ -77,6 +80,13 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
     let engine: GameEngine | null = null;
     let options: GameOptions | null = null;
     const timers: ReturnType<typeof setTimeout>[] = [];
+    const fail = () => {
+      engine?.destroy();
+      engine = null;
+      engineRef.current = null;
+      if (optionsRef.current === options) optionsRef.current = null;
+      if (alive) setPhase('error');
+    };
 
     cancelShockTimer();
     setShocked(false);
@@ -87,8 +97,11 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
     setPhase('loading');
 
     void loadEngine(gameId).then(async (e) => {
-      if (!alive || !canvasRef.current) return;
       engine = e;
+      if (!alive || !canvasRef.current) {
+        fail();
+        return;
+      }
       engineRef.current = e;
       options = {
         seed,
@@ -110,12 +123,15 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
             setPhase('over');
             timers.push(setTimeout(() => onFinishRef.current(result), 700));
           },
+          onFatalError: () => {
+            fail();
+          },
         },
       };
       optionsRef.current = options;
       e.init(canvasRef.current, options);
       await document.fonts.ready;
-      if (!alive) return;
+      if (!alive || !engine) return;
       setPhase('countdown');
       for (let i = 3; i >= 1; i--) {
         timers.push(
@@ -133,6 +149,8 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
           engine.start();
         }, 2100),
       );
+    }).catch(() => {
+      fail();
     });
 
     return () => {
@@ -174,7 +192,7 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
   };
 
   return (
-    <div className={`mx-auto w-full px-4 select-none ${wide ? 'max-w-xl' : 'max-w-md'}`}>
+    <div className={`mx-auto w-full px-4 select-none ${shellWidth}`}>
       <div className="flex items-center justify-between py-3">
         <button onClick={onQuit} aria-label={t('shell.quit')} className="rounded-full border-[3px] border-ink bg-paper p-1.5 cursor-pointer">
           <X size={18} />
@@ -198,7 +216,7 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
           <span>{score}</span>
           <span className={combo >= 5 ? 'text-neon-green' : 'text-navy-soft'}>x{comboMultiplier(combo)}</span>
         </div>
-        <canvas ref={canvasRef} className="w-full rounded-2xl touch-none" style={{ aspectRatio: '2 / 3' }} />
+        <canvas ref={canvasRef} className="w-full rounded-2xl touch-none" style={{ aspectRatio: canvasAspect }} />
 
         <AnimatePresence>
           {phase === 'countdown' && (
@@ -218,6 +236,16 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
                 <p className="font-display text-cream text-xl mb-4">{t('shell.paused')}</p>
                 <ChunkyButton color="teal" onClick={togglePause}>
                   {t('shell.resume')}
+                </ChunkyButton>
+              </div>
+            </div>
+          )}
+          {phase === 'error' && (
+            <div className="absolute inset-0 grid place-items-center rounded-3xl bg-navy/85 p-6">
+              <div className="text-center">
+                <p className="mb-4 font-display text-xl text-cream">{t('shell.loadError')}</p>
+                <ChunkyButton color="teal" onClick={onQuit}>
+                  {t('shell.back')}
                 </ChunkyButton>
               </div>
             </div>

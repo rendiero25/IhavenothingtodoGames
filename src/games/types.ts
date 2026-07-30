@@ -8,7 +8,8 @@ export type GameId =
   | 'word-scramble'
   | 'quick-math'
   | 'dodge'
-  | 'beat-tap';
+  | 'beat-tap'
+  | 'arena-fps';
 
 export type Category =
   | 'reflex'
@@ -18,7 +19,8 @@ export type Category =
   | 'word'
   | 'math'
   | 'dexterity'
-  | 'rhythm';
+  | 'rhythm'
+  | 'shooter';
 
 export type EndReason = 'lives' | 'timeup';
 
@@ -36,6 +38,7 @@ export interface GameCallbacks {
   onScore(totalScore: number, combo: number): void;
   onLifeLost(): void;
   onGameOver(result: GameResult): void;
+  onFatalError?(error: Error): void;
 }
 
 export interface GameOptions {
@@ -67,15 +70,18 @@ export type IconKey =
   | 'type'
   | 'calculator'
   | 'move'
-  | 'music';
+  | 'music'
+  | 'crosshair';
 
 export type Accent = 'coral' | 'teal' | 'amber' | 'pink';
+export type GameViewport = 'portrait' | 'landscape';
 
 export interface GameMeta {
   id: GameId;
   category: Category;
   icon: IconKey;
   accent: Accent;
+  viewport: GameViewport;
   name: L10n;
   tagline: L10n;
   howTo: L10n;
