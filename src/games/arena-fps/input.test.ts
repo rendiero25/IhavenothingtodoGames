@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { actionForKey, InputController } from './input';
+import { actionForKey, InputController, touchZone } from './input';
 
 describe('actionForKey', () => {
+  it('memisahkan joystick, aim, fire, reload, dan switch', () => {
+    expect(touchZone(30, 300, 800, 450)).toBe('move');
+    expect(touchZone(700, 200, 800, 450)).toBe('aim');
+    expect(touchZone(740, 390, 800, 450)).toBe('fire');
+    expect(touchZone(640, 390, 800, 450)).toBe('reload');
+    expect(touchZone(540, 390, 800, 450)).toBe('switch');
+  });
+
   it('memetakan keyboard ke aksi FPS', () => {
     expect(actionForKey('KeyW')).toEqual({ kind: 'move', axis: 'forward', value: 1 });
     expect(actionForKey('KeyR')).toEqual({ kind: 'reload' });
@@ -16,7 +24,7 @@ describe('actionForKey', () => {
 
   it('memutar permintaan senjata pada touch switch melalui ketiga senjata', () => {
     const canvas = {
-      getBoundingClientRect: () => ({ left: 0, top: 0, width: 100, height: 100 }),
+      getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 450 }),
       setPointerCapture: () => undefined,
       releasePointerCapture: () => undefined,
     } as unknown as HTMLCanvasElement;
@@ -30,8 +38,8 @@ describe('actionForKey', () => {
       const event = {
         pointerId,
         pointerType: 'touch',
-        clientX: 90,
-        clientY: 90,
+        clientX: 540,
+        clientY: 390,
         preventDefault: () => undefined,
       } as unknown as PointerEvent;
       handlers.onPointerDown(event);

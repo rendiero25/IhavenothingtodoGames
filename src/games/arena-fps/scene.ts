@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { EnemySpawn } from './config';
+import type { EnemySpawn, FpsState } from './config';
 
 export interface ArenaScene {
   scene: THREE.Scene;
@@ -8,7 +8,11 @@ export interface ArenaScene {
   projectileRoot: THREE.Group;
   arenaColliders: readonly THREE.Box3[];
   spawnPlayer: THREE.Vector3;
-  setQuality(lowPower: boolean): void;
+  setQuality(quality: RenderQuality): void;
+  updateHud(state: FpsState, wave: number): void;
+  triggerMuzzleFlash(nowMs: number, durationMs: number): void;
+  updateEffects(nowMs: number): void;
+  render(): void;
   resize(width: number, height: number, pixelRatio: number): void;
   dispose(): void;
 }
@@ -16,6 +20,34 @@ export interface ArenaScene {
 const ARENA_HALF_WIDTH = 25;
 const ARENA_HALF_DEPTH = 34;
 const WALL_HEIGHT = 8;
+
+export interface RenderQuality {
+  lowPower: boolean;
+  maxPixelRatio: 1.5 | 2;
+}
+
+export function selectRenderQuality(
+  hardwareConcurrency: number,
+  devicePixelRatio: number,
+  mobile: boolean,
+): RenderQuality {
+  return {
+    lowPower: hardwareConcurrency <= 4 || devicePixelRatio > 2,
+    maxPixelRatio: mobile ? 1.5 : 2,
+  };
+}
+
+export interface MotionProfile {
+  shake: 0 | 1;
+  recoil: 0.25 | 1;
+  muzzleFlashMs: 35 | 90;
+}
+
+export function selectMotionProfile(reducedMotion: boolean): MotionProfile {
+  return reducedMotion
+    ? { shake: 0, recoil: 0.25, muzzleFlashMs: 35 }
+    : { shake: 1, recoil: 1, muzzleFlashMs: 90 };
+}
 
 function seededRandom(seed: number): () => number {
   let state = seed >>> 0;
@@ -154,8 +186,10 @@ export function createArenaScene(renderer: THREE.WebGLRenderer, seed: number): A
     arenaColliders.push(colliderFor(container));
   }
 
+  const hud = createHud(renderer.domElement);
   let disposed = false;
-  let lowPower = false;
+  let quality: RenderQuality = { lowPower: false, maxPixelRatio: 2 };
+  let muzzleFlashUntil = 0;
   return {
     scene,
     camera,
@@ -163,22 +197,280 @@ export function createArenaScene(renderer: THREE.WebGLRenderer, seed: number): A
     projectileRoot,
     arenaColliders,
     spawnPlayer,
-    setQuality(nextLowPower: boolean): void {
-      lowPower = nextLowPower;
-      directional.castShadow = !lowPower;
-      renderer.shadowMap.enabled = !lowPower;
+    setQuality(nextQuality: RenderQuality): void {
+      quality = nextQuality;
+      directional.castShadow = !quality.lowPower;
+      renderer.shadowMap.enabled = !quality.lowPower;
+      scene.fog = new THREE.Fog(0x10161c, quality.lowPower ? 16 : 22, quality.lowPower ? 52 : 78);
+    },
+    updateHud(state: FpsState, wave: number): void {
+      hud?.update(state, wave);
+    },
+    triggerMuzzleFlash(nowMs: number, durationMs: number): void {
+      muzzleFlashUntil = nowMs + durationMs;
+      if (hud) hud.flash.visible = true;
+    },
+    updateEffects(nowMs: number): void {
+      if (hud) hud.flash.visible = nowMs < muzzleFlashUntil;
+    },
+    render(): void {
+      if (!hud) {
+        renderer.render(scene, camera);
+        return;
+      }
+      const autoClear = renderer.autoClear;
+      renderer.autoClear = false;
+      renderer.clear();
+      renderer.render(scene, camera);
+      renderer.clearDepth();
+      renderer.render(hud.scene, hud.camera);
+      renderer.autoClear = autoClear;
     },
     resize(width: number, height: number, pixelRatio: number): void {
       camera.aspect = width / Math.max(1, height);
       camera.updateProjectionMatrix();
-      renderer.setPixelRatio(Math.min(Math.max(1, pixelRatio), lowPower ? 1 : 2));
+      renderer.setPixelRatio(Math.min(Math.max(1, pixelRatio), quality.maxPixelRatio));
       renderer.setSize(width, height, false);
+      hud?.resize(width, height);
     },
     dispose(): void {
       if (disposed) return;
       disposed = true;
       directional.shadow.dispose();
+      hud?.dispose();
       disposeObject(scene);
+    },
+  };
+}
+
+interface HudRuntime {
+  scene: THREE.Scene;
+  camera: THREE.OrthographicCamera;
+  flash: THREE.Mesh;
+  update(state: FpsState, wave: number): void;
+  resize(width: number, height: number): void;
+  dispose(): void;
+}
+
+function createHud(canvas: HTMLCanvasElement): HudRuntime | null {
+  if (typeof document === 'undefined') return null;
+
+  const hudScene = new THREE.Scene();
+  const hudCamera = new THREE.OrthographicCamera(0, 1, 1, 0, -10, 10);
+  const sharedPlane = new THREE.PlaneGeometry(1, 1);
+  const sharedCircle = new THREE.CircleGeometry(0.5, 32);
+  const textures: THREE.Texture[] = [];
+  const materials: THREE.Material[] = [];
+  const roots = {
+    crosshair: new THREE.Group(),
+    panels: new THREE.Group(),
+    touch: new THREE.Group(),
+  };
+  hudScene.add(roots.crosshair, roots.panels, roots.touch);
+
+  const plane = (
+    material: THREE.Material,
+    parent: THREE.Object3D,
+    width: number,
+    height: number,
+  ): THREE.Mesh => {
+    materials.push(material);
+    const mesh = new THREE.Mesh(sharedPlane, material);
+    mesh.scale.set(width, height, 1);
+    parent.add(mesh);
+    return mesh;
+  };
+
+  const crosshairMaterial = new THREE.MeshBasicMaterial({
+    color: 0xf6fbff,
+    transparent: true,
+    opacity: 0.92,
+    depthTest: false,
+    depthWrite: false,
+  });
+  const crosshairHorizontal = plane(crosshairMaterial, roots.crosshair, 28, 2);
+  const crosshairVertical = plane(crosshairMaterial, roots.crosshair, 2, 28);
+
+  const flashMaterial = new THREE.MeshBasicMaterial({
+    color: 0xffd27a,
+    transparent: true,
+    opacity: 0.38,
+    depthTest: false,
+    depthWrite: false,
+  });
+  materials.push(flashMaterial);
+  const flash = new THREE.Mesh(sharedCircle, flashMaterial);
+  flash.scale.setScalar(54);
+  flash.visible = false;
+  hudScene.add(flash);
+
+  const createTextPanel = (): {
+    canvas: HTMLCanvasElement;
+    context: CanvasRenderingContext2D;
+    mesh: THREE.Mesh;
+  } | null => {
+    const textCanvas = document.createElement('canvas');
+    textCanvas.width = 512;
+    textCanvas.height = 128;
+    const context = textCanvas.getContext('2d');
+    if (!context) return null;
+    const texture = new THREE.CanvasTexture(textCanvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.minFilter = THREE.LinearFilter;
+    textures.push(texture);
+    const material = new THREE.MeshBasicMaterial({
+      map: texture,
+      transparent: true,
+      depthTest: false,
+      depthWrite: false,
+    });
+    const mesh = plane(material, roots.panels, 1, 1);
+    return { canvas: textCanvas, context, mesh };
+  };
+
+  const wavePanel = createTextPanel();
+  const ammoPanel = createTextPanel();
+  let lastHudSignature = '';
+
+  const controlMaterial = new THREE.MeshBasicMaterial({
+    color: 0x8fe7ff,
+    transparent: true,
+    opacity: 0.16,
+    depthTest: false,
+    depthWrite: false,
+  });
+  materials.push(controlMaterial);
+  const joystick = new THREE.Mesh(sharedCircle, controlMaterial);
+  joystick.scale.setScalar(88);
+  roots.touch.add(joystick);
+
+  const aimMaterial = new THREE.MeshBasicMaterial({
+    color: 0x8fe7ff,
+    transparent: true,
+    opacity: 0.035,
+    depthTest: false,
+    depthWrite: false,
+  });
+  const aimZone = plane(aimMaterial, roots.touch, 1, 1);
+  const buttons = [0, 1, 2].map(() => {
+    const button = new THREE.Mesh(sharedCircle, controlMaterial);
+    button.scale.setScalar(68);
+    roots.touch.add(button);
+    return button;
+  });
+
+  const labelMeshes = ['SW', 'R', 'FIRE'].map((label) => {
+    const labelCanvas = document.createElement('canvas');
+    labelCanvas.width = 128;
+    labelCanvas.height = 64;
+    const context = labelCanvas.getContext('2d');
+    if (!context) return null;
+    context.clearRect(0, 0, 128, 64);
+    context.fillStyle = '#f6fbff';
+    context.font = '700 26px monospace';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(label, 64, 34);
+    const texture = new THREE.CanvasTexture(labelCanvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    textures.push(texture);
+    const material = new THREE.MeshBasicMaterial({
+      map: texture,
+      transparent: true,
+      depthTest: false,
+      depthWrite: false,
+    });
+    return plane(material, roots.touch, 58, 30);
+  });
+
+  const isMobile =
+    navigator.maxTouchPoints > 0 ||
+    (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
+  roots.touch.visible = isMobile;
+
+  const resize = (width: number, height: number): void => {
+    hudCamera.left = 0;
+    hudCamera.right = width;
+    hudCamera.top = height;
+    hudCamera.bottom = 0;
+    hudCamera.updateProjectionMatrix();
+
+    const centerX = width / 2;
+    const centerY = height / 2;
+    crosshairHorizontal.position.set(centerX, centerY, 2);
+    crosshairVertical.position.set(centerX, centerY, 2);
+    flash.position.set(centerX, centerY, 1);
+
+    if (wavePanel) {
+      wavePanel.mesh.scale.set(260, 65, 1);
+      wavePanel.mesh.position.set(138, height - 42, 1);
+    }
+    if (ammoPanel) {
+      ammoPanel.mesh.scale.set(360, 90, 1);
+      ammoPanel.mesh.position.set(width - 188, isMobile ? 154 : 55, 1);
+    }
+
+    joystick.position.set(76, 76, 1);
+    aimZone.scale.set(width * 0.55, Math.max(44, height * 0.72), 1);
+    aimZone.position.set(width * 0.725, height * 0.64, 0);
+    for (const [index, button] of buttons.entries()) {
+      const x = width - 250 + index * 100;
+      button.position.set(x, 50, 2);
+      labelMeshes[index]?.position.set(x, 50, 3);
+    }
+  };
+
+  resize(Math.max(1, canvas.clientWidth || canvas.width), Math.max(1, canvas.clientHeight || canvas.height));
+
+  return {
+    scene: hudScene,
+    camera: hudCamera,
+    flash,
+    update(state: FpsState, wave: number): void {
+      const ammo = state.loadout[state.activeWeapon];
+      const reserve = Number.isFinite(ammo.reserve) ? String(ammo.reserve) : '∞';
+      const signature = `${wave}|${state.activeWeapon}|${ammo.magazine}|${reserve}`;
+      if (signature === lastHudSignature) return;
+      lastHudSignature = signature;
+
+      if (wavePanel) {
+        const { context, canvas: panelCanvas } = wavePanel;
+        context.clearRect(0, 0, panelCanvas.width, panelCanvas.height);
+        context.fillStyle = 'rgba(8, 14, 20, 0.72)';
+        context.fillRect(0, 0, panelCanvas.width, panelCanvas.height);
+        context.fillStyle = '#8fe7ff';
+        context.font = '700 48px monospace';
+        context.textBaseline = 'middle';
+        context.fillText(`WAVE ${wave}`, 24, 68);
+        (wavePanel.mesh.material as THREE.MeshBasicMaterial).map!.needsUpdate = true;
+      }
+
+      if (ammoPanel) {
+        const { context, canvas: panelCanvas } = ammoPanel;
+        context.clearRect(0, 0, panelCanvas.width, panelCanvas.height);
+        context.fillStyle = 'rgba(8, 14, 20, 0.8)';
+        context.fillRect(0, 0, panelCanvas.width, panelCanvas.height);
+        context.textAlign = 'right';
+        context.textBaseline = 'middle';
+        context.fillStyle = '#f6fbff';
+        context.font = '700 32px monospace';
+        context.fillText(state.activeWeapon.toUpperCase(), 488, 38);
+        context.fillStyle = ammo.magazine === 0 ? '#ff8a70' : '#8fe7ff';
+        context.font = '700 42px monospace';
+        context.fillText(`${ammo.magazine} / ${reserve}`, 488, 80);
+        context.fillStyle = '#f6fbff';
+        context.font = '700 21px monospace';
+        context.fillText('RELOAD', 488, 111);
+        (ammoPanel.mesh.material as THREE.MeshBasicMaterial).map!.needsUpdate = true;
+      }
+    },
+    resize,
+    dispose(): void {
+      for (const texture of textures) texture.dispose();
+      for (const material of new Set(materials)) material.dispose();
+      sharedPlane.dispose();
+      sharedCircle.dispose();
+      hudScene.clear();
     },
   };
 }

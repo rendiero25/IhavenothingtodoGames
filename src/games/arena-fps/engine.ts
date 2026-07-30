@@ -16,7 +16,16 @@ import {
   reload,
   switchWeapon,
 } from './logic';
-import { createArenaScene, createEnemyObject, disposeObject, type ArenaScene } from './scene';
+import {
+  createArenaScene,
+  createEnemyObject,
+  disposeObject,
+  selectMotionProfile,
+  selectRenderQuality,
+  type ArenaScene,
+  type MotionProfile,
+  type RenderQuality,
+} from './scene';
 import { createWave } from './waves';
 
 interface EnemyRuntime {
@@ -25,6 +34,16 @@ interface EnemyRuntime {
   health: number;
   nextAttackAt: number;
   strafeSign: -1 | 1;
+}
+
+export class ContextRecoveryGate {
+  private attempted = false;
+
+  begin(): 'restore' | 'fatal' {
+    if (this.attempted) return 'fatal';
+    this.attempted = true;
+    return 'restore';
+  }
 }
 
 const PLAYER_SPEED = 5;
@@ -43,11 +62,6 @@ const ENEMY_BEHAVIOR: Record<
   zombie: { speed: 1.65, cooldownMs: 1150, range: 1.65, preferredDistance: 0 },
 };
 
-function isLowPowerDevice(): boolean {
-  const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
-  return (memory !== undefined && memory <= 4) || navigator.hardwareConcurrency <= 4;
-}
-
 function attackCooldown(spawn: EnemySpawn): number {
   const base = ENEMY_BEHAVIOR[spawn.kind].cooldownMs;
   return spawn.boss ? base * 0.8 : base;
@@ -56,6 +70,7 @@ function attackCooldown(spawn: EnemySpawn): number {
 /** Low-poly, texture-free arena combat runtime. */
 export class FpsEngine implements GameEngine {
   private opts: GameOptions | null = null;
+  private canvas: HTMLCanvasElement | null = null;
   private renderer: THREE.WebGLRenderer | null = null;
   private arena: ArenaScene | null = null;
   private input: InputController | null = null;
@@ -76,6 +91,14 @@ export class FpsEngine implements GameEngine {
   };
   private yaw = 0;
   private pitch = 0;
+  private recoil = 0;
+  private shakeUntil = 0;
+  private quality: RenderQuality = { lowPower: false, maxPixelRatio: 2 };
+  private motion: MotionProfile = selectMotionProfile(false);
+  private readonly contextRecovery = new ContextRecoveryGate();
+  private contextListenersAttached = false;
+  private awaitingContextRestore = false;
+  private resumeAfterContextRestore = false;
   private paused = true;
   private finished = false;
   private destroyed = false;
@@ -83,12 +106,20 @@ export class FpsEngine implements GameEngine {
   init(canvas: HTMLCanvasElement, opts: GameOptions): void {
     if (this.renderer || this.destroyed) return;
     this.opts = opts;
-    const lowPower = isLowPowerDevice();
+    this.canvas = canvas;
+    const devicePixelRatio = window.devicePixelRatio || 1;
+    const mobile =
+      navigator.maxTouchPoints > 0 ||
+      (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
+    this.quality = selectRenderQuality(navigator.hardwareConcurrency || 8, devicePixelRatio, mobile);
+    this.motion = selectMotionProfile(
+      typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches,
+    );
 
     try {
       this.renderer = new THREE.WebGLRenderer({
         canvas,
-        antialias: !lowPower,
+        antialias: !this.quality.lowPower,
         powerPreference: 'high-performance',
       });
     } catch {
@@ -99,7 +130,7 @@ export class FpsEngine implements GameEngine {
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.arena = createArenaScene(this.renderer, opts.seed);
-    this.arena.setQuality(lowPower);
+    this.arena.setQuality(this.quality);
     this.input = new InputController(canvas);
     this.raycaster = new THREE.Raycaster();
     this.state = createFpsState(opts.startLives);
@@ -107,6 +138,8 @@ export class FpsEngine implements GameEngine {
     this.lifecycle = new EngineLifecycle();
     this.input.attach();
     this.lifecycle.track(() => this.input?.destroy());
+    this.attachContextListeners();
+    this.lifecycle.track(() => this.detachContextListeners());
 
     const resize = (): void => {
       if (!this.arena) return;
@@ -121,7 +154,8 @@ export class FpsEngine implements GameEngine {
     this.arena.camera.rotation.order = 'YXZ';
     this.arena.camera.position.copy(this.arena.spawnPlayer);
     this.spawnWave(1);
-    this.renderer.render(this.arena.scene, this.arena.camera);
+    this.arena.updateHud(this.state, this.wave);
+    this.arena.render();
   }
 
   start(): void {
@@ -150,6 +184,7 @@ export class FpsEngine implements GameEngine {
     if (this.destroyed) return;
     this.destroyed = true;
     this.paused = true;
+    this.detachContextListeners();
     this.lifecycle?.destroy();
     this.input?.destroy();
     for (const object of this.enemyPool) disposeObject(object);
@@ -159,6 +194,7 @@ export class FpsEngine implements GameEngine {
     this.renderer?.dispose();
     this.renderer?.forceContextLoss();
     this.opts = null;
+    this.canvas = null;
     this.renderer = null;
     this.arena = null;
     this.input = null;
@@ -168,7 +204,7 @@ export class FpsEngine implements GameEngine {
   }
 
   private onFrame(time: number): void {
-    if (!this.renderer || !this.arena || this.destroyed || this.finished) return;
+    if (!this.renderer || !this.arena || !this.state || this.destroyed || this.finished) return;
     if (this.paused) {
       this.lastFrameAt = null;
       return;
@@ -176,7 +212,9 @@ export class FpsEngine implements GameEngine {
 
     if (this.lastFrameAt === null) {
       this.lastFrameAt = time;
-      this.renderer.render(this.arena.scene, this.arena.camera);
+      this.arena.updateEffects(this.elapsed);
+      this.arena.updateHud(this.state, this.wave);
+      this.arena.render();
       return;
     }
 
@@ -192,7 +230,11 @@ export class FpsEngine implements GameEngine {
     this.updateInput(simulationMs);
     this.updateEnemies(simulationMs);
     this.updateWave();
-    if (!this.finished) this.renderer.render(this.arena.scene, this.arena.camera);
+    if (!this.finished) {
+      this.arena.updateEffects(this.elapsed);
+      this.arena.updateHud(this.state, this.wave);
+      this.arena.render();
+    }
   }
 
   private updateInput(deltaMs: number): void {
@@ -200,7 +242,11 @@ export class FpsEngine implements GameEngine {
     const input = this.input.snapshot();
     this.yaw -= input.lookX * LOOK_SENSITIVITY;
     this.pitch = THREE.MathUtils.clamp(this.pitch - input.lookY * LOOK_SENSITIVITY, -1.2, 1.2);
-    this.arena.camera.rotation.set(this.pitch, this.yaw, 0, 'YXZ');
+    this.recoil *= Math.exp(-deltaMs / 65);
+    const shaking = this.elapsed < this.shakeUntil && this.motion.shake > 0;
+    const shakeYaw = shaking ? Math.sin(this.elapsed * 0.09) * 0.012 : 0;
+    const shakePitch = shaking ? Math.cos(this.elapsed * 0.12) * 0.009 : 0;
+    this.arena.camera.rotation.set(this.pitch + this.recoil + shakePitch, this.yaw + shakeYaw, 0, 'YXZ');
 
     const moveLength = Math.hypot(input.moveX, input.moveZ);
     if (moveLength > 0) {
@@ -245,6 +291,8 @@ export class FpsEngine implements GameEngine {
     if (fired === this.state) return;
     this.state = fired;
     this.lastShotAt[weapon] = this.elapsed;
+    this.recoil = 0.035 * this.motion.recoil;
+    this.arena.triggerMuzzleFlash(this.elapsed, this.motion.muzzleFlashMs);
     sfx.play('tick');
     this.arena.camera.updateMatrixWorld(true);
 
@@ -342,6 +390,7 @@ export class FpsEngine implements GameEngine {
     const damaged = damagePlayer(this.state, this.elapsed);
     if (damaged.lives === this.state.lives) return;
     this.state = damaged;
+    if (this.motion.shake > 0) this.shakeUntil = this.elapsed + 180;
     this.opts.callbacks.onLifeLost();
     if (this.state.lives <= 0) this.finish('lives');
   }
@@ -409,5 +458,78 @@ export class FpsEngine implements GameEngine {
     this.input?.setPaused(true);
     this.lifecycle?.destroy();
     this.opts.callbacks.onGameOver(buildFpsResult(this.state, this.wave, this.elapsed, endReason));
+  }
+
+  private readonly onContextLost = (event: Event): void => {
+    event.preventDefault();
+    if (this.destroyed || this.finished) return;
+    if (this.contextRecovery.begin() === 'fatal') {
+      this.failContextRecovery();
+      return;
+    }
+
+    this.awaitingContextRestore = true;
+    this.resumeAfterContextRestore = !this.paused;
+    this.pause();
+  };
+
+  private readonly onContextRestored = (): void => {
+    if (!this.awaitingContextRestore || this.destroyed || this.finished) return;
+    try {
+      this.rebuildArenaAfterContextRestore();
+      this.awaitingContextRestore = false;
+      if (this.resumeAfterContextRestore) this.resume();
+    } catch {
+      this.failContextRecovery();
+    }
+  };
+
+  private attachContextListeners(): void {
+    if (!this.canvas || this.contextListenersAttached) return;
+    this.canvas.addEventListener('webglcontextlost', this.onContextLost);
+    this.canvas.addEventListener('webglcontextrestored', this.onContextRestored);
+    this.contextListenersAttached = true;
+  }
+
+  private detachContextListeners(): void {
+    if (!this.canvas || !this.contextListenersAttached) return;
+    this.canvas.removeEventListener('webglcontextlost', this.onContextLost);
+    this.canvas.removeEventListener('webglcontextrestored', this.onContextRestored);
+    this.contextListenersAttached = false;
+  }
+
+  private rebuildArenaAfterContextRestore(): void {
+    if (!this.renderer || !this.opts || !this.state || !this.canvas) throw new Error('WEBGL_CONTEXT_LOST');
+
+    this.arena?.dispose();
+    for (const object of this.enemyPool) disposeObject(object);
+    this.enemyPool.length = 0;
+    this.enemies.clear();
+    this.renderer.resetState();
+
+    this.arena = createArenaScene(this.renderer, this.opts.seed);
+    this.arena.setQuality(this.quality);
+    this.arena.camera.rotation.order = 'YXZ';
+    this.arena.camera.position.copy(this.arena.spawnPlayer);
+    this.arena.camera.rotation.set(this.pitch, this.yaw, 0, 'YXZ');
+    this.random = mulberry32((this.opts.seed ^ 0xa5f1523d ^ Math.imul(this.wave, 0x9e3779b1)) >>> 0);
+
+    const width = Math.max(1, this.canvas.clientWidth || this.canvas.width);
+    const height = Math.max(1, this.canvas.clientHeight || this.canvas.height);
+    this.arena.resize(width, height, window.devicePixelRatio || 1);
+    this.spawnWave(this.wave);
+    this.arena.updateHud(this.state, this.wave);
+    this.arena.render();
+    this.lastFrameAt = null;
+  }
+
+  private failContextRecovery(): void {
+    if (this.finished || this.destroyed) return;
+    this.finished = true;
+    this.paused = true;
+    this.awaitingContextRestore = false;
+    this.input?.setPaused(true);
+    this.lifecycle?.destroy();
+    this.opts?.callbacks.onFatalError?.(new Error('WEBGL_CONTEXT_LOST'));
   }
 }

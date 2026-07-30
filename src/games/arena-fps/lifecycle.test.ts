@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { ContextRecoveryGate } from './engine';
 import { EngineLifecycle } from './lifecycle';
-import { createArenaScene } from './scene';
+import { createArenaScene, selectMotionProfile, selectRenderQuality } from './scene';
 
 describe('EngineLifecycle', () => {
   it('destroy membatalkan frame dan semua cleanup sekali', () => {
@@ -17,9 +18,44 @@ describe('EngineLifecycle', () => {
 
     expect(calls).toEqual(['cancel', 'listener']);
   });
+
+  it('mengizinkan tepat satu percobaan recovery context', () => {
+    const recovery = new ContextRecoveryGate();
+
+    expect(recovery.begin()).toBe('restore');
+    expect(recovery.begin()).toBe('fatal');
+  });
 });
 
 describe('createArenaScene', () => {
+  it('memilih low-power sebelum renderer dan membatasi DPR menurut perangkat', () => {
+    expect(selectRenderQuality(4, 1, false)).toEqual({ lowPower: true, maxPixelRatio: 2 });
+    expect(selectRenderQuality(8, 3, false)).toEqual({ lowPower: true, maxPixelRatio: 2 });
+    expect(selectRenderQuality(8, 2, true)).toEqual({ lowPower: false, maxPixelRatio: 1.5 });
+  });
+
+  it('reduced motion menghapus shake, memotong recoil 75%, dan memendekkan flash', () => {
+    expect(selectMotionProfile(true)).toEqual({ shake: 0, recoil: 0.25, muzzleFlashMs: 35 });
+    expect(selectMotionProfile(false)).toEqual({ shake: 1, recoil: 1, muzzleFlashMs: 90 });
+  });
+
+  it('low-power mematikan shadow, memendekkan fog, dan memakai cap DPR mobile', () => {
+    const calls: string[] = [];
+    const renderer = {
+      shadowMap: { enabled: true },
+      setPixelRatio: (ratio: number) => calls.push(`pixel:${ratio}`),
+      setSize: () => undefined,
+    };
+    const arena = createArenaScene(renderer as never, 17);
+
+    arena.setQuality({ lowPower: true, maxPixelRatio: 1.5 });
+    arena.resize(800, 450, 3);
+
+    expect(renderer.shadowMap.enabled).toBe(false);
+    expect((arena.scene.fog as { far: number }).far).toBe(52);
+    expect(calls).toEqual(['pixel:1.5']);
+  });
+
   it('membuat arena seeded beserta collider dan renderer responsif', () => {
     const calls: string[] = [];
     const renderer = {

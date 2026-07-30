@@ -27,12 +27,24 @@ const KEY_ACTIONS: Readonly<Record<string, InputAction>> = {
 };
 
 const TOUCH_WEAPONS: readonly WeaponId[] = ['pistol', 'rifle', 'shotgun'];
+const TOUCH_BUTTON_SIZE = 100;
 
 export function actionForKey(code: string): InputAction | null {
   return KEY_ACTIONS[code] ?? null;
 }
 
-type TouchMode = 'move' | 'aim' | 'fire' | 'reload' | 'weapon';
+export type TouchZone = 'move' | 'aim' | 'fire' | 'reload' | 'switch';
+
+export function touchZone(x: number, y: number, width: number, height: number): TouchZone {
+  if (x <= width * 0.45) return 'move';
+  if (y < height * 0.72) return 'aim';
+  if (x >= width - TOUCH_BUTTON_SIZE) return 'fire';
+  if (x >= width - TOUCH_BUTTON_SIZE * 2) return 'reload';
+  if (x >= width - TOUCH_BUTTON_SIZE * 3) return 'switch';
+  return 'aim';
+}
+
+type TouchMode = TouchZone;
 
 /** Converts desktop and touch controls into one per-frame FPS input snapshot. */
 export class InputController {
@@ -186,26 +198,18 @@ export class InputController {
     const bounds = this.canvas.getBoundingClientRect();
     const localX = event.clientX - bounds.left;
     const localY = event.clientY - bounds.top;
-    const isMoveSide = localX <= bounds.width * 0.45;
-    const isBottomControl = !isMoveSide && localY >= bounds.height * 0.72;
+    const mode = touchZone(localX, localY, bounds.width, bounds.height);
 
-    if (isMoveSide) {
-      this.touchModes.set(event.pointerId, 'move');
-      this.touchStarts.set(event.pointerId, { x: localX, y: localY });
-      return;
-    }
-    if (!isBottomControl) {
-      this.touchModes.set(event.pointerId, 'aim');
+    if (mode === 'move' || mode === 'aim') {
+      this.touchModes.set(event.pointerId, mode);
       this.touchStarts.set(event.pointerId, { x: localX, y: localY });
       return;
     }
 
-    const control = Math.min(2, Math.floor(((localX - bounds.width * 0.45) / (bounds.width * 0.55)) * 3));
-    const mode: TouchMode = control === 0 ? 'fire' : control === 1 ? 'reload' : 'weapon';
     this.touchModes.set(event.pointerId, mode);
     if (mode === 'fire') this.firing = true;
     if (mode === 'reload') this.reloadRequested = true;
-    if (mode === 'weapon') {
+    if (mode === 'switch') {
       this.weaponRequested = TOUCH_WEAPONS[this.touchWeaponIndex];
       this.touchWeaponIndex = (this.touchWeaponIndex + 1) % TOUCH_WEAPONS.length;
     }
