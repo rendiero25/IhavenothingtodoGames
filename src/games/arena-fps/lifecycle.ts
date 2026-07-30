@@ -9,8 +9,8 @@ export class EngineLifecycle {
   private readonly cleanups = new Set<() => void>();
 
   constructor(
-    private readonly requestFrame: FrameRequester = requestAnimationFrame,
-    private readonly cancelFrame: FrameCanceller = cancelAnimationFrame,
+    private readonly requestFrame: FrameRequester = (callback) => globalThis.requestAnimationFrame(callback),
+    private readonly cancelFrame: FrameCanceller = (frameId) => globalThis.cancelAnimationFrame(frameId),
   ) {}
 
   track(cleanup: () => void): () => void {

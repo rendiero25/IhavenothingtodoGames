@@ -4,6 +4,48 @@ import { EngineLifecycle, WebGlContextRecovery } from './lifecycle';
 import { createArenaScene, selectMotionProfile, selectRenderQuality } from './scene';
 
 describe('EngineLifecycle', () => {
+  it('default scheduler memanggil browser frame API dengan receiver global', () => {
+    const originalRequestFrame = Object.getOwnPropertyDescriptor(globalThis, 'requestAnimationFrame');
+    const originalCancelFrame = Object.getOwnPropertyDescriptor(globalThis, 'cancelAnimationFrame');
+    let requests = 0;
+
+    Object.defineProperty(globalThis, 'requestAnimationFrame', {
+      configurable: true,
+      writable: true,
+      value: function (this: typeof globalThis, _callback: FrameRequestCallback): number {
+        if (this !== globalThis) throw new TypeError('Illegal invocation');
+        requests += 1;
+        return 1;
+      },
+    });
+    Object.defineProperty(globalThis, 'cancelAnimationFrame', {
+      configurable: true,
+      writable: true,
+      value: function (this: typeof globalThis, _frameId: number): void {
+        if (this !== globalThis) throw new TypeError('Illegal invocation');
+      },
+    });
+
+    try {
+      const life = new EngineLifecycle();
+
+      life.start(() => undefined);
+
+      expect(requests).toBe(1);
+    } finally {
+      if (originalRequestFrame) {
+        Object.defineProperty(globalThis, 'requestAnimationFrame', originalRequestFrame);
+      } else {
+        Reflect.deleteProperty(globalThis, 'requestAnimationFrame');
+      }
+      if (originalCancelFrame) {
+        Object.defineProperty(globalThis, 'cancelAnimationFrame', originalCancelFrame);
+      } else {
+        Reflect.deleteProperty(globalThis, 'cancelAnimationFrame');
+      }
+    }
+  });
+
   it('destroy membatalkan frame dan semua cleanup sekali', () => {
     const calls: string[] = [];
     const life = new EngineLifecycle(
