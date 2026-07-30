@@ -26,6 +26,8 @@ const KEY_ACTIONS: Readonly<Record<string, InputAction>> = {
   Digit3: { kind: 'weapon', weapon: 'shotgun' },
 };
 
+const TOUCH_WEAPONS: readonly WeaponId[] = ['pistol', 'rifle', 'shotgun'];
+
 export function actionForKey(code: string): InputAction | null {
   return KEY_ACTIONS[code] ?? null;
 }
@@ -43,6 +45,7 @@ export class InputController {
   private firing = false;
   private reloadRequested = false;
   private weaponRequested: WeaponId | null = null;
+  private touchWeaponIndex = 0;
   private readonly pressedKeys = new Set<string>();
   private readonly touchModes = new Map<number, TouchMode>();
   private readonly touchStarts = new Map<number, { x: number; y: number }>();
@@ -202,7 +205,10 @@ export class InputController {
     this.touchModes.set(event.pointerId, mode);
     if (mode === 'fire') this.firing = true;
     if (mode === 'reload') this.reloadRequested = true;
-    if (mode === 'weapon') this.weaponRequested = 'rifle';
+    if (mode === 'weapon') {
+      this.weaponRequested = TOUCH_WEAPONS[this.touchWeaponIndex];
+      this.touchWeaponIndex = (this.touchWeaponIndex + 1) % TOUCH_WEAPONS.length;
+    }
   }
 
   private moveTouch(event: PointerEvent): void {

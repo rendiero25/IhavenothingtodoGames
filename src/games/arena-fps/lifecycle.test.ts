@@ -38,4 +38,23 @@ describe('createArenaScene', () => {
     expect(arena.projectileRoot.parent).toBe(arena.scene);
     expect(calls).toEqual(['pixel:1.5', 'size:900x600']);
   });
+
+  it('membuang shadow directional light sekali saat arena dihentikan', () => {
+    const renderer = {
+      shadowMap: { enabled: false },
+      setPixelRatio: () => undefined,
+      setSize: () => undefined,
+    };
+    const arena = createArenaScene(renderer as never, 17);
+    const directional = arena.scene.children.find((child) => child.type === 'DirectionalLight') as unknown as {
+      shadow: { dispose(): void };
+    };
+    let disposals = 0;
+    directional.shadow.dispose = () => { disposals += 1; };
+
+    arena.dispose();
+    arena.dispose();
+
+    expect(disposals).toBe(1);
+  });
 });

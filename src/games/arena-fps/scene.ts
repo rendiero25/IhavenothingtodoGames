@@ -177,6 +177,7 @@ export function createArenaScene(renderer: THREE.WebGLRenderer, seed: number): A
     dispose(): void {
       if (disposed) return;
       disposed = true;
+      directional.shadow.dispose();
       disposeObject(scene);
     },
   };
