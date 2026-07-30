@@ -3,6 +3,13 @@ import { WEAPONS, type FpsState, type WeaponId } from './config';
 
 export type { AmmoState, EnemyKind, EnemySpawn, FpsState, WeaponId, WeaponSpec } from './config';
 
+const MAX_SIMULATION_DELTA_MS = 50;
+
+export function frameDeltas(previousMs: number, currentMs: number): { elapsedMs: number; simulationMs: number } {
+  const elapsedMs = Math.max(0, currentMs - previousMs);
+  return { elapsedMs, simulationMs: Math.min(MAX_SIMULATION_DELTA_MS, elapsedMs) };
+}
+
 export function createFpsState(lives = 5): FpsState {
   return {
     lives,
@@ -18,6 +25,7 @@ export function createFpsState(lives = 5): FpsState {
     bestCombo: 0,
     kills: 0,
     shots: 0,
+    projectilesFired: 0,
     shotsByWeapon: { pistol: 0, rifle: 0, shotgun: 0 },
     hits: 0,
     headshots: 0,
@@ -33,6 +41,7 @@ export function fire(state: FpsState, _nowMs: number): FpsState {
     ...state,
     loadout: { ...state.loadout, [weapon]: { ...ammo, magazine: ammo.magazine - 1 } },
     shots: state.shots + 1,
+    projectilesFired: state.projectilesFired + WEAPONS[weapon].pellets,
     shotsByWeapon: { ...state.shotsByWeapon, [weapon]: state.shotsByWeapon[weapon] + 1 },
   };
 }
@@ -113,7 +122,10 @@ export function buildFpsResult(
     endReason,
     stats: {
       kills: state.kills,
-      accuracy: state.shots === 0 ? 0 : Math.round((state.hits / state.shots) * 100),
+      accuracy:
+        state.projectilesFired === 0
+          ? 0
+          : Math.min(100, Math.round((state.hits / state.projectilesFired) * 100)),
       headshots: state.headshots,
       wave,
       favoriteWeapon: favoriteWeaponIndex(state.shotsByWeapon),

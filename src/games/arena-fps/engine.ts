@@ -10,6 +10,7 @@ import {
   createFpsState,
   damagePlayer,
   fire,
+  frameDeltas,
   refillWaveReserves,
   registerHit,
   reload,
@@ -28,7 +29,6 @@ interface EnemyRuntime {
 
 const PLAYER_SPEED = 5;
 const LOOK_SENSITIVITY = 0.0025;
-const MAX_DELTA_MS = 50;
 const WAVE_DELAY_MS = 1500;
 const PLAYER_COLLIDER_SIZE = new THREE.Vector3(0.72, 1.8, 0.72);
 
@@ -180,17 +180,17 @@ export class FpsEngine implements GameEngine {
       return;
     }
 
-    const deltaMs = Math.min(MAX_DELTA_MS, Math.max(0, time - this.lastFrameAt));
+    const { elapsedMs, simulationMs } = frameDeltas(this.lastFrameAt, time);
     this.lastFrameAt = time;
-    this.elapsed += deltaMs;
+    this.elapsed += elapsedMs;
     if (this.opts?.roundMs !== undefined && this.elapsed >= this.opts.roundMs) {
       this.elapsed = this.opts.roundMs;
       this.finish('timeup');
       return;
     }
 
-    this.updateInput(deltaMs);
-    this.updateEnemies(deltaMs);
+    this.updateInput(simulationMs);
+    this.updateEnemies(simulationMs);
     this.updateWave();
     if (!this.finished) this.renderer.render(this.arena.scene, this.arena.camera);
   }

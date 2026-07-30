@@ -5,6 +5,7 @@ import {
   damagePlayer,
   favoriteWeaponIndex,
   fire,
+  frameDeltas,
   refillWaveReserves,
   registerHit,
   reload,
@@ -27,6 +28,11 @@ describe('arena FPS gameplay', () => {
     expect(hit.lives).toBe(4);
     expect(damagePlayer(hit, 2500).lives).toBe(4);
     expect(damagePlayer(hit, 3000).lives).toBe(3);
+  });
+
+  it('memisahkan elapsed aktif dari delta simulasi maksimum 50ms', () => {
+    expect(frameDeltas(1000, 1500)).toEqual({ elapsedMs: 500, simulationMs: 50 });
+    expect(frameDeltas(1500, 1400)).toEqual({ elapsedMs: 0, simulationMs: 0 });
   });
 
   it('kill headshot memperbarui skor, combo, dan statistik', () => {
@@ -68,6 +74,7 @@ describe('arena FPS gameplay', () => {
     const state = registerHit(createFpsState(3), true, true, 100);
     state.shots = 4;
     state.hits = 3;
+    state.projectilesFired = 4;
     state.shotsByWeapon.rifle = 5;
 
     expect(buildFpsResult(state, 5, 1234.6, 'timeup')).toEqual({
@@ -85,5 +92,18 @@ describe('arena FPS gameplay', () => {
         favoriteWeapon: 1,
       },
     });
+  });
+
+  it('menghitung akurasi shotgun dari pellet yang ditembakkan tanpa melewati 100%', () => {
+    let state = switchWeapon(createFpsState(5), 'shotgun');
+    state = fire(state, 0);
+    for (let pellet = 0; pellet < 7; pellet += 1) state = registerHit(state, false, false, 0);
+
+    expect((state as typeof state & { projectilesFired?: number }).projectilesFired).toBe(7);
+    expect(state.shots).toBe(1);
+    expect(buildFpsResult(state, 1, 100, 'timeup').stats.accuracy).toBe(100);
+
+    const pistol = fire(createFpsState(5), 0);
+    expect((pistol as typeof pistol & { projectilesFired?: number }).projectilesFired).toBe(1);
   });
 });

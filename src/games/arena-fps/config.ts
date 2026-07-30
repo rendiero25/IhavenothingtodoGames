@@ -42,6 +42,7 @@ export interface FpsState {
   bestCombo: number;
   kills: number;
   shots: number;
+  projectilesFired: number;
   shotsByWeapon: Record<WeaponId, number>;
   hits: number;
   headshots: number;
