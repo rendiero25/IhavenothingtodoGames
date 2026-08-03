@@ -15,10 +15,14 @@ describe('actionForKey', () => {
     (width) => {
       const layout = touchLayout(width, 450);
 
+      expect(layout.move.width).toBe(width * 0.45);
+      expect(layout.aim.width).toBeCloseTo(width * 0.55);
+      expect(layout.joystick.x + layout.joystick.width).toBeLessThanOrEqual(layout.move.width);
       for (const zone of ['switch', 'reload', 'fire'] as const) {
         const rect = layout[zone];
         expect(rect.width).toBeGreaterThanOrEqual(44);
         expect(rect.height).toBeGreaterThanOrEqual(44);
+        expect(rect.x).toBeGreaterThanOrEqual(layout.move.width);
         expect(touchZone(rect.x + rect.width / 2, rect.y + rect.height / 2, width, 450)).toBe(zone);
       }
 
@@ -72,16 +76,16 @@ describe('actionForKey', () => {
     };
 
     switchTouch(1);
-    expect(controller.snapshot().weaponRequested).toBe('pistol');
-    controller.consumeFrame();
-    switchTouch(2);
     expect(controller.snapshot().weaponRequested).toBe('rifle');
     controller.consumeFrame();
-    switchTouch(3);
+    switchTouch(2);
     expect(controller.snapshot().weaponRequested).toBe('shotgun');
     controller.consumeFrame();
-    switchTouch(4);
+    switchTouch(3);
     expect(controller.snapshot().weaponRequested).toBe('pistol');
+    controller.consumeFrame();
+    switchTouch(4);
+    expect(controller.snapshot().weaponRequested).toBe('rifle');
   });
 
   it('menangani penolakan pointer lock tanpa menghentikan fire desktop', () => {

@@ -79,7 +79,7 @@ export class FpsEngine implements GameEngine {
   private raycaster: THREE.Raycaster | null = null;
   private state: FpsState | null = null;
   private readonly enemies = new Map<string, EnemyRuntime>();
-  private readonly enemyPool: THREE.Group[] = [];
+  private readonly enemyPool = new Map<EnemyKind, THREE.Group[]>();
   private random: () => number = Math.random;
   private wave = 1;
   private elapsed = 0;
@@ -195,8 +195,8 @@ export class FpsEngine implements GameEngine {
     this.contextRecovery?.destroy();
     this.lifecycle?.destroy();
     this.input?.destroy();
-    for (const object of this.enemyPool) disposeObject(object);
-    this.enemyPool.length = 0;
+    for (const objects of this.enemyPool.values()) for (const object of objects) disposeObject(object);
+    this.enemyPool.clear();
     this.enemies.clear();
     this.arena?.dispose();
     this.renderer?.dispose();
@@ -401,6 +401,7 @@ export class FpsEngine implements GameEngine {
     this.state = damaged;
     if (this.motion.shake > 0) this.shakeUntil = this.elapsed + 180;
     this.opts.callbacks.onLifeLost();
+    this.opts.callbacks.onScore(this.state.score, this.state.combo);
     if (this.state.lives <= 0) this.finish('lives');
   }
 
@@ -430,7 +431,7 @@ export class FpsEngine implements GameEngine {
 
   private takeEnemyObject(spawn: EnemySpawn): THREE.Group {
     const object =
-      this.enemyPool.pop() ??
+      this.enemyPool.get(spawn.kind)?.pop() ??
       createEnemyObject({
         ...spawn,
         boss: false,
@@ -441,14 +442,13 @@ export class FpsEngine implements GameEngine {
     object.rotation.set(0, spawn.yaw, 0);
     object.scale.setScalar(spawn.boss ? 1.6 : 1);
     object.userData = { spawnId: spawn.id, kind: spawn.kind, boss: spawn.boss };
-    let meshIndex = 0;
     object.traverse((child) => {
       if (!(child instanceof THREE.Mesh)) return;
       child.userData = {
+        ...child.userData,
         enemyId: spawn.id,
-        hitPart: meshIndex === 0 ? 'body' : 'head',
+        hitPart: child.userData.hitPart === 'head' ? 'head' : 'body',
       };
-      meshIndex += 1;
     });
     return object;
   }
@@ -457,7 +457,9 @@ export class FpsEngine implements GameEngine {
     this.enemies.delete(enemy.spawn.id);
     enemy.object.removeFromParent();
     enemy.object.visible = false;
-    this.enemyPool.push(enemy.object);
+    const pool = this.enemyPool.get(enemy.spawn.kind) ?? [];
+    pool.push(enemy.object);
+    this.enemyPool.set(enemy.spawn.kind, pool);
   }
 
   private finish(endReason: EndReason): void {
@@ -474,8 +476,8 @@ export class FpsEngine implements GameEngine {
     const recoveryPlan = planContextRestore(this.wave, this.enemies.size, this.nextWaveAt);
 
     this.arena?.dispose();
-    for (const object of this.enemyPool) disposeObject(object);
-    this.enemyPool.length = 0;
+    for (const objects of this.enemyPool.values()) for (const object of objects) disposeObject(object);
+    this.enemyPool.clear();
     this.enemies.clear();
     this.renderer.resetState();
 

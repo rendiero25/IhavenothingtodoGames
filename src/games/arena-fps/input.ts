@@ -54,13 +54,14 @@ export function touchLayout(width: number, height: number): TouchLayout {
   const actionSize = Math.min(100, Math.max(44, width / 8));
   const actionY = Math.max(0, height - actionSize);
   const actionStart = Math.max(0, width - actionSize * 3);
-  const joystickSize = Math.max(44, Math.min(88, actionStart * 0.47));
-  const joystickX = Math.max(0, Math.min(32, (actionStart - joystickSize) / 2));
+  const moveWidth = width * 0.45;
+  const joystickSize = Math.max(44, Math.min(88, moveWidth * 0.47));
+  const joystickX = Math.max(0, Math.min(32, (moveWidth - joystickSize) / 2));
   const joystickY = Math.max(0, height - joystickSize - 32);
 
   return {
-    move: { x: 0, y: 0, width: actionStart, height },
-    aim: { x: actionStart, y: 0, width: actionSize * 3, height: actionY },
+    move: { x: 0, y: 0, width: moveWidth, height },
+    aim: { x: moveWidth, y: 0, width: width - moveWidth, height: actionY },
     switch: { x: actionStart, y: actionY, width: actionSize, height: actionSize },
     reload: { x: actionStart + actionSize, y: actionY, width: actionSize, height: actionSize },
     fire: { x: actionStart + actionSize * 2, y: actionY, width: actionSize, height: actionSize },
@@ -94,7 +95,7 @@ export class InputController {
   private firing = false;
   private reloadRequested = false;
   private weaponRequested: WeaponId | null = null;
-  private touchWeaponIndex = 0;
+  private touchWeaponIndex = 1;
   private readonly pressedKeys = new Set<string>();
   private readonly touchModes = new Map<number, TouchMode>();
   private readonly touchStarts = new Map<number, { x: number; y: number }>();

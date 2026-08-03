@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { EnemySpawn, FpsState } from './config';
+import type { EnemyKind, EnemySpawn, FpsState } from './config';
 import { touchLayout, type TouchRect } from './input';
 
 export interface ArenaScene {
@@ -21,6 +21,12 @@ export interface ArenaScene {
 const ARENA_HALF_WIDTH = 25;
 const ARENA_HALF_DEPTH = 34;
 const WALL_HEIGHT = 8;
+const PLAYER_SPAWN_SAFETY_BOX = {
+  minX: -2,
+  maxX: 2,
+  minZ: 10.5,
+  maxZ: 17.5,
+};
 
 export interface RenderQuality {
   lowPower: boolean;
@@ -61,6 +67,43 @@ function seededRandom(seed: number): () => number {
   };
 }
 
+export interface ContainerPlacement {
+  materialIndex: number;
+  x: number;
+  z: number;
+  length: number;
+  rotationY: number;
+}
+
+function intersectsPlayerSpawnSafetyBox(placement: ContainerPlacement): boolean {
+  const horizontalLength = placement.rotationY === 0 ? placement.length : 2.35;
+  const verticalLength = placement.rotationY === 0 ? 2.35 : placement.length;
+  return (
+    placement.x - horizontalLength / 2 < PLAYER_SPAWN_SAFETY_BOX.maxX &&
+    placement.x + horizontalLength / 2 > PLAYER_SPAWN_SAFETY_BOX.minX &&
+    placement.z - verticalLength / 2 < PLAYER_SPAWN_SAFETY_BOX.maxZ &&
+    placement.z + verticalLength / 2 > PLAYER_SPAWN_SAFETY_BOX.minZ
+  );
+}
+
+/** Creates deterministic container candidates while reserving space for the player to leave spawn. */
+export function seedContainerPlacements(seed: number): ContainerPlacement[] {
+  const rand = seededRandom(seed);
+  const containerCount = 8 + Math.floor(rand() * 7);
+  const placements: ContainerPlacement[] = [];
+  while (placements.length < containerCount) {
+    const placement: ContainerPlacement = {
+      materialIndex: Math.floor(rand() * 3),
+      x: (rand() - 0.5) * 40,
+      z: (rand() - 0.5) * 52,
+      length: 3.2 + rand() * 2.8,
+      rotationY: rand() > 0.5 ? 0 : Math.PI / 2,
+    };
+    if (!intersectsPlayerSpawnSafetyBox(placement)) placements.push(placement);
+  }
+  return placements;
+}
+
 function colliderFor(mesh: THREE.Mesh): THREE.Box3 {
   mesh.updateWorldMatrix(true, false);
   return new THREE.Box3().setFromObject(mesh);
@@ -87,6 +130,65 @@ export function disposeObject(root: THREE.Object3D): void {
   root.clear();
 }
 
+interface EnemyVisual {
+  bodyGeometry: THREE.BufferGeometry;
+  headGeometry: THREE.BufferGeometry;
+  bodyColor: number;
+  headColor: number;
+  bodyY: number;
+  headY: number;
+}
+
+function createEnemyVisual(kind: EnemyKind, scale: number): EnemyVisual {
+  switch (kind) {
+    case 'drone':
+      return {
+        bodyGeometry: new THREE.DodecahedronGeometry(0.78 * scale, 0),
+        headGeometry: new THREE.SphereGeometry(0.28 * scale, 8, 6),
+        bodyColor: 0x8bd8f7,
+        headColor: 0xff4e68,
+        bodyY: 1.2 * scale,
+        headY: 1.2 * scale,
+      };
+    case 'runner':
+      return {
+        bodyGeometry: new THREE.ConeGeometry(0.62 * scale, 1.55 * scale, 5),
+        headGeometry: new THREE.SphereGeometry(0.34 * scale, 8, 6),
+        bodyColor: 0xff6f61,
+        headColor: 0x3b2024,
+        bodyY: 0.78 * scale,
+        headY: 1.72 * scale,
+      };
+    case 'turret':
+      return {
+        bodyGeometry: new THREE.CylinderGeometry(0.76 * scale, 0.76 * scale, 0.9 * scale, 8),
+        headGeometry: new THREE.BoxGeometry(1.08 * scale, 0.42 * scale, 0.58 * scale),
+        bodyColor: 0xd69b4d,
+        headColor: 0x30251b,
+        bodyY: 0.45 * scale,
+        headY: 1.04 * scale,
+      };
+    case 'soldier':
+      return {
+        bodyGeometry: new THREE.BoxGeometry(1.1 * scale, 1.4 * scale, 0.75 * scale),
+        headGeometry: new THREE.BoxGeometry(0.72 * scale, 0.62 * scale, 0.66 * scale),
+        bodyColor: 0x5f9fe8,
+        headColor: 0xf4d6a4,
+        bodyY: 0.7 * scale,
+        headY: 1.68 * scale,
+      };
+    case 'zombie':
+      return {
+        bodyGeometry: new THREE.TetrahedronGeometry(0.88 * scale, 0),
+        headGeometry: new THREE.SphereGeometry(0.42 * scale, 7, 5),
+        bodyColor: 0x78aa64,
+        headColor: 0xa8cc83,
+        bodyY: 0.78 * scale,
+        headY: 1.62 * scale,
+      };
+  }
+}
+
 /** Builds a low-poly enemy visual from one deterministic gameplay spawn. */
 export function createEnemyObject(spawn: EnemySpawn): THREE.Group {
   const root = new THREE.Group();
@@ -96,20 +198,21 @@ export function createEnemyObject(spawn: EnemySpawn): THREE.Group {
   root.userData = { spawnId: spawn.id, kind: spawn.kind, boss: spawn.boss };
 
   const scale = spawn.boss ? 1.45 : 1;
-  const bodyGeometry = new THREE.BoxGeometry(1.1 * scale, 1.4 * scale, 0.75 * scale);
-  const headGeometry = new THREE.BoxGeometry(0.72 * scale, 0.62 * scale, 0.66 * scale);
+  const visual = createEnemyVisual(spawn.kind, scale);
   const bodyMaterial = new THREE.MeshStandardMaterial({
-    color: spawn.boss ? 0xe06666 : 0xf28c5b,
+    color: spawn.boss ? 0xe06666 : visual.bodyColor,
     flatShading: true,
     roughness: 0.8,
   });
-  const headMaterial = new THREE.MeshStandardMaterial({ color: 0xf4d6a4, flatShading: true, roughness: 0.9 });
-  const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-  body.position.y = 0.7 * scale;
+  const headMaterial = new THREE.MeshStandardMaterial({ color: visual.headColor, flatShading: true, roughness: 0.9 });
+  const body = new THREE.Mesh(visual.bodyGeometry, bodyMaterial);
+  body.position.y = visual.bodyY;
   body.castShadow = true;
-  const head = new THREE.Mesh(headGeometry, headMaterial);
-  head.position.y = 1.68 * scale;
+  body.userData = { hitPart: 'body' };
+  const head = new THREE.Mesh(visual.headGeometry, headMaterial);
+  head.position.y = visual.headY;
   head.castShadow = true;
+  head.userData = { hitPart: 'head' };
   root.add(body, head);
   return root;
 }
@@ -164,23 +267,18 @@ export function createArenaScene(renderer: THREE.WebGLRenderer, seed: number): A
     arenaColliders.push(colliderFor(wall));
   }
 
-  const rand = seededRandom(seed);
   const containerGeometry = new THREE.BoxGeometry(1, 1, 1);
   const containerMaterials = [
     new THREE.MeshStandardMaterial({ color: 0x3d7288, roughness: 0.72, metalness: 0.45 }),
     new THREE.MeshStandardMaterial({ color: 0xba6845, roughness: 0.72, metalness: 0.35 }),
     new THREE.MeshStandardMaterial({ color: 0x747b4d, roughness: 0.72, metalness: 0.4 }),
   ];
-  const containerCount = 8 + Math.floor(rand() * 7);
-  for (let index = 0; index < containerCount; index += 1) {
-    const container = new THREE.Mesh(containerGeometry, containerMaterials[Math.floor(rand() * containerMaterials.length)]);
+  for (const [index, placement] of seedContainerPlacements(seed).entries()) {
+    const container = new THREE.Mesh(containerGeometry, containerMaterials[placement.materialIndex]);
     container.name = `arena-container-${index}`;
-    const x = (rand() - 0.5) * 40;
-    const z = (rand() - 0.5) * 52;
-    const length = 3.2 + rand() * 2.8;
-    container.position.set(x, 1.45, z);
-    container.scale.set(length, 2.9, 2.35);
-    container.rotation.y = rand() > 0.5 ? 0 : Math.PI / 2;
+    container.position.set(placement.x, 1.45, placement.z);
+    container.scale.set(placement.length, 2.9, 2.35);
+    container.rotation.y = placement.rotationY;
     container.castShadow = true;
     container.receiveShadow = true;
     scene.add(container);
