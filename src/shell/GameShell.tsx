@@ -4,13 +4,13 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useI18n } from '../i18n';
 import { sfx } from '../core/sound';
 import { comboMultiplier } from '../core/score';
-import { loadEngine } from '../games/registry';
+import { getMeta, loadEngine } from '../games/registry';
 import type { GameEngine, GameId, GameOptions, GameResult } from '../games/types';
 import { LivesBar } from '../components/LivesBar';
 import { ChunkyButton } from '../components/ChunkyButton';
 import { Mascot } from '../components/Mascot';
 
-type Phase = 'loading' | 'countdown' | 'playing' | 'paused' | 'over';
+type Phase = 'loading' | 'countdown' | 'playing' | 'paused' | 'over' | 'error';
 
 export interface GameShellProps {
   gameId: GameId;
@@ -20,6 +20,36 @@ export interface GameShellProps {
   wide?: boolean;
   onFinish: (result: GameResult) => void;
   onQuit: () => void;
+}
+
+interface SessionLifecycle {
+  isAlive(): boolean;
+  schedule(callback: () => void, delayMs: number): void;
+  stop(): boolean;
+}
+
+export function createSessionLifecycle(): SessionLifecycle {
+  let alive = true;
+  const timers = new Set<ReturnType<typeof setTimeout>>();
+
+  return {
+    isAlive: () => alive,
+    schedule: (callback, delayMs) => {
+      if (!alive) return;
+      const timer = setTimeout(() => {
+        timers.delete(timer);
+        if (alive) callback();
+      }, delayMs);
+      timers.add(timer);
+    },
+    stop: () => {
+      const wasAlive = alive;
+      alive = false;
+      timers.forEach(clearTimeout);
+      timers.clear();
+      return wasAlive;
+    },
+  };
 }
 
 export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onFinish, onQuit }: GameShellProps) {
@@ -37,6 +67,9 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
   const [combo, setCombo] = useState(0);
   const [count, setCount] = useState(3);
   const [shocked, setShocked] = useState(false);
+  const landscape = getMeta(gameId)?.viewport === 'landscape';
+  const shellWidth = landscape ? 'max-w-5xl' : wide ? 'max-w-xl' : 'max-w-md';
+  const canvasAspect = landscape ? '16 / 9' : '2 / 3';
 
   const setPhase = useCallback((p: Phase) => {
     phaseRef.current = p;
@@ -73,10 +106,23 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
   }, [locale]);
 
   useEffect(() => {
-    let alive = true;
     let engine: GameEngine | null = null;
     let options: GameOptions | null = null;
-    const timers: ReturnType<typeof setTimeout>[] = [];
+    const lifecycle = createSessionLifecycle();
+    const fail = () => {
+      const wasAlive = lifecycle.stop();
+      cancelShockTimer();
+      const failedEngine = engine;
+      engine = null;
+      engineRef.current = null;
+      if (optionsRef.current === options) optionsRef.current = null;
+      try {
+        failedEngine?.destroy();
+      } catch {
+        // A broken engine must not prevent the recoverable fallback.
+      }
+      if (wasAlive) setPhase('error');
+    };
 
     cancelShockTimer();
     setShocked(false);
@@ -87,8 +133,11 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
     setPhase('loading');
 
     void loadEngine(gameId).then(async (e) => {
-      if (!alive || !canvasRef.current) return;
       engine = e;
+      if (!lifecycle.isAlive() || !canvasRef.current) {
+        fail();
+        return;
+      }
       engineRef.current = e;
       options = {
         seed,
@@ -97,47 +146,56 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
         roundMs,
         callbacks: {
           onScore: (s, c) => {
+            if (!lifecycle.isAlive()) return;
             setScore(s);
             setCombo(c);
           },
           onLifeLost: () => {
+            if (!lifecycle.isAlive()) return;
             sfx.play('life');
             setLives((l) => Math.max(0, l - 1));
             triggerShock();
           },
           onGameOver: (result) => {
+            if (!lifecycle.isAlive()) return;
             sfx.play('over');
             setPhase('over');
-            timers.push(setTimeout(() => onFinishRef.current(result), 700));
+            lifecycle.schedule(() => onFinishRef.current(result), 700);
+          },
+          onFatalError: () => {
+            fail();
           },
         },
       };
       optionsRef.current = options;
       e.init(canvasRef.current, options);
       await document.fonts.ready;
-      if (!alive) return;
+      if (!lifecycle.isAlive() || !engine) return;
       setPhase('countdown');
       for (let i = 3; i >= 1; i--) {
-        timers.push(
-          setTimeout(() => {
+        lifecycle.schedule(
+          () => {
             setCount(i);
             sfx.play('tick');
-          }, (3 - i) * 700),
+          },
+          (3 - i) * 700,
         );
       }
-      timers.push(
-        setTimeout(() => {
-          if (!alive || !engine) return;
+      lifecycle.schedule(
+        () => {
+          if (!engine) return;
           setPhase('playing');
           sfx.play('coin');
           engine.start();
-        }, 2100),
+        },
+        2100,
       );
+    }).catch(() => {
+      fail();
     });
 
     return () => {
-      alive = false;
-      timers.forEach(clearTimeout);
+      lifecycle.stop();
       cancelShockTimer();
       engine?.destroy();
       engineRef.current = null;
@@ -174,7 +232,7 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
   };
 
   return (
-    <div className={`mx-auto w-full px-4 select-none ${wide ? 'max-w-xl' : 'max-w-md'}`}>
+    <div className={`mx-auto w-full px-4 select-none ${shellWidth}`}>
       <div className="flex items-center justify-between py-3">
         <button onClick={onQuit} aria-label={t('shell.quit')} className="rounded-full border-[3px] border-ink bg-paper p-1.5 cursor-pointer">
           <X size={18} />
@@ -198,7 +256,7 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
           <span>{score}</span>
           <span className={combo >= 5 ? 'text-neon-green' : 'text-navy-soft'}>x{comboMultiplier(combo)}</span>
         </div>
-        <canvas ref={canvasRef} className="w-full rounded-2xl touch-none" style={{ aspectRatio: '2 / 3' }} />
+        <canvas ref={canvasRef} className="w-full rounded-2xl touch-none" style={{ aspectRatio: canvasAspect }} />
 
         <AnimatePresence>
           {phase === 'countdown' && (
@@ -218,6 +276,16 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
                 <p className="font-display text-cream text-xl mb-4">{t('shell.paused')}</p>
                 <ChunkyButton color="teal" onClick={togglePause}>
                   {t('shell.resume')}
+                </ChunkyButton>
+              </div>
+            </div>
+          )}
+          {phase === 'error' && (
+            <div className="absolute inset-0 grid place-items-center rounded-3xl bg-navy/85 p-6">
+              <div className="text-center">
+                <p className="mb-4 font-display text-xl text-cream">{t('shell.loadError')}</p>
+                <ChunkyButton color="teal" onClick={onQuit}>
+                  {t('shell.back')}
                 </ChunkyButton>
               </div>
             </div>

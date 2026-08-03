@@ -1,4 +1,4 @@
-import { Brain, Calculator, ChevronRight, Hash, Move, Music, Target, Type, Zap } from 'lucide-react';
+import { Brain, Calculator, ChevronRight, Crosshair, Hash, Move, Music, Target, Type, Zap } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useI18n } from '../i18n';
@@ -13,6 +13,7 @@ const ICONS: Record<IconKey, LucideIcon> = {
   calculator: Calculator,
   move: Move,
   music: Music,
+  crosshair: Crosshair,
 };
 
 const ACCENTS: Record<GameMeta['accent'], string> = {
