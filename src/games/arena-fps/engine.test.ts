@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import * as THREE from 'three';
 import type { EnemySpawn, FpsState } from './config';
 import { FpsEngine } from './engine';
 import { createFpsState, registerHit } from './logic';
@@ -50,5 +51,50 @@ describe('FpsEngine enemy pooling', () => {
       'ConeGeometry',
       'SphereGeometry',
     ]);
+  });
+});
+
+describe('FpsEngine cursor aiming', () => {
+  it('hits an enemy under the mouse cursor instead of the screen center', () => {
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 100);
+    const target = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), new THREE.MeshBasicMaterial());
+    target.position.set(2, 0, -5);
+    target.userData = { enemyId: 'target', hitPart: 'body' };
+    scene.add(target);
+    scene.updateMatrixWorld(true);
+
+    const engine = new FpsEngine() as unknown as {
+      state: FpsState;
+      elapsed: number;
+      arena: {
+        scene: THREE.Scene;
+        camera: THREE.PerspectiveCamera;
+        triggerMuzzleFlash(nowMs: number, durationMs: number): void;
+      };
+      raycaster: THREE.Raycaster;
+      enemies: Map<string, { spawn: EnemySpawn; object: THREE.Group; health: number }>;
+      opts: { callbacks: { onScore(score: number, combo: number): void } };
+      tryFire(aimX: number, aimY: number): void;
+    };
+    engine.state = createFpsState(3);
+    engine.elapsed = 1_000;
+    engine.arena = { scene, camera, triggerMuzzleFlash: () => undefined };
+    engine.raycaster = new THREE.Raycaster();
+    engine.enemies = new Map([
+      [
+        'target',
+        {
+          spawn: { id: 'target', kind: 'soldier', x: 2, z: -5, yaw: 0, health: 1_000, boss: false },
+          object: new THREE.Group(),
+          health: 1_000,
+        },
+      ],
+    ]);
+    engine.opts = { callbacks: { onScore: () => undefined } };
+
+    engine.tryFire(0.52, 0);
+
+    expect(engine.state.hits).toBe(1);
   });
 });

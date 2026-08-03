@@ -5,6 +5,8 @@ export interface InputSnapshot {
   moveZ: number;
   lookX: number;
   lookY: number;
+  aimX: number;
+  aimY: number;
   firing: boolean;
   reloadRequested: boolean;
   weaponRequested: WeaponId | null;
@@ -92,6 +94,8 @@ export class InputController {
   private moveZ = 0;
   private lookX = 0;
   private lookY = 0;
+  private aimX = 0;
+  private aimY = 0;
   private firing = false;
   private reloadRequested = false;
   private weaponRequested: WeaponId | null = null;
@@ -101,12 +105,15 @@ export class InputController {
   private readonly touchStarts = new Map<number, { x: number; y: number }>();
   private fallbackDragPointer: number | null = null;
   private fallbackDragPoint: { x: number; y: number } | null = null;
+  private previousCursor: string | null = null;
 
   constructor(private readonly canvas: HTMLCanvasElement) {}
 
   attach(): void {
     if (this.attached) return;
     this.attached = true;
+    this.previousCursor = this.canvas.style.cursor;
+    this.canvas.style.cursor = 'crosshair';
 
     this.canvas.addEventListener('contextmenu', this.onContextMenu);
     this.canvas.addEventListener('pointerdown', this.onPointerDown);
@@ -123,6 +130,8 @@ export class InputController {
       moveZ: this.moveZ,
       lookX: this.lookX,
       lookY: this.lookY,
+      aimX: this.aimX,
+      aimY: this.aimY,
       firing: this.firing,
       reloadRequested: this.reloadRequested,
       weaponRequested: this.weaponRequested,
@@ -151,6 +160,8 @@ export class InputController {
     this.canvas.removeEventListener('pointercancel', this.onPointerUp);
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
+    this.canvas.style.cursor = this.previousCursor ?? '';
+    this.previousCursor = null;
     this.resetTransientInput();
   }
 
@@ -186,18 +197,19 @@ export class InputController {
     this.canvas.setPointerCapture?.(event.pointerId);
 
     if (event.pointerType === 'touch') {
+      this.aimX = 0;
+      this.aimY = 0;
       this.startTouch(event);
       return;
     }
 
+    this.updateMouseAim(event);
     if (event.button === 0) {
       this.firing = true;
-      const pointerLock = this.canvas.requestPointerLock?.();
-      void pointerLock?.catch(() => undefined);
       return;
     }
 
-    if (event.button === 2 && document.pointerLockElement !== this.canvas) {
+    if (event.button === 2) {
       this.fallbackDragPointer = event.pointerId;
       this.fallbackDragPoint = { x: event.clientX, y: event.clientY };
     }
@@ -210,10 +222,8 @@ export class InputController {
       return;
     }
 
-    if (document.pointerLockElement === this.canvas) {
-      this.lookX += event.movementX;
-      this.lookY += event.movementY;
-    } else if (event.pointerId === this.fallbackDragPointer && this.fallbackDragPoint) {
+    this.updateMouseAim(event);
+    if (event.pointerId === this.fallbackDragPointer && this.fallbackDragPoint) {
       this.lookX += event.clientX - this.fallbackDragPoint.x;
       this.lookY += event.clientY - this.fallbackDragPoint.y;
       this.fallbackDragPoint = { x: event.clientX, y: event.clientY };
@@ -252,6 +262,14 @@ export class InputController {
       this.weaponRequested = TOUCH_WEAPONS[this.touchWeaponIndex];
       this.touchWeaponIndex = (this.touchWeaponIndex + 1) % TOUCH_WEAPONS.length;
     }
+  }
+
+  private updateMouseAim(event: Pick<PointerEvent, 'clientX' | 'clientY'>): void {
+    const bounds = this.canvas.getBoundingClientRect();
+    const width = Math.max(1, bounds.width);
+    const height = Math.max(1, bounds.height);
+    this.aimX = Math.max(-1, Math.min(1, ((event.clientX - bounds.left) / width) * 2 - 1));
+    this.aimY = Math.max(-1, Math.min(1, 1 - ((event.clientY - bounds.top) / height) * 2));
   }
 
   private moveTouch(event: PointerEvent): void {

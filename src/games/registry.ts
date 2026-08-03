@@ -116,8 +116,8 @@ export const GAMES: GameMeta[] = [
     name: { id: 'Arena Gabut', en: 'Boredom Arena' },
     tagline: { id: 'Lima nyawa. Tiga senjata. Banyak masalah.', en: 'Five lives. Three weapons. Many problems.' },
     howTo: {
-      id: 'WASD/joystick untuk bergerak, bidik, tembak manual, R untuk reload, 1-3 untuk ganti senjata.',
-      en: 'Move with WASD/joystick, aim, fire manually, press R to reload, and 1-3 to switch weapons.',
+      id: 'WASD/joystick untuk bergerak, klik cursor mouse untuk menembak, R untuk reload, 1-3 untuk ganti senjata.',
+      en: 'Move with WASD/joystick, click the mouse cursor to shoot, press R to reload, and 1-3 to switch weapons.',
     },
   },
 ];

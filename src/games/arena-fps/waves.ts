@@ -21,7 +21,7 @@ function position(rand: () => number, index: number): Pick<EnemySpawn, 'x' | 'z'
 
 export function createWave(seed: number, wave: number): EnemySpawn[] {
   const safeWave = Math.max(1, Math.floor(wave));
-  const count = Math.min(12, 3 + safeWave);
+  const count = Math.min(12, safeWave);
   const rand = mulberry32((seed ^ Math.imul(safeWave, 0x9e3779b1)) >>> 0);
   const available = UNLOCKS.slice(0, Math.min(UNLOCKS.length, safeWave));
   const bossIndex = safeWave % 5 === 0 ? Math.floor(rand() * count) : -1;

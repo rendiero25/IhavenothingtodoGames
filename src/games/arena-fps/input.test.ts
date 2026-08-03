@@ -1,7 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { actionForKey, InputController, touchLayout, touchZone } from './input';
 
 describe('actionForKey', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
   it('memisahkan joystick, aim, fire, reload, dan switch', () => {
     expect(touchZone(30, 300, 800, 450)).toBe('move');
     expect(touchZone(700, 200, 800, 450)).toBe('aim');
@@ -88,17 +90,13 @@ describe('actionForKey', () => {
     expect(controller.snapshot().weaponRequested).toBe('rifle');
   });
 
-  it('menangani penolakan pointer lock tanpa menghentikan fire desktop', () => {
-    let rejectionHandled = false;
-    const pointerLock = {
-      catch: () => {
-        rejectionHandled = true;
-        return pointerLock;
-      },
-    };
+  it('menembak ke posisi cursor desktop tanpa pointer lock', () => {
     const canvas = {
       setPointerCapture: () => undefined,
-      requestPointerLock: () => pointerLock,
+      getBoundingClientRect: () => ({ left: 100, top: 50, width: 800, height: 400 }),
+      requestPointerLock: () => {
+        throw new Error('pointer lock tidak boleh dipakai');
+      },
     } as unknown as HTMLCanvasElement;
     const controller = new InputController(canvas);
     const handlers = controller as unknown as { onPointerDown(event: PointerEvent): void };
@@ -106,12 +104,29 @@ describe('actionForKey', () => {
       button: 0,
       pointerId: 1,
       pointerType: 'mouse',
+      clientX: 700,
+      clientY: 150,
       preventDefault: () => undefined,
     } as unknown as PointerEvent;
 
     handlers.onPointerDown(click);
 
-    expect(rejectionHandled).toBe(true);
-    expect(controller.snapshot().firing).toBe(true);
+    expect(controller.snapshot()).toMatchObject({ firing: true, aimX: 0.5, aimY: 0.5 });
+  });
+
+  it('memakai cursor crosshair selama controller aktif lalu memulihkan cursor lama', () => {
+    vi.stubGlobal('window', { addEventListener: () => undefined, removeEventListener: () => undefined });
+    const canvas = {
+      style: { cursor: 'default' },
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    } as unknown as HTMLCanvasElement;
+    const controller = new InputController(canvas);
+
+    controller.attach();
+    expect(canvas.style.cursor).toBe('crosshair');
+
+    controller.destroy();
+    expect(canvas.style.cursor).toBe('default');
   });
 });

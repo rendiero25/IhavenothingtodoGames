@@ -267,7 +267,7 @@ export class FpsEngine implements GameEngine {
 
     if (input.weaponRequested) this.state = switchWeapon(this.state, input.weaponRequested);
     if (input.reloadRequested) this.state = reload(this.state);
-    if (input.firing) this.tryFire();
+    if (input.firing) this.tryFire(input.aimX, input.aimY);
     this.input.consumeFrame();
   }
 
@@ -290,7 +290,7 @@ export class FpsEngine implements GameEngine {
     return this.arena.arenaColliders.some((collider) => collider.intersectsBox(playerBox));
   }
 
-  private tryFire(): void {
+  private tryFire(aimX: number, aimY: number): void {
     if (!this.state || !this.arena || !this.raycaster) return;
     const weapon = this.state.activeWeapon;
     const spec = WEAPONS[weapon];
@@ -308,7 +308,7 @@ export class FpsEngine implements GameEngine {
     for (let pellet = 0; pellet < spec.pellets; pellet += 1) {
       const spreadX = (this.random() * 2 - 1) * spec.spread;
       const spreadY = (this.random() * 2 - 1) * spec.spread;
-      this.raycaster.setFromCamera(new THREE.Vector2(spreadX, spreadY), this.arena.camera);
+      this.raycaster.setFromCamera(new THREE.Vector2(aimX + spreadX, aimY + spreadY), this.arena.camera);
       const first = this.raycaster.intersectObjects(this.arena.scene.children, true)[0];
       const enemyId = first?.object.userData.enemyId as string | undefined;
       if (!enemyId) continue;
