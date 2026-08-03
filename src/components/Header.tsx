@@ -3,56 +3,47 @@ import { Link } from 'react-router-dom';
 import { Volume2, VolumeX } from 'lucide-react';
 import { useI18n } from '../i18n';
 import { sfx } from '../core/sound';
-import { Mascot } from './Mascot';
 
 export function Header({ wide = false }: { wide?: boolean }) {
   const { locale, setLocale, t } = useI18n();
   const [muted, setMuted] = useState(sfx.muted);
 
   return (
-    <header
-      className={`mx-auto flex w-full items-center justify-between px-5 py-4 ${
-        wide ? 'max-w-[1440px]' : 'max-w-3xl'
-      }`}
-    >
-      <Link
-        to="/"
-        className="group flex items-center gap-2.5 rounded-xl outline-none focus-visible:ring-[3px] focus-visible:ring-coral focus-visible:ring-offset-4"
-      >
-        {wide && (
-          <span className="transition-transform duration-200 ease-out group-hover:-rotate-6">
-            <Mascot size={42} />
-          </span>
-        )}
-        <span className="font-display text-xl leading-none lowercase sm:text-2xl">
-          ihavenothing<span className="text-coral">todo</span>
-        </span>
-      </Link>
-      <div className="flex items-center gap-2">
-        <div className="flex rounded-full border-[3px] border-ink overflow-hidden text-sm font-bold">
-          {(['id', 'en'] as const).map((l) => (
-            <button
-              key={l}
-              onClick={() => setLocale(l)}
-              aria-pressed={locale === l}
-              className={`min-h-11 cursor-pointer px-3 py-1 text-xs uppercase outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-inset ${
-                locale === l ? 'bg-ink text-cream' : 'bg-paper text-ink'
-              }`}
-            >
-              {l}
-            </button>
-          ))}
-        </div>
-        <button
-          onClick={() => {
-            sfx.unlock();
-            setMuted(sfx.toggleMute());
-          }}
-          aria-label={muted ? t('a11y.unmute') : t('a11y.mute')}
-          className="grid size-11 cursor-pointer place-items-center rounded-full border-[3px] border-ink bg-paper outline-none transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-[3px] focus-visible:ring-coral focus-visible:ring-offset-2"
+    <header className="sticky top-0 z-30 border-b border-ink bg-paper">
+      <div className={`mx-auto flex min-h-16 w-full items-center justify-between gap-4 px-4 sm:px-6 ${wide ? 'max-w-[1600px] lg:px-8' : 'max-w-5xl'}`}>
+        <Link
+          to="/"
+          className="font-mono text-xs font-semibold lowercase tracking-[-0.03em] outline-none focus-visible:underline focus-visible:underline-offset-4 sm:text-sm"
         >
-          {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-        </button>
+          ihavenothingtodo
+        </Link>
+
+        <div className="flex items-center gap-1">
+          <div className="flex" aria-label={locale === 'id' ? 'Pilih bahasa' : 'Choose language'}>
+            {(['id', 'en'] as const).map((language) => (
+              <button
+                key={language}
+                type="button"
+                onClick={() => setLocale(language)}
+                aria-pressed={locale === language}
+                className={`min-h-10 min-w-10 cursor-pointer px-2 font-mono text-[10px] uppercase outline-none transition-colors duration-200 ${locale === language ? 'bg-ink text-paper' : 'bg-paper text-ink hover:bg-ink hover:text-paper focus-visible:bg-ink focus-visible:text-paper'}`}
+              >
+                {language}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              sfx.unlock();
+              setMuted(sfx.toggleMute());
+            }}
+            aria-label={muted ? t('a11y.unmute') : t('a11y.mute')}
+            className="grid size-10 cursor-pointer place-items-center border-l border-ink/20 bg-paper outline-none transition-colors duration-200 hover:bg-ink hover:text-paper focus-visible:bg-ink focus-visible:text-paper"
+          >
+            {muted ? <VolumeX size={16} strokeWidth={1.7} /> : <Volume2 size={16} strokeWidth={1.7} />}
+          </button>
+        </div>
       </div>
     </header>
   );

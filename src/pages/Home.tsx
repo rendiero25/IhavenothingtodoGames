@@ -1,235 +1,195 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { CalendarDays } from 'lucide-react';
-import { motion } from 'motion/react';
+import { useEffect, useMemo, useState } from 'react';
+import { ArrowRight, CalendarDays, Shuffle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { motion, useReducedMotion } from 'motion/react';
 import { Header } from '../components/Header';
-import { Mascot } from '../components/Mascot';
-import type { Expression } from '../components/Mascot';
-import { ChunkyButton } from '../components/ChunkyButton';
+import { GameArtwork } from '../components/GameArtwork';
 import { GameCard } from '../components/GameCard';
+import { GameModal } from '../components/GameModal';
 import { GAMES } from '../games/registry';
-import { dailyLineup, todayKey, useCurrentDateKey } from '../core/daily';
-import { useIdle } from '../core/idle';
-import { hashString } from '../core/rng';
-import { sfx } from '../core/sound';
 import { useI18n } from '../i18n';
-import type { GameId, GameResult } from '../games/types';
-import { GameOver } from '../shell/GameOver';
-import { GameShell } from '../shell/GameShell';
+import { sfx } from '../core/sound';
+import type { Category, GameMeta } from '../games/types';
 
-const homeSessionBests = new Map<string, number>();
+type Filter = 'all' | Category;
 
 export default function Home() {
-  const { t, locale } = useI18n();
-  const nav = useNavigate();
-  const gamePanelRef = useRef<HTMLElement>(null);
-  const isBest = useRef(false);
-  const [selectedGameId, setSelectedGameId] = useState<GameId | null>(null);
-  const [runId, setRunId] = useState(0);
-  const [result, setResult] = useState<GameResult | null>(null);
-  const dateKey = useCurrentDateKey();
-  const selectedMeta = GAMES.find((game) => game.id === selectedGameId);
-  const seed = useMemo(
-    () => hashString(`home:${selectedGameId ?? 'none'}:${Date.now()}:${runId}`),
-    [runId, selectedGameId],
+  const { locale, t } = useI18n();
+  const reduceMotion = useReducedMotion();
+  const [filter, setFilter] = useState<Filter>('all');
+  const [previewId, setPreviewId] = useState(GAMES[0].id);
+  const [openGame, setOpenGame] = useState<GameMeta | null>(null);
+
+  const filters = useMemo<Filter[]>(
+    () => ['all', ...Array.from(new Set(GAMES.map((game) => game.category)))],
+    [],
   );
-  const lineupNames = useMemo(() => {
-    const ids = dailyLineup(
-      dateKey,
-      GAMES.map((game) => game.id),
-    );
-    return ids
-      .map((id) => GAMES.find((game) => game.id === id)?.name[locale])
-      .filter(Boolean)
-      .join(' · ');
-  }, [dateKey, locale]);
-
-  const selectGame = (gameId: GameId) => {
-    sfx.unlock();
-    sfx.play('coin');
-    setSelectedGameId(gameId);
-    setResult(null);
-    setRunId((value) => value + 1);
-  };
-
-  const roulette = () => {
-    selectGame(GAMES[Math.floor(Math.random() * GAMES.length)].id);
-  };
-
-  const finishGame = (gameResult: GameResult) => {
-    if (!selectedMeta) return;
-    const previousBest = homeSessionBests.get(selectedMeta.id) ?? 0;
-    isBest.current = gameResult.score > previousBest && previousBest > 0;
-    if (gameResult.score > previousBest) homeSessionBests.set(selectedMeta.id, gameResult.score);
-    if (isBest.current) sfx.play('record');
-    setResult(gameResult);
-  };
-
-  const idle = useIdle();
-  const expression: Expression =
-    idle === 'sleep' ? 'sleep' : idle === 'yawn' ? 'yawn' : 'happy';
+  const filteredGames = useMemo(
+    () => (filter === 'all' ? GAMES : GAMES.filter((game) => game.category === filter)),
+    [filter],
+  );
+  const previewGame =
+    filteredGames.find((game) => game.id === previewId) ?? filteredGames[0] ?? GAMES[0];
 
   useEffect(() => {
-    document.title = idle === 'sleep' ? 'zzz… | ihavenothingtodo' : 'ihavenothingtodo';
+    if (!filteredGames.some((game) => game.id === previewId)) {
+      setPreviewId(filteredGames[0]?.id ?? GAMES[0].id);
+    }
+  }, [filteredGames, previewId]);
+
+  useEffect(() => {
+    document.title = 'ihavenothingtodo | quick games';
     return () => {
       document.title = 'ihavenothingtodo';
     };
-  }, [idle]);
+  }, []);
 
-  useEffect(() => {
-    if (!selectedGameId || !window.matchMedia('(max-width: 1023px)').matches) return;
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    gamePanelRef.current?.scrollIntoView({
-      behavior: reduceMotion ? 'auto' : 'smooth',
-      block: 'start',
-    });
-  }, [selectedGameId, runId]);
+  const launch = (game: GameMeta) => {
+    sfx.unlock();
+    sfx.play('coin');
+    setPreviewId(game.id);
+    setOpenGame(game);
+  };
 
-  const closeGame = () => {
-    setSelectedGameId(null);
-    setResult(null);
+  const randomGame = () => {
+    const pool = filteredGames.length > 0 ? filteredGames : GAMES;
+    launch(pool[Math.floor(Math.random() * pool.length)]);
   };
 
   return (
-    <div className="min-h-dvh overflow-x-hidden">
+    <div className="min-h-dvh bg-paper text-ink">
       <Header wide />
-      <main className="mx-auto max-w-[1440px] px-5 pb-12">
-        <section className="grid items-center gap-5 border-y-[3px] border-ink py-5 md:grid-cols-[1fr_auto]">
-          <div className="flex min-w-0 items-center gap-4 sm:gap-5">
-            <Mascot expression={expression} size={74} />
-            <div className="min-w-0">
-              <h1 className="font-display text-3xl leading-none sm:text-4xl">{t('site.tagline')}</h1>
-              <p className="mt-2 text-sm font-bold text-ink-soft">{t('home.bored.sub')}</p>
-            </div>
-          </div>
-          <ChunkyButton
-            size="lg"
-            color="coral"
-            onClick={roulette}
-            className="w-full md:w-auto md:min-w-56"
-          >
-            {t('home.bored')}
-          </ChunkyButton>
-        </section>
 
-        <section className="mt-5 rounded-2xl border-[3px] border-ink bg-amber p-4 shadow-[0_5px_0_0_var(--color-ink)] sm:p-5">
-          <div className="grid items-center gap-4 md:grid-cols-[auto_1fr_auto] md:gap-6">
-            <div className="flex items-center gap-3 md:border-r-[1px] md:border-ink/40 md:pr-6">
-              <span className="grid size-12 shrink-0 place-items-center rounded-xl border-[3px] border-ink bg-paper">
-                <CalendarDays size={25} strokeWidth={2.5} />
-              </span>
-              <div>
-                <p className="font-pixel text-[9px] leading-relaxed">{dateKey}</p>
-                <h2 className="font-display text-2xl leading-tight">{t('home.daily.title')}</h2>
-              </div>
-            </div>
-            <div className="min-w-0">
-              <p className="max-w-3xl text-sm font-bold leading-snug text-ink/80">
-                {t('home.daily.sub')}
-              </p>
-              <p className="mt-2 truncate text-xs font-extrabold uppercase tracking-[0.08em] text-ink-soft">
-                {lineupNames}
-              </p>
-            </div>
-            <ChunkyButton
-              color="teal"
-              size="md"
-              onClick={() => nav('/daily')}
-              className="w-full md:w-auto"
+      <main>
+        <section className="mx-auto grid max-w-[1600px] gap-8 border-b border-ink px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:px-8">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-soft">
+              {locale === 'id' ? '9 game, tanpa akun' : '9 games, no account'}
+            </p>
+            <h1 className="mt-4 max-w-[16ch] text-[clamp(2.75rem,6vw,6.25rem)] font-medium leading-[0.92] tracking-[-0.065em]">
+              {locale === 'id' ? 'Pilih satu. Main sekarang.' : 'Pick one. Play now.'}
+            </h1>
+            <p className="mt-5 max-w-[52ch] text-sm leading-relaxed text-ink/65 sm:text-base">
+              {t('site.tagline')}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2 lg:justify-end">
+            <button
+              type="button"
+              onClick={randomGame}
+              className="inline-flex min-h-11 cursor-pointer items-center gap-2 border border-ink bg-ink px-4 text-sm font-medium text-paper outline-none transition-colors duration-200 hover:bg-paper hover:text-ink focus-visible:bg-paper focus-visible:text-ink"
             >
-              {t('home.daily.cta')}
-            </ChunkyButton>
+              <Shuffle size={15} strokeWidth={1.8} />
+              {t('home.bored')}
+            </button>
+            <Link
+              to="/daily"
+              className="inline-flex min-h-11 items-center gap-2 border border-ink px-4 text-sm font-medium outline-none transition-colors duration-200 hover:bg-ink hover:text-paper focus-visible:bg-ink focus-visible:text-paper"
+            >
+              <CalendarDays size={15} strokeWidth={1.8} />
+              {t('home.daily.title')}
+            </Link>
           </div>
         </section>
 
-        <section className="mt-7">
-          <div className="grid items-start gap-6 lg:grid-cols-[400px_minmax(0,1fr)] xl:grid-cols-[430px_minmax(0,1fr)]">
-            <nav aria-label={t('home.grid.title')} className="min-w-0">
-              <h2 className="mb-4 font-display text-3xl">{t('home.grid.title')}</h2>
-              <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-5 lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0 lg:pb-0">
-                {GAMES.map((meta, index) => (
-                  <GameCard
-                    key={meta.id}
-                    meta={meta}
-                    index={index}
-                    selected={selectedGameId === meta.id}
-                    onSelect={() => selectGame(meta.id)}
-                  />
-                ))}
-              </div>
+        <section className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2 overflow-x-auto border-b border-ink py-4" aria-label={locale === 'id' ? 'Filter kategori' : 'Category filters'}>
+            {filters.map((item) => {
+              const active = filter === item;
+              const label = item === 'all'
+                ? locale === 'id' ? 'Semua' : 'All'
+                : t(`cat.${item}` as const);
+              return (
+                <button
+                  key={item}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setFilter(item)}
+                  className={`min-h-10 shrink-0 cursor-pointer rounded-full border px-4 font-mono text-[10px] uppercase tracking-[0.12em] outline-none transition-colors duration-200 ${
+                    active
+                      ? 'border-ink bg-ink text-paper'
+                      : 'border-ink/30 bg-paper text-ink hover:border-ink focus-visible:border-ink'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="grid border-b border-ink lg:grid-cols-[minmax(0,1.08fr)_minmax(22rem,0.92fr)]">
+            <nav
+              aria-label={t('home.grid.title')}
+              className="min-w-0 lg:max-h-[calc(100dvh-15.5rem)] lg:overflow-y-auto lg:border-r lg:border-ink lg:pr-6"
+            >
+              {filteredGames.map((meta) => (
+                <GameCard
+                  key={meta.id}
+                  meta={meta}
+                  index={GAMES.indexOf(meta)}
+                  selected={previewGame.id === meta.id}
+                  onPreview={() => setPreviewId(meta.id)}
+                  onSelect={() => launch(meta)}
+                />
+              ))}
             </nav>
 
-            <aside ref={gamePanelRef} className="scroll-mt-4 lg:sticky lg:top-4">
-              {selectedMeta ? (
-                <motion.div
-                  key={selectedMeta.id}
-                  initial={{ opacity: 0, x: 12 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                  className="rounded-[28px] border-[3px] border-ink bg-teal-dark p-3 shadow-[0_7px_0_0_var(--color-ink)] sm:p-5"
+            <aside className="hidden min-h-[34rem] p-6 lg:block xl:p-8" aria-live="polite">
+              <motion.div
+                key={previewGame.id}
+                initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                className="flex h-full flex-col"
+              >
+                <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft">
+                  <span>{t(`cat.${previewGame.category}` as const)}</span>
+                  <span>{String(GAMES.indexOf(previewGame) + 1).padStart(2, '0')} / {String(GAMES.length).padStart(2, '0')}</span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => launch(previewGame)}
+                  className="mt-5 block aspect-[8/5] w-full cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-4"
+                  aria-label={`${locale === 'id' ? 'Mainkan' : 'Play'} ${previewGame.name[locale]}`}
                 >
-                  <div className="px-3 pb-3 text-center text-cream">
-                    <h2 className="font-display text-3xl sm:text-4xl">
-                      {selectedMeta.name[locale]}
+                  <GameArtwork
+                    gameId={previewGame.id}
+                    label={`${previewGame.name[locale]} preview`}
+                  />
+                </button>
+
+                <div className="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1fr)_11rem]">
+                  <div>
+                    <h2 className="font-pixel text-[clamp(1.7rem,2.8vw,3.25rem)] leading-[0.95] tracking-[-0.045em]">
+                      {previewGame.name[locale]}
                     </h2>
-                    <p className="mt-1 text-sm font-bold text-cream/80">
-                      {selectedMeta.tagline[locale]}
+                    <p className="mt-3 max-w-[38rem] text-sm leading-relaxed text-ink/65">
+                      {previewGame.tagline[locale]}
                     </p>
                   </div>
-                  {result ? (
-                    <div className="rounded-3xl bg-paper pt-4">
-                      <GameOver
-                        mode="free"
-                        heading={t('over.title')}
-                        entries={[{ name: selectedMeta.name[locale], score: result.score }]}
-                        totalScore={result.score}
-                        bestCombo={result.bestCombo}
-                        levelReached={result.levelReached}
-                        durationMs={result.durationMs}
-                        dateKey={todayKey()}
-                        sessionBest={isBest.current}
-                        primaryLabel={t('over.playAgain')}
-                        onPrimary={() => {
-                          setResult(null);
-                          setRunId((value) => value + 1);
-                        }}
-                        onHome={closeGame}
-                      />
-                    </div>
-                  ) : (
-                    <>
-                      <GameShell
-                        key={`${selectedMeta.id}:${runId}`}
-                        gameId={selectedMeta.id}
-                        seed={seed}
-                        startLives={5}
-                        wide
-                        onFinish={finishGame}
-                        onQuit={closeGame}
-                      />
-                      <p className="mx-auto max-w-md px-5 pb-2 pt-5 text-center text-sm font-bold leading-relaxed text-cream/85">
-                        {selectedMeta.howTo[locale]}
-                      </p>
-                    </>
-                  )}
-                </motion.div>
-              ) : (
-                <div className="hidden min-h-[680px] place-items-center rounded-[28px] border-[3px] border-ink bg-teal-dark p-10 text-center text-cream shadow-[0_7px_0_0_var(--color-ink)] lg:grid">
-                  <div className="max-w-sm">
-                    <Mascot expression="hype" size={104} />
-                    <p className="mt-5 font-display text-4xl">{t('home.grid.title')}</p>
-                    <p className="mt-3 font-bold text-cream/75">{t('home.bored.sub')}</p>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => launch(previewGame)}
+                    className="group inline-flex min-h-11 cursor-pointer items-center justify-between self-end border-t border-ink py-3 text-sm font-medium outline-none focus-visible:bg-ink focus-visible:px-3 focus-visible:text-paper"
+                  >
+                    {locale === 'id' ? 'Buka game' : 'Open game'}
+                    <ArrowRight className="transition-transform duration-200 group-hover:translate-x-1" size={16} strokeWidth={1.8} />
+                  </button>
                 </div>
-              )}
+              </motion.div>
             </aside>
           </div>
         </section>
-
-        <footer className="mt-10 border-t-[3px] border-dashed border-ink/30 pt-7 text-center text-sm font-bold text-ink-soft">
-          {t('home.footer')}
-        </footer>
       </main>
+
+      <footer className="mx-auto flex max-w-[1600px] flex-col gap-2 px-4 py-5 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-soft sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+        <span>© {new Date().getFullYear()} ihavenothingtodo</span>
+        <span>{t('home.footer')}</span>
+      </footer>
+
+      {openGame && <GameModal meta={openGame} onClose={() => setOpenGame(null)} />}
     </div>
   );
 }

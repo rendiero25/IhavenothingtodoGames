@@ -1,29 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Download, Share2 } from 'lucide-react';
-import { motion, useReducedMotion } from 'motion/react';
+import { motion } from 'motion/react';
 import { useI18n } from '../i18n';
 import { formatDuration, titleKeyFor } from '../core/score';
 import { downloadDataUrl, receiptLines, renderReceiptPng, shareReceipt } from '../core/receipt';
 import type { ReceiptEntry } from '../core/receipt';
 import { ChunkyButton } from '../components/ChunkyButton';
-
-function Confetti() {
-  const colors = ['#E4572E', '#0FA47F', '#F2A007', '#E0447C'];
-  return (
-    <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
-      {Array.from({ length: 18 }, (_, i) => (
-        <motion.span
-          key={i}
-          initial={{ y: -24, rotate: 0, opacity: 1 }}
-          animate={{ y: '105vh', rotate: 360 + i * 40, opacity: [1, 1, 0.5] }}
-          transition={{ duration: 2.2 + (i % 5) * 0.3, ease: 'easeIn' }}
-          className="absolute block h-3 w-3"
-          style={{ left: `${(i * 100) / 18}vw`, backgroundColor: colors[i % 4] }}
-        />
-      ))}
-    </div>
-  );
-}
 
 export interface GameOverProps {
   mode: 'free' | 'daily';
@@ -42,7 +24,6 @@ export interface GameOverProps {
 
 export function GameOver(props: GameOverProps) {
   const { t } = useI18n();
-  const reduceMotion = useReducedMotion();
   const [shared, setShared] = useState(false);
 
   const dataUrl = useMemo(() => {
@@ -67,15 +48,15 @@ export function GameOver(props: GameOverProps) {
     <motion.div
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
       className="mx-auto w-full max-w-md px-4 pb-10 text-center"
     >
-      {props.sessionBest && !reduceMotion && <Confetti />}
-      <h2 className="font-display text-4xl mt-2">{props.heading}</h2>
+      <h2 className="mt-2 font-pixel text-3xl tracking-[-0.04em]">{props.heading}</h2>
       {props.sessionBest && (
-        <p className="font-display text-teal text-lg mt-1">{t('over.sessionBest')}</p>
+        <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em]">{t('over.sessionBest')}</p>
       )}
-      <p className="font-pixel text-3xl text-coral mt-4">{props.totalScore}</p>
-      <div className="grid grid-cols-3 gap-2 mt-5 text-sm">
+      <p className="mt-5 font-mono text-4xl tabular-nums">{props.totalScore}</p>
+      <div className="mt-5 grid grid-cols-3 border-y border-ink text-sm">
         {(
           [
             [t('over.combo'), `x${props.bestCombo}`],
@@ -83,23 +64,16 @@ export function GameOver(props: GameOverProps) {
             [t('over.time'), formatDuration(props.durationMs)],
           ] as const
         ).map(([label, value]) => (
-          <div key={label} className="rounded-xl border-[3px] border-ink bg-paper py-2">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-ink-soft">{label}</p>
-            <p className="font-display text-lg">{value}</p>
+          <div key={label} className="border-r border-ink/20 py-3 last:border-r-0">
+            <p className="font-mono text-[9px] uppercase tracking-[0.1em] text-ink-soft">{label}</p>
+            <p className="mt-1 text-base">{value}</p>
           </div>
         ))}
       </div>
-      <motion.img
+      <img
         src={dataUrl}
         alt="Boredom Receipt"
-        initial={reduceMotion ? false : { rotate: -2 }}
-        animate={reduceMotion ? { rotate: 0 } : { rotate: 2 }}
-        transition={
-          reduceMotion
-            ? { duration: 0 }
-            : { repeat: Infinity, repeatType: 'reverse', duration: 2.2 }
-        }
-        className="mx-auto mt-6 w-56 border-[3px] border-ink shadow-[0_6px_0_0_var(--color-ink)]"
+        className="mx-auto mt-6 w-56 border border-ink"
       />
       <div className="flex flex-wrap justify-center gap-3 mt-6">
         <ChunkyButton color="amber" onClick={() => downloadDataUrl(dataUrl, filename)}>

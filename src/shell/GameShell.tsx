@@ -8,7 +8,6 @@ import { getMeta, loadEngine } from '../games/registry';
 import type { GameEngine, GameId, GameOptions, GameResult } from '../games/types';
 import { LivesBar } from '../components/LivesBar';
 import { ChunkyButton } from '../components/ChunkyButton';
-import { Mascot } from '../components/Mascot';
 
 type Phase = 'loading' | 'countdown' | 'playing' | 'paused' | 'over' | 'error';
 
@@ -232,31 +231,35 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
   };
 
   return (
-    <div className={`mx-auto w-full px-4 select-none ${shellWidth}`}>
-      <div className="flex items-center justify-between py-3">
-        <button onClick={onQuit} aria-label={t('shell.quit')} className="rounded-full border-[3px] border-ink bg-paper p-1.5 cursor-pointer">
-          <X size={18} />
+    <div className={`mx-auto w-full select-none px-3 sm:px-5 ${shellWidth}`}>
+      <div className="flex items-center justify-between border-b border-ink/20 py-3 font-mono text-[10px] uppercase tracking-[0.12em]">
+        <button
+          onClick={onQuit}
+          aria-label={t('shell.quit')}
+          className="grid size-9 cursor-pointer place-items-center border border-ink bg-paper outline-none transition-colors duration-200 hover:bg-ink hover:text-paper focus-visible:bg-ink focus-visible:text-paper"
+        >
+          <X size={16} strokeWidth={1.7} />
         </button>
         <div className="flex items-center gap-2">
-          <Mascot expression={shocked ? 'shock' : 'happy'} size={34} />
+          <span className={shocked ? 'opacity-35' : ''}>{locale === 'id' ? 'Nyawa' : 'Lives'}</span>
           <LivesBar lives={lives} max={startLives} />
         </div>
         <button
           onClick={togglePause}
           disabled={phase !== 'playing' && phase !== 'paused'}
           aria-label={phase === 'paused' ? t('shell.resume') : t('shell.pause')}
-          className="rounded-full border-[3px] border-ink bg-paper p-1.5 cursor-pointer disabled:opacity-40"
+          className="grid size-9 cursor-pointer place-items-center border border-ink bg-paper outline-none transition-colors duration-200 hover:bg-ink hover:text-paper focus-visible:bg-ink focus-visible:text-paper disabled:cursor-not-allowed disabled:opacity-30"
         >
-          {phase === 'paused' ? <PlayIcon size={18} /> : <Pause size={18} />}
+          {phase === 'paused' ? <PlayIcon size={16} strokeWidth={1.7} /> : <Pause size={16} strokeWidth={1.7} />}
         </button>
       </div>
 
-      <div className="relative rounded-3xl border-[3px] border-ink bg-navy p-2 shadow-[0_8px_0_0_var(--color-ink)]">
-        <div className="flex items-center justify-between px-3 py-2 font-pixel text-[11px] text-neon-yellow">
+      <div className="relative mt-3 rounded-md border border-ink bg-navy p-2">
+        <div className="flex items-center justify-between px-2 py-2 font-mono text-[11px] text-paper">
           <span>{score}</span>
-          <span className={combo >= 5 ? 'text-neon-green' : 'text-navy-soft'}>x{comboMultiplier(combo)}</span>
+          <span className={combo >= 5 ? 'text-paper' : 'text-paper/40'}>x{comboMultiplier(combo)}</span>
         </div>
-        <canvas ref={canvasRef} className="w-full rounded-2xl touch-none" style={{ aspectRatio: canvasAspect }} />
+        <canvas ref={canvasRef} className="w-full touch-none rounded-sm" style={{ aspectRatio: canvasAspect }} />
 
         <AnimatePresence>
           {phase === 'countdown' && (
@@ -265,15 +268,15 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
               initial={{ scale: 2.2, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.6, opacity: 0 }}
-              className="absolute inset-0 grid place-items-center font-display text-7xl text-neon-yellow"
+              className="absolute inset-0 grid place-items-center font-pixel text-7xl text-paper"
             >
               {count}
             </motion.div>
           )}
           {phase === 'paused' && (
-            <div className="absolute inset-0 grid place-items-center rounded-3xl bg-navy/85">
+            <div className="absolute inset-0 grid place-items-center rounded-md bg-navy">
               <div className="text-center">
-                <p className="font-display text-cream text-xl mb-4">{t('shell.paused')}</p>
+                <p className="mb-4 text-xl text-paper">{t('shell.paused')}</p>
                 <ChunkyButton color="teal" onClick={togglePause}>
                   {t('shell.resume')}
                 </ChunkyButton>
@@ -281,9 +284,9 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
             </div>
           )}
           {phase === 'error' && (
-            <div className="absolute inset-0 grid place-items-center rounded-3xl bg-navy/85 p-6">
+            <div className="absolute inset-0 grid place-items-center rounded-md bg-navy p-6">
               <div className="text-center">
-                <p className="mb-4 font-display text-xl text-cream">{t('shell.loadError')}</p>
+                <p className="mb-4 text-xl text-paper">{t('shell.loadError')}</p>
                 <ChunkyButton color="teal" onClick={onQuit}>
                   {t('shell.back')}
                 </ChunkyButton>

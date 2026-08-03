@@ -3,18 +3,10 @@ import type { ButtonHTMLAttributes } from 'react';
 type Color = 'coral' | 'teal' | 'amber' | 'pink' | 'ink';
 type Size = 'md' | 'lg' | 'xl';
 
-const COLORS: Record<Color, string> = {
-  coral: 'bg-coral text-cream',
-  teal: 'bg-teal-dark text-cream',
-  amber: 'bg-amber text-ink',
-  pink: 'bg-pink text-cream',
-  ink: 'bg-ink text-cream',
-};
-
 const SIZES: Record<Size, string> = {
-  md: 'px-5 py-2.5 text-base rounded-xl',
-  lg: 'px-7 py-3.5 text-xl rounded-2xl',
-  xl: 'px-10 py-5 text-3xl rounded-3xl',
+  md: 'min-h-10 px-4 py-2 text-sm',
+  lg: 'min-h-11 px-5 py-2.5 text-base',
+  xl: 'min-h-12 px-6 py-3 text-lg',
 };
 
 interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -23,13 +15,10 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export function ChunkyButton({ color = 'coral', size = 'md', className = '', ...rest }: Props) {
+  const filled = color === 'ink' || color === 'coral' || color === 'teal';
   return (
     <button
-      className={`font-display tracking-wide border-[3px] border-ink select-none
-        shadow-[0_6px_0_0_var(--color-ink)] active:translate-y-[6px] active:shadow-none
-        transition-[transform,box-shadow] duration-100 cursor-pointer
-        disabled:opacity-50 disabled:cursor-not-allowed
-        ${COLORS[color]} ${SIZES[size]} ${className}`}
+      className={`cursor-pointer select-none rounded-md border border-ink font-medium outline-none transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-45 ${filled ? 'bg-ink text-paper hover:bg-paper hover:text-ink' : 'bg-paper text-ink hover:bg-ink hover:text-paper'} focus-visible:bg-ink focus-visible:text-paper ${SIZES[size]} ${className}`}
       {...rest}
     />
   );

@@ -1,12 +1,12 @@
 export const ARCADE = {
-  bg: '#14142B',
-  bgSoft: '#22224A',
-  pink: '#FF2E88',
-  green: '#00E5A0',
-  yellow: '#FFD23F',
-  blue: '#4DA6FF',
-  white: '#F4F2FF',
-  dim: '#8A8AB8',
+  bg: '#20201f',
+  bgSoft: '#393938',
+  pink: '#8a8986',
+  green: '#f0f0ed',
+  yellow: '#d7d7d3',
+  blue: '#b7b6b2',
+  white: '#f9f9f7',
+  dim: '#777673',
 } as const;
 
 export function setupCanvas(canvas: HTMLCanvasElement, w: number, h: number): CanvasRenderingContext2D {
