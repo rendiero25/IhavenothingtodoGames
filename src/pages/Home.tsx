@@ -31,19 +31,21 @@ function PreviewPanel({
       transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
       className="flex h-full min-h-[30rem] flex-col"
     >
-      <div className="flex flex-1 flex-col items-center justify-center py-12 text-center lg:py-16">
-        <h2 className="font-pixel text-[clamp(2rem,3.4vw,4.3rem)] leading-[0.86] tracking-[-0.06em]">
-          {game.name[locale]}
-        </h2>
-        <p className="mt-5 max-w-[38rem] text-base leading-relaxed text-ink/75">
-          {game.tagline[locale]}
-        </p>
-        <p className="mt-3 max-w-[38rem] text-sm leading-relaxed text-ink/60">
-          {game.howTo[locale]}
-        </p>
-        <p className="mt-3 max-w-[34rem] text-sm leading-relaxed text-ink/45">
-          {extraDescription}
-        </p>
+      <div className="flex flex-1 flex-col items-center justify-center py-12 lg:py-16">
+        <div className="w-full max-w-[38rem] text-left">
+          <h2 className="font-pixel text-[clamp(2rem,3.4vw,4.3rem)] leading-[0.86] tracking-[-0.06em]">
+            {game.name[locale]}
+          </h2>
+          <p className="mt-5 text-base leading-relaxed text-ink/75">
+            {game.tagline[locale]}
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-ink/60">
+            {game.howTo[locale]}
+          </p>
+          <p className="mt-3 max-w-[34rem] text-sm leading-relaxed text-ink/45">
+            {extraDescription}
+          </p>
+        </div>
       </div>
     </motion.div>
   );
