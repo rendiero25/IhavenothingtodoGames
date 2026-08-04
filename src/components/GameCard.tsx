@@ -36,7 +36,7 @@ export function GameCard({
       aria-current={selected ? 'true' : undefined}
       style={{
         opacity: wheelOpacity,
-        transform: `perspective(850px) rotateX(${wheelRotation}deg) rotateZ(20deg) scale(${wheelScale})`,
+        transform: `perspective(850px) rotateX(${wheelRotation}deg) rotateZ(0deg) scale(${wheelScale})`,
       }}
       className={`game-list-item origin-center group grid w-full cursor-pointer grid-cols-[2.4rem_minmax(0,1fr)_auto] items-center gap-3 py-5 text-left outline-none transition-[color,transform,opacity] duration-300 ease-out sm:grid-cols-[3.5rem_minmax(0,1fr)_auto] sm:py-7 xl:py-8 ${selected ? 'text-ink' : 'text-ink/55 hover:text-ink/85 focus-visible:text-ink'}`}
     >
