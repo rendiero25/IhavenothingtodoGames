@@ -1,13 +1,13 @@
+import { FLOOR_Y, LOGICAL_HEIGHT, LOGICAL_WIDTH } from './config';
 import type { EffectState, EnemyState, GameState, PickupState, PlayerState } from './logic';
 
-const WIDTH = 960;
-const HEIGHT = 540;
-const FLOOR_Y = 432;
+const WIDTH = LOGICAL_WIDTH;
+const HEIGHT = LOGICAL_HEIGHT;
 const INK = '#171717';
 const GRAPHITE = '#626262';
-const PAPER = '#f7f6ef';
-const RULE = '#d6d5ce';
-const MARGIN = '#d8b7b0';
+const PAPER = '#f7f7f7';
+const RULE = '#d6d6d6';
+const MARGIN = '#c8c8c8';
 
 function line(
   ctx: CanvasRenderingContext2D,
@@ -47,20 +47,20 @@ function inkDot(ctx: CanvasRenderingContext2D, x: number, y: number, radius: num
 
 function drawPaper(ctx: CanvasRenderingContext2D): void {
   ctx.fillStyle = PAPER;
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  ctx.fillRect(-16, -16, WIDTH + 32, HEIGHT + 32);
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
   ctx.strokeStyle = RULE;
   ctx.lineWidth = 1;
-  for (let y = 48; y < HEIGHT; y += 30) line(ctx, 0, y, WIDTH, y, 1, RULE);
-  line(ctx, 70, 0, 70, HEIGHT, 1, MARGIN);
+  for (let y = 48; y < HEIGHT + 16; y += 30) line(ctx, -16, y, WIDTH + 16, y, 1, RULE);
+  line(ctx, 70, -16, 70, HEIGHT + 16, 1, MARGIN);
 
-  ctx.strokeStyle = '#d8d7d0';
+  ctx.strokeStyle = '#d8d8d8';
   ctx.lineWidth = 1;
   for (let x = 126; x < WIDTH; x += 184) {
-    line(ctx, x, 12, x + 19, 17, 1, '#d8d7d0');
-    line(ctx, x + 12, 20, x + 35, 16, 1, '#d8d7d0');
+    line(ctx, x, 12, x + 19, 17, 1, '#d8d8d8');
+    line(ctx, x + 12, 20, x + 35, 16, 1, '#d8d8d8');
   }
 }
 
@@ -79,7 +79,7 @@ function drawArena(ctx: CanvasRenderingContext2D): void {
   }
 }
 
-function drawPlayer(ctx: CanvasRenderingContext2D, player: PlayerState): void {
+function drawPlayer(ctx: CanvasRenderingContext2D, player: PlayerState, time: number): void {
   const dir = player.facing;
   const attacking = player.comboStep > 0;
   const recoil = attacking ? -dir * player.comboStep * 2 : 0;
@@ -90,7 +90,7 @@ function drawPlayer(ctx: CanvasRenderingContext2D, player: PlayerState): void {
   const stride = Math.min(10, Math.abs(player.vx) / 30) * dir;
 
   ctx.save();
-  ctx.globalAlpha = player.invulnerableUntil > 0 && Math.floor(player.invulnerableUntil / 80) % 2 === 1 ? 0.42 : 1;
+  ctx.globalAlpha = time < player.invulnerableUntil && Math.floor(time / 80) % 2 === 1 ? 0.42 : 1;
   circle(ctx, player.x + recoil, headY, 16, 3.5);
   line(ctx, player.x + recoil, headY + 16, player.x + recoil, hipY, 4);
   line(ctx, player.x + recoil, shoulderY, player.x + recoil + dir * (attacking ? 44 + player.comboStep * 12 : 27), shoulderY + (attacking ? -4 : 18), 4);
@@ -110,7 +110,7 @@ function drawWeapon(ctx: CanvasRenderingContext2D, x: number, y: number, dir: nu
     for (let notch = 10; notch < 50; notch += 10) line(ctx, x + dir * notch, y - 4, x + dir * notch, y - 10, 1);
   } else if (weapon === 'eraser') {
     ctx.lineWidth = 3;
-    ctx.strokeRect(x + dir * (dir < 0 ? -25 : 0), y - 11, 26, 17);
+    ctx.strokeRect(x + (dir < 0 ? -26 : 0), y - 11, 26, 17);
     line(ctx, x + dir * 4, y - 8, x + dir * 20, y + 3, 1, GRAPHITE);
   } else if (weapon === 'pencil') {
     line(ctx, x, y, x + dir * 43, y - 18, 4);
@@ -129,16 +129,16 @@ function drawWeapon(ctx: CanvasRenderingContext2D, x: number, y: number, dir: nu
 
 /** Draw only the controllable stickman, useful for isolated pose previews. */
 export function drawStickMan(ctx: CanvasRenderingContext2D, state: GameState, _reducedMotion = false): void {
-  drawPlayer(ctx, state.player);
+  drawPlayer(ctx, state.player, state.time);
 }
 
-function drawEnemy(ctx: CanvasRenderingContext2D, enemy: EnemyState): void {
+function drawEnemy(ctx: CanvasRenderingContext2D, enemy: EnemyState, time: number): void {
   const scale = enemy.kind === 'boss' ? 1.55 : enemy.kind === 'blocker' ? 1.18 : 1;
   const footY = enemy.y;
   const headY = footY - 92 * scale;
   const torsoY = footY - 47 * scale;
   const dir = enemy.facing;
-  const stunned = enemy.stunUntil > 0;
+  const stunned = time < enemy.stunUntil;
   ctx.save();
   ctx.translate(enemy.x, footY);
   ctx.scale(scale, scale);
@@ -155,7 +155,7 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: EnemyState): void {
   } else if (enemy.kind === 'blocker') {
     ctx.strokeStyle = INK;
     ctx.lineWidth = 4;
-    ctx.strokeRect(enemy.x + dir * (dir < 0 ? -26 : 3), torsoY - 8, 23, 35);
+    ctx.strokeRect(enemy.x + (dir < 0 ? -26 : 3), torsoY - 8, 23, 35);
     line(ctx, enemy.x + dir * 8, headY + 37, enemy.x + dir * 30, headY + 40, 4);
   } else if (enemy.kind === 'thrower') {
     line(ctx, enemy.x, headY + 38, enemy.x + dir * 36, headY + 20, 3);
@@ -240,7 +240,10 @@ function drawPickup(ctx: CanvasRenderingContext2D, pickup: PickupState): void {
 
 function drawEffects(ctx: CanvasRenderingContext2D, effects: EffectState[], reducedMotion: boolean): void {
   for (const effect of effects) {
-    const ratio = lifeRatio(effect);
+    if (reducedMotion && effect.kind === 'page-shift') continue;
+    const shortenedLife = reducedMotion ? effect.life - effect.maxLife * 0.5 : effect.life;
+    const ratio = Math.max(0, Math.min(1, shortenedLife / Math.max(1, effect.maxLife * (reducedMotion ? 0.5 : 1))));
+    if (ratio <= 0) continue;
     const size = effect.strength * (reducedMotion ? 0.55 : 1) * (0.55 + ratio * 0.45);
     ctx.save();
     ctx.globalAlpha = ratio;
@@ -274,15 +277,9 @@ export function drawNotebookScene(ctx: CanvasRenderingContext2D, state: GameStat
   drawPaper(ctx);
   drawArena(ctx);
   for (const pickup of state.pickups) drawPickup(ctx, pickup);
-  for (const enemy of state.enemies) drawEnemy(ctx, enemy);
+  for (const enemy of state.enemies) drawEnemy(ctx, enemy, state.time);
   drawStickMan(ctx, state, reducedMotion);
   drawEffects(ctx, state.effects, reducedMotion);
 
-  ctx.fillStyle = INK;
-  ctx.font = '13px ui-monospace, SFMono-Regular, Menlo, monospace';
-  ctx.textAlign = 'left';
-  ctx.fillText(`WAVE ${String(state.wave).padStart(2, '0')}`, 88, 34);
-  ctx.textAlign = 'right';
-  ctx.fillText(`COMBO ${state.combo}  ·  ${state.lives} LIFE`, WIDTH - 32, 34);
   ctx.restore();
 }
