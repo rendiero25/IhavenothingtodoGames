@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, CalendarDays, Shuffle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { ArrowRight, Shuffle } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { Header } from '../components/Header';
-import { GameArtwork } from '../components/GameArtwork';
 import { GameCard } from '../components/GameCard';
 import { GameModal } from '../components/GameModal';
 import { GAMES } from '../games/registry';
@@ -13,11 +11,60 @@ import type { Category, GameMeta } from '../games/types';
 
 type Filter = 'all' | Category;
 
+function PreviewPanel({
+  game,
+  onLaunch,
+  reduceMotion,
+}: {
+  game: GameMeta;
+  onLaunch: () => void;
+  reduceMotion: boolean | null;
+}) {
+  const { locale, t } = useI18n();
+  const gameNumber = String(GAMES.indexOf(game) + 1).padStart(2, '0');
+
+  return (
+    <motion.div
+      key={game.id}
+      initial={reduceMotion ? false : { opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+      className="flex h-full min-h-[30rem] flex-col"
+    >
+      <div className="flex items-center justify-between border-b border-ink/10 pb-3 font-mono text-[9px] uppercase tracking-[0.14em] text-ink-soft">
+        <span>{t(`cat.${game.category}` as const)}</span>
+        <span>{gameNumber} / {String(GAMES.length).padStart(2, '0')}</span>
+      </div>
+
+      <div className="flex flex-1 flex-col justify-center py-12 lg:py-16">
+        <h2 className="font-pixel text-[clamp(2rem,3.4vw,4.3rem)] leading-[0.86] tracking-[-0.06em]">
+          {game.name[locale]}
+        </h2>
+        <p className="mt-4 max-w-[38rem] text-base leading-relaxed text-ink/65">
+          {game.tagline[locale]}
+        </p>
+        <p className="mt-3 max-w-[38rem] text-sm leading-relaxed text-ink/45">
+          {game.howTo[locale]}
+        </p>
+
+        <button
+          type="button"
+          onClick={onLaunch}
+          className="group mt-auto flex min-h-12 items-center justify-between border-t border-ink/20 pt-4 text-left font-mono text-[10px] uppercase tracking-[0.14em] outline-none hover:text-ink/65 focus-visible:text-ink/65"
+        >
+          <span>{locale === 'id' ? 'Buka game' : 'Open game'}</span>
+          <ArrowRight className="transition-transform duration-200 group-hover:translate-x-1" size={16} strokeWidth={1.6} />
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
 export default function Home() {
   const { locale, t } = useI18n();
   const reduceMotion = useReducedMotion();
   const [filter, setFilter] = useState<Filter>('all');
-  const [previewId, setPreviewId] = useState(GAMES[0].id);
+  const [previewId, setPreviewId] = useState(GAMES[Math.floor(GAMES.length / 2)].id);
   const [openGame, setOpenGame] = useState<GameMeta | null>(null);
 
   const filters = useMemo<Filter[]>(
@@ -30,6 +77,7 @@ export default function Home() {
   );
   const previewGame =
     filteredGames.find((game) => game.id === previewId) ?? filteredGames[0] ?? GAMES[0];
+  const previewIndex = Math.max(filteredGames.findIndex((game) => game.id === previewGame.id), 0);
 
   useEffect(() => {
     if (!filteredGames.some((game) => game.id === previewId)) {
@@ -38,7 +86,16 @@ export default function Home() {
   }, [filteredGames, previewId]);
 
   useEffect(() => {
-    document.title = 'ihavenothingtodo | quick games';
+    const row = document.getElementById(`game-row-${previewGame.id}`);
+    row?.scrollIntoView({
+      block: 'center',
+      inline: 'nearest',
+      behavior: reduceMotion ? 'auto' : 'smooth',
+    });
+  }, [previewGame.id, reduceMotion]);
+
+  useEffect(() => {
+    document.title = 'ihavenothingtodo';
     return () => {
       document.title = 'ihavenothingtodo';
     };
@@ -60,41 +117,12 @@ export default function Home() {
     <div className="min-h-dvh bg-paper text-ink">
       <Header wide />
 
-      <main>
-        <section className="mx-auto grid max-w-[1600px] gap-8 border-b border-ink px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:px-8">
-          <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-soft">
-              {locale === 'id' ? '9 game, tanpa akun' : '9 games, no account'}
-            </p>
-            <h1 className="mt-4 max-w-[16ch] text-[clamp(2.75rem,6vw,6.25rem)] font-medium leading-[0.92] tracking-[-0.065em]">
-              {locale === 'id' ? 'Pilih satu. Main sekarang.' : 'Pick one. Play now.'}
-            </h1>
-            <p className="mt-5 max-w-[52ch] text-sm leading-relaxed text-ink/65 sm:text-base">
-              {t('site.tagline')}
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-2 lg:justify-end">
-            <button
-              type="button"
-              onClick={randomGame}
-              className="inline-flex min-h-11 cursor-pointer items-center gap-2 border border-ink bg-ink px-4 text-sm font-medium text-paper outline-none transition-colors duration-200 hover:bg-paper hover:text-ink focus-visible:bg-paper focus-visible:text-ink"
-            >
-              <Shuffle size={15} strokeWidth={1.8} />
-              {t('home.bored')}
-            </button>
-            <Link
-              to="/daily"
-              className="inline-flex min-h-11 items-center gap-2 border border-ink px-4 text-sm font-medium outline-none transition-colors duration-200 hover:bg-ink hover:text-paper focus-visible:bg-ink focus-visible:text-paper"
-            >
-              <CalendarDays size={15} strokeWidth={1.8} />
-              {t('home.daily.title')}
-            </Link>
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2 overflow-x-auto border-b border-ink py-4" aria-label={locale === 'id' ? 'Filter kategori' : 'Category filters'}>
+      <main className="mx-auto max-w-[1800px] px-4 sm:px-6 lg:px-8">
+        <section className="flex min-h-12 items-center justify-between gap-4 border-b border-ink/15 py-2" aria-label={locale === 'id' ? 'Filter kategori' : 'Category filters'}>
+          <span className="shrink-0 font-mono text-[9px] uppercase tracking-[0.14em] text-ink-soft">
+            {locale === 'id' ? 'Filter:' : 'Filter:'}
+          </span>
+          <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
             {filters.map((item) => {
               const active = filter === item;
               const label = item === 'all'
@@ -106,10 +134,10 @@ export default function Home() {
                   type="button"
                   aria-pressed={active}
                   onClick={() => setFilter(item)}
-                  className={`min-h-10 shrink-0 cursor-pointer rounded-full border px-4 font-mono text-[10px] uppercase tracking-[0.12em] outline-none transition-colors duration-200 ${
+                  className={`min-h-8 shrink-0 cursor-pointer px-2.5 font-mono text-[9px] uppercase tracking-[0.1em] outline-none transition-colors duration-200 ${
                     active
-                      ? 'border-ink bg-ink text-paper'
-                      : 'border-ink/30 bg-paper text-ink hover:border-ink focus-visible:border-ink'
+                      ? 'bg-ink text-paper'
+                      : 'text-ink/40 hover:text-ink focus-visible:bg-ink focus-visible:text-paper'
                   }`}
                 >
                   {label}
@@ -117,77 +145,51 @@ export default function Home() {
               );
             })}
           </div>
+          <button
+            type="button"
+            onClick={randomGame}
+            className="inline-flex min-h-8 shrink-0 cursor-pointer items-center gap-2 border-l border-ink/15 pl-3 font-mono text-[9px] uppercase tracking-[0.1em] text-ink-soft outline-none hover:text-ink focus-visible:text-ink"
+          >
+            <Shuffle size={13} strokeWidth={1.6} />
+            <span className="hidden sm:inline">{locale === 'id' ? 'Acak' : 'Random'}</span>
+          </button>
+        </section>
 
-          <div className="grid border-b border-ink lg:grid-cols-[minmax(0,1.08fr)_minmax(22rem,0.92fr)]">
-            <nav
-              aria-label={t('home.grid.title')}
-              className="min-w-0 lg:max-h-[calc(100dvh-15.5rem)] lg:overflow-y-auto lg:border-r lg:border-ink lg:pr-6"
-            >
-              {filteredGames.map((meta) => (
+        <section className="grid lg:grid-cols-[minmax(0,1.22fr)_minmax(23rem,0.78fr)]">
+          <div className="wheel-viewport order-2 min-w-0 max-h-[58dvh] lg:order-1 lg:h-[calc(100dvh-7.25rem)] lg:max-h-none">
+            <div className="flex items-center justify-between border-b border-ink/10 py-3 font-mono text-[9px] uppercase tracking-[0.14em] text-ink-soft">
+              <span>{locale === 'id' ? 'Pilih game' : 'Choose a game'}</span>
+              <span>{filteredGames.length} / {GAMES.length}</span>
+            </div>
+            <nav aria-label={t('home.grid.title')} className="wheel-scroll lg:pr-8">
+              {filteredGames.map((meta, index) => (
                 <GameCard
                   key={meta.id}
                   meta={meta}
                   index={GAMES.indexOf(meta)}
+                  distance={index - previewIndex}
                   selected={previewGame.id === meta.id}
                   onPreview={() => setPreviewId(meta.id)}
                   onSelect={() => launch(meta)}
                 />
               ))}
             </nav>
-
-            <aside className="hidden min-h-[34rem] p-6 lg:block xl:p-8" aria-live="polite">
-              <motion.div
-                key={previewGame.id}
-                initial={reduceMotion ? false : { opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                className="flex h-full flex-col"
-              >
-                <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft">
-                  <span>{t(`cat.${previewGame.category}` as const)}</span>
-                  <span>{String(GAMES.indexOf(previewGame) + 1).padStart(2, '0')} / {String(GAMES.length).padStart(2, '0')}</span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => launch(previewGame)}
-                  className="mt-5 block aspect-[8/5] w-full cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-4"
-                  aria-label={`${locale === 'id' ? 'Mainkan' : 'Play'} ${previewGame.name[locale]}`}
-                >
-                  <GameArtwork
-                    gameId={previewGame.id}
-                    label={`${previewGame.name[locale]} preview`}
-                  />
-                </button>
-
-                <div className="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1fr)_11rem]">
-                  <div>
-                    <h2 className="font-pixel text-[clamp(1.7rem,2.8vw,3.25rem)] leading-[0.95] tracking-[-0.045em]">
-                      {previewGame.name[locale]}
-                    </h2>
-                    <p className="mt-3 max-w-[38rem] text-sm leading-relaxed text-ink/65">
-                      {previewGame.tagline[locale]}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => launch(previewGame)}
-                    className="group inline-flex min-h-11 cursor-pointer items-center justify-between self-end border-t border-ink py-3 text-sm font-medium outline-none focus-visible:bg-ink focus-visible:px-3 focus-visible:text-paper"
-                  >
-                    {locale === 'id' ? 'Buka game' : 'Open game'}
-                    <ArrowRight className="transition-transform duration-200 group-hover:translate-x-1" size={16} strokeWidth={1.8} />
-                  </button>
-                </div>
-              </motion.div>
-            </aside>
           </div>
-        </section>
-      </main>
 
-      <footer className="mx-auto flex max-w-[1600px] flex-col gap-2 px-4 py-5 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-soft sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-        <span>© {new Date().getFullYear()} ihavenothingtodo</span>
-        <span>{t('home.footer')}</span>
-      </footer>
+          <aside className="order-1 min-h-[34rem] border-b border-ink/15 py-6 lg:order-2 lg:min-h-0 lg:border-b-0 lg:border-l lg:py-8 lg:pl-8" aria-live="polite">
+            <PreviewPanel
+              game={previewGame}
+              onLaunch={() => launch(previewGame)}
+              reduceMotion={reduceMotion}
+            />
+          </aside>
+        </section>
+
+        <footer className="flex min-h-12 items-center justify-between border-t border-ink/15 font-mono text-[9px] uppercase tracking-[0.12em] text-ink-soft">
+          <span>ihavenothingtodo</span>
+          <span>{t('home.footer')}</span>
+        </footer>
+      </main>
 
       {openGame && <GameModal meta={openGame} onClose={() => setOpenGame(null)} />}
     </div>

@@ -255,9 +255,9 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
       </div>
 
       <div className="relative mt-3 rounded-md border border-ink bg-navy p-2">
-        <div className="flex items-center justify-between px-2 py-2 font-mono text-[11px] text-paper">
+        <div className="flex items-center justify-between px-2 py-2 font-mono text-[11px] text-ink">
           <span>{score}</span>
-          <span className={combo >= 5 ? 'text-paper' : 'text-paper/40'}>x{comboMultiplier(combo)}</span>
+          <span className={combo >= 5 ? 'text-ink' : 'text-ink/40'}>x{comboMultiplier(combo)}</span>
         </div>
         <canvas ref={canvasRef} className="w-full touch-none rounded-sm" style={{ aspectRatio: canvasAspect }} />
 
@@ -268,7 +268,7 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
               initial={{ scale: 2.2, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.6, opacity: 0 }}
-              className="absolute inset-0 grid place-items-center font-pixel text-7xl text-paper"
+              className="absolute inset-0 grid place-items-center font-pixel text-7xl text-ink"
             >
               {count}
             </motion.div>
@@ -276,7 +276,7 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
           {phase === 'paused' && (
             <div className="absolute inset-0 grid place-items-center rounded-md bg-navy">
               <div className="text-center">
-                <p className="mb-4 text-xl text-paper">{t('shell.paused')}</p>
+                <p className="mb-4 text-xl text-ink">{t('shell.paused')}</p>
                 <ChunkyButton color="teal" onClick={togglePause}>
                   {t('shell.resume')}
                 </ChunkyButton>
@@ -286,7 +286,7 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
           {phase === 'error' && (
             <div className="absolute inset-0 grid place-items-center rounded-md bg-navy p-6">
               <div className="text-center">
-                <p className="mb-4 text-xl text-paper">{t('shell.loadError')}</p>
+                <p className="mb-4 text-xl text-ink">{t('shell.loadError')}</p>
                 <ChunkyButton color="teal" onClick={onQuit}>
                   {t('shell.back')}
                 </ChunkyButton>
