@@ -44,7 +44,7 @@ export function GameCard({
         {String(index + 1).padStart(2, '0')}
       </span>
       <span className="min-w-0">
-        <span className="block font-pixel text-[clamp(2.35rem,5.7vw,6.5rem)] leading-[0.84] tracking-[-0.065em]">
+        <span className="inline-block origin-left rotate-[20deg] font-pixel text-[clamp(2.35rem,5.7vw,6.5rem)] leading-[0.84] tracking-[-0.065em]">
           {meta.name[locale]}
         </span>
         <span className="mt-2 block font-mono text-[9px] uppercase tracking-[0.12em] text-ink sm:hidden">
