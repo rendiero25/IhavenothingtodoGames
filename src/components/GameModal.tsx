@@ -81,7 +81,7 @@ export function GameModal({ meta, onClose }: { meta: GameMeta; onClose: () => vo
                 {meta.howTo[locale]}
               </p>
               <div className="mt-6 border-t border-ink/20 pt-4 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-soft">
-                <p>{meta.viewport === 'landscape' ? '16:9' : '2:3'} viewport</p>
+                <p>2:3 / 4:3 / 16:9 viewport</p>
                 <p className="mt-2">5 {locale === 'id' ? 'nyawa' : 'lives'}</p>
               </div>
             </aside>

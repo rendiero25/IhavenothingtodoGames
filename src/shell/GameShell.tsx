@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useI18n } from '../i18n';
 import { sfx } from '../core/sound';
 import { comboMultiplier } from '../core/score';
-import { getMeta, loadEngine } from '../games/registry';
+import { loadEngine } from '../games/registry';
 import type { GameEngine, GameId, GameOptions, GameResult } from '../games/types';
 import { LivesBar } from '../components/LivesBar';
 import { ChunkyButton } from '../components/ChunkyButton';
@@ -66,9 +66,9 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
   const [combo, setCombo] = useState(0);
   const [count, setCount] = useState(3);
   const [shocked, setShocked] = useState(false);
-  const landscape = getMeta(gameId)?.viewport === 'landscape';
-  const shellWidth = landscape ? 'max-w-5xl' : wide ? 'max-w-xl' : 'max-w-md';
-  const canvasAspect = landscape ? '16 / 9' : '2 / 3';
+  const shellWidth = wide
+    ? 'max-w-[42rem] md:max-w-4xl lg:max-w-5xl'
+    : 'max-w-md md:max-w-3xl lg:max-w-5xl';
 
   const setPhase = useCallback((p: Phase) => {
     phaseRef.current = p;
@@ -259,7 +259,10 @@ export function GameShell({ gameId, seed, startLives, roundMs, wide = false, onF
           <span>{score}</span>
           <span className={combo >= 5 ? 'text-ink' : 'text-ink/40'}>x{comboMultiplier(combo)}</span>
         </div>
-        <canvas ref={canvasRef} className="w-full touch-none rounded-sm" style={{ aspectRatio: canvasAspect }} />
+        <canvas
+          ref={canvasRef}
+          className="block aspect-[2/3] w-full touch-none rounded-sm md:aspect-[4/3] lg:aspect-[16/9]"
+        />
 
         <AnimatePresence>
           {phase === 'countdown' && (
