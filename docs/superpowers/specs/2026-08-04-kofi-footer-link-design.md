@@ -1,6 +1,6 @@
 # Ko-fi Footer Link Design
 
-Status: Pending user review
+Status: Approved by user
 
 ## Tujuan
 
