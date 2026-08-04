@@ -31,6 +31,28 @@
   text-rendering: optimizeLegibility;
 }
 
+html[data-theme='light'] {
+  color-scheme: light;
+  --color-cream: oklch(0.97 0.003 90);
+  --color-paper: oklch(0.97 0.003 90);
+  --color-ink: oklch(0.16 0.003 90);
+  --color-ink-soft: oklch(0.48 0.004 90);
+  --color-coral: oklch(0.16 0.003 90);
+  --color-coral-dark: oklch(0.32 0.003 90);
+  --color-teal: oklch(0.35 0.003 90);
+  --color-teal-dark: oklch(0.97 0.003 90);
+  --color-amber: oklch(0.75 0.003 90);
+  --color-amber-dark: oklch(0.35 0.003 90);
+  --color-pink: oklch(0.32 0.003 90);
+  --color-pink-dark: oklch(0.55 0.003 90);
+  --color-navy: oklch(0.91 0.003 90);
+  --color-navy-soft: oklch(0.64 0.003 90);
+  --color-neon-pink: oklch(0.16 0.003 90);
+  --color-neon-green: oklch(0.16 0.003 90);
+  --color-neon-yellow: oklch(0.16 0.003 90);
+  --color-neon-blue: oklch(0.35 0.003 90);
+}
+
 * {
   box-sizing: border-box;
 }

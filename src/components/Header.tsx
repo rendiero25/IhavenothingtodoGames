@@ -1,12 +1,44 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Volume2, VolumeX } from 'lucide-react';
+import { Moon, Sun, Volume2, VolumeX } from 'lucide-react';
 import { useI18n } from '../i18n';
 import { sfx } from '../core/sound';
+
+type Theme = 'light' | 'dark';
+
+const THEME_STORAGE_KEY = 'ihnttd.theme';
+
+function detectTheme(): Theme {
+  try {
+    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    if (saved === 'light' || saved === 'dark') return saved;
+  } catch {
+    /* localStorage tidak tersedia, pakai preferensi sistem */
+  }
+  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
+
+function applyTheme(theme: Theme) {
+  document.documentElement.dataset.theme = theme;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute(
+    'content',
+    theme === 'light' ? '#f7f7f5' : '#1b1b1a',
+  );
+}
 
 export function Header({ wide = false }: { wide?: boolean }) {
   const { locale, setLocale, t } = useI18n();
   const [muted, setMuted] = useState(sfx.muted);
+  const [theme, setTheme] = useState<Theme>(detectTheme);
+
+  useEffect(() => {
+    applyTheme(theme);
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      /* abaikan */
+    }
+  }, [theme]);
 
   return (
     <header className="sticky top-0 z-30 shrink-0 border-b border-ink/15 bg-paper">
@@ -44,6 +76,14 @@ export function Header({ wide = false }: { wide?: boolean }) {
               </button>
             ))}
           </div>
+          <button
+            type="button"
+            onClick={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
+            aria-label={theme === 'dark' ? t('a11y.lightMode') : t('a11y.darkMode')}
+            className="grid size-9 cursor-pointer place-items-center bg-paper outline-none transition-colors duration-200 hover:bg-ink hover:text-paper focus-visible:bg-ink focus-visible:text-paper"
+          >
+            {theme === 'dark' ? <Sun size={16} strokeWidth={1.7} /> : <Moon size={16} strokeWidth={1.7} />}
+          </button>
           <button
             type="button"
             onClick={() => {

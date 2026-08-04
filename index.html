@@ -6,6 +6,20 @@
     <title>ihavenothingtodo</title>
     <meta name="description" content="Koleksi mini-game cepat. Pilih, buka, dan langsung bermain tanpa akun." />
     <meta name="theme-color" content="#1b1b1a" />
+    <script>
+      (() => {
+        try {
+          const saved = localStorage.getItem('ihnttd.theme');
+          const theme = saved === 'light' || saved === 'dark'
+            ? saved
+            : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+          document.documentElement.dataset.theme = theme;
+          document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'light' ? '#f7f7f5' : '#1b1b1a');
+        } catch {
+          document.documentElement.dataset.theme = 'dark';
+        }
+      })();
+    </script>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta property="og:title" content="ihavenothingtodo" />
     <meta property="og:description" content="Quick games for a short break." />
