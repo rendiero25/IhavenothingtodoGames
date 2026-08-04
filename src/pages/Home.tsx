@@ -29,7 +29,7 @@ function PreviewPanel({
       initial={reduceMotion ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-      className="flex h-full min-h-[30rem] flex-col"
+      className="flex h-full min-h-0 flex-col"
     >
       <div className="flex flex-1 flex-col items-center justify-center py-12 lg:py-16">
         <div className="w-full max-w-[38rem] text-left">
@@ -105,10 +105,10 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-dvh bg-paper text-ink">
+    <div className="flex h-dvh flex-col overflow-hidden bg-paper text-ink">
       <Header wide />
 
-      <main className="mx-auto max-w-[1800px] px-4 sm:px-6 lg:px-8">
+      <main className="mx-auto flex min-h-0 w-full max-w-[1800px] flex-1 flex-col overflow-y-auto px-4 sm:px-6 lg:overflow-hidden lg:px-8">
         <section className="flex min-h-12 items-center justify-between gap-4 py-2" aria-label={locale === 'id' ? 'Filter kategori' : 'Category filters'}>
           <span className="shrink-0 font-mono text-[9px] uppercase tracking-[0.14em] text-ink">
             {locale === 'id' ? 'Filter:' : 'Filter:'}
@@ -146,8 +146,8 @@ export default function Home() {
           </button>
         </section>
 
-        <section className="grid lg:grid-cols-[minmax(0,1.22fr)_minmax(23rem,0.78fr)]">
-          <div className="wheel-viewport order-2 min-w-0 max-h-[58dvh] lg:order-1 lg:h-[calc(100dvh-7.25rem)] lg:max-h-none">
+        <section className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,1.22fr)_minmax(23rem,0.78fr)]">
+          <div className="wheel-viewport order-2 min-w-0 max-h-[58dvh] lg:order-1 lg:h-full lg:max-h-none">
             <div className="flex items-center justify-between py-3 font-mono text-[9px] uppercase tracking-[0.14em] text-ink">
               <span>{locale === 'id' ? 'Pilih game' : 'Choose a game'}</span>
               <span>{filteredGames.length} / {GAMES.length}</span>
@@ -167,7 +167,7 @@ export default function Home() {
             </nav>
           </div>
 
-          <aside className="order-1 min-h-[34rem] py-6 lg:order-2 lg:min-h-0 lg:py-8 lg:pl-8" aria-live="polite">
+          <aside className="order-1 min-h-0 py-6 lg:order-2 lg:min-h-0 lg:py-8 lg:pl-8" aria-live="polite">
             <PreviewPanel
               game={previewGame}
               reduceMotion={reduceMotion}
@@ -175,19 +175,20 @@ export default function Home() {
           </aside>
         </section>
 
-        <footer className="grid min-h-12 grid-cols-2 items-center gap-x-4 gap-y-2 py-3 font-mono text-[9px] uppercase tracking-[0.12em] text-ink-soft sm:grid-cols-[1fr_auto_1fr] sm:py-0">
-          <span>ihavenothingtodo</span>
-          <a
-            href="https://ko-fi.com/rendiero"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="justify-self-start text-ink outline-none underline-offset-4 transition-colors duration-200 hover:text-ink/65 hover:underline focus-visible:text-ink focus-visible:underline sm:justify-self-center"
-          >
-            {t('home.kofi')}
-          </a>
-          <span className="col-span-2 sm:col-span-1 sm:justify-self-end">{t('home.footer')}</span>
-        </footer>
       </main>
+
+      <footer className="mx-auto grid min-h-12 w-full max-w-[1800px] shrink-0 grid-cols-2 items-center gap-x-4 gap-y-2 px-4 py-3 font-mono text-[9px] uppercase tracking-[0.12em] text-ink sm:grid-cols-[1fr_auto_1fr] sm:px-6 sm:py-0 lg:px-8">
+        <span>ihavenothingtodo</span>
+        <a
+          href="https://ko-fi.com/rendiero"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="justify-self-start text-ink outline-none underline-offset-4 transition-colors duration-200 hover:text-ink/65 hover:underline focus-visible:text-ink focus-visible:underline sm:justify-self-center"
+        >
+          {t('home.kofi')}
+        </a>
+        <span className="col-span-2 sm:col-span-1 sm:justify-self-end">{t('home.footer')}</span>
+      </footer>
 
       {openGame && <GameModal meta={openGame} onClose={() => setOpenGame(null)} />}
     </div>

@@ -9,7 +9,7 @@ export function Header({ wide = false }: { wide?: boolean }) {
   const [muted, setMuted] = useState(sfx.muted);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-ink/15 bg-paper">
+    <header className="sticky top-0 z-30 shrink-0 border-b border-ink/15 bg-paper">
       <div className={`mx-auto grid min-h-14 w-full grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 sm:px-6 ${wide ? 'max-w-[1800px] lg:px-8' : 'max-w-5xl'}`}>
         <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-ink sm:text-[10px]">
           {wide ? (locale === 'id' ? 'Pilih game:' : 'Choose your game:') : 'ihavenothingtodo'}
