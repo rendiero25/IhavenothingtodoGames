@@ -47,15 +47,15 @@ export function GameCard({
         <span className="block font-pixel text-[clamp(2.35rem,5.7vw,6.5rem)] leading-[0.84] tracking-[-0.065em]">
           {meta.name[locale]}
         </span>
-        <span className="mt-2 block font-mono text-[9px] uppercase tracking-[0.12em] opacity-70 sm:hidden">
+        <span className="mt-2 block font-mono text-[9px] uppercase tracking-[0.12em] text-ink sm:hidden">
           {t(catKey)}
         </span>
       </span>
       <span className="flex items-center gap-3">
-        <span className="hidden font-mono text-[9px] uppercase tracking-[0.12em] opacity-70 sm:block">
+        <span className="hidden font-mono text-[9px] uppercase tracking-[0.12em] text-ink sm:block">
           {t(catKey)}
         </span>
-        <span className="grid size-8 place-items-center opacity-70 transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5 sm:size-9">
+        <span className="grid size-8 place-items-center text-ink transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5 sm:size-9">
           <ArrowUpRight aria-hidden="true" size={16} strokeWidth={1.7} />
         </span>
       </span>

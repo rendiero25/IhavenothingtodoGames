@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, Shuffle } from 'lucide-react';
+import { Shuffle } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { Header } from '../components/Header';
 import { GameCard } from '../components/GameCard';
@@ -13,15 +13,15 @@ type Filter = 'all' | Category;
 
 function PreviewPanel({
   game,
-  onLaunch,
   reduceMotion,
 }: {
   game: GameMeta;
-  onLaunch: () => void;
   reduceMotion: boolean | null;
 }) {
-  const { locale, t } = useI18n();
-  const gameNumber = String(GAMES.indexOf(game) + 1).padStart(2, '0');
+  const { locale } = useI18n();
+  const extraDescription = locale === 'id'
+    ? 'Mainkan beberapa ronde pendek untuk menemukan ritme terbaikmu dan mengejar skor tertinggi.'
+    : 'Play a few short rounds to find your rhythm and chase your highest score.';
 
   return (
     <motion.div
@@ -31,30 +31,19 @@ function PreviewPanel({
       transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
       className="flex h-full min-h-[30rem] flex-col"
     >
-      <div className="flex items-center justify-between pb-3 font-mono text-[9px] uppercase tracking-[0.14em] text-ink-soft">
-        <span>{t(`cat.${game.category}` as const)}</span>
-        <span>{gameNumber} / {String(GAMES.length).padStart(2, '0')}</span>
-      </div>
-
-      <div className="flex flex-1 flex-col justify-center py-12 lg:py-16">
+      <div className="flex flex-1 flex-col items-center justify-center py-12 text-center lg:py-16">
         <h2 className="font-pixel text-[clamp(2rem,3.4vw,4.3rem)] leading-[0.86] tracking-[-0.06em]">
           {game.name[locale]}
         </h2>
-        <p className="mt-4 max-w-[38rem] text-base leading-relaxed text-ink/65">
+        <p className="mt-5 max-w-[38rem] text-base leading-relaxed text-ink/75">
           {game.tagline[locale]}
         </p>
-        <p className="mt-3 max-w-[38rem] text-sm leading-relaxed text-ink/45">
+        <p className="mt-3 max-w-[38rem] text-sm leading-relaxed text-ink/60">
           {game.howTo[locale]}
         </p>
-
-        <button
-          type="button"
-          onClick={onLaunch}
-          className="group mt-auto flex min-h-12 items-center justify-between pt-4 text-left font-mono text-[10px] uppercase tracking-[0.14em] outline-none hover:text-ink/65 focus-visible:text-ink/65"
-        >
-          <span>{locale === 'id' ? 'Buka game' : 'Open game'}</span>
-          <ArrowRight className="transition-transform duration-200 group-hover:translate-x-1" size={16} strokeWidth={1.6} />
-        </button>
+        <p className="mt-3 max-w-[34rem] text-sm leading-relaxed text-ink/45">
+          {extraDescription}
+        </p>
       </div>
     </motion.div>
   );
@@ -119,7 +108,7 @@ export default function Home() {
 
       <main className="mx-auto max-w-[1800px] px-4 sm:px-6 lg:px-8">
         <section className="flex min-h-12 items-center justify-between gap-4 py-2" aria-label={locale === 'id' ? 'Filter kategori' : 'Category filters'}>
-          <span className="shrink-0 font-mono text-[9px] uppercase tracking-[0.14em] text-ink-soft">
+          <span className="shrink-0 font-mono text-[9px] uppercase tracking-[0.14em] text-ink">
             {locale === 'id' ? 'Filter:' : 'Filter:'}
           </span>
           <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
@@ -148,7 +137,7 @@ export default function Home() {
           <button
             type="button"
             onClick={randomGame}
-            className="inline-flex min-h-8 shrink-0 cursor-pointer items-center gap-2 pl-3 font-mono text-[9px] uppercase tracking-[0.1em] text-ink-soft outline-none hover:text-ink focus-visible:text-ink"
+            className="inline-flex min-h-8 shrink-0 cursor-pointer items-center gap-2 pl-3 font-mono text-[9px] uppercase tracking-[0.1em] text-ink outline-none hover:text-ink/70 focus-visible:text-ink"
           >
             <Shuffle size={13} strokeWidth={1.6} />
             <span className="hidden sm:inline">{locale === 'id' ? 'Acak' : 'Random'}</span>
@@ -157,7 +146,7 @@ export default function Home() {
 
         <section className="grid lg:grid-cols-[minmax(0,1.22fr)_minmax(23rem,0.78fr)]">
           <div className="wheel-viewport order-2 min-w-0 max-h-[58dvh] lg:order-1 lg:h-[calc(100dvh-7.25rem)] lg:max-h-none">
-            <div className="flex items-center justify-between py-3 font-mono text-[9px] uppercase tracking-[0.14em] text-ink-soft">
+            <div className="flex items-center justify-between py-3 font-mono text-[9px] uppercase tracking-[0.14em] text-ink">
               <span>{locale === 'id' ? 'Pilih game' : 'Choose a game'}</span>
               <span>{filteredGames.length} / {GAMES.length}</span>
             </div>
@@ -179,7 +168,6 @@ export default function Home() {
           <aside className="order-1 min-h-[34rem] py-6 lg:order-2 lg:min-h-0 lg:py-8 lg:pl-8" aria-live="polite">
             <PreviewPanel
               game={previewGame}
-              onLaunch={() => launch(previewGame)}
               reduceMotion={reduceMotion}
             />
           </aside>
