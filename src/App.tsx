@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import Play from './pages/Play';
 import Daily from './pages/Daily';
 import NotFound from './pages/NotFound';
+import SectionPlaceholder from './pages/SectionPlaceholder';
 
 export default function App() {
   useEffect(() => {
@@ -22,6 +23,8 @@ export default function App() {
       <Route path="/" element={<Home />} />
       <Route path="/play/:gameId" element={<Play />} />
       <Route path="/daily" element={<Daily />} />
+      <Route path="/education" element={<SectionPlaceholder section="education" />} />
+      <Route path="/weird" element={<SectionPlaceholder section="weird" />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

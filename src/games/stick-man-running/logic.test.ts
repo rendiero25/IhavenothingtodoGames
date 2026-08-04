@@ -2,14 +2,14 @@ import { describe, expect, it } from 'vitest';
 import {
   ARENA_LEFT,
   ARENA_RIGHT,
+  ATTACK_ANIMATION_MS,
   BOSS_MILESTONE_WAVE,
   COMBO_WINDOW_MS,
   FLOOR_Y,
+  FINISHER_JUMP_VELOCITY,
   HIT_STOP_MS,
-  PAPER_PROJECTILE_SPEED,
   PLAYER_HALF_WIDTH,
   PLAYER_INVULNERABILITY_MS,
-  WEAPON_TUNING,
   type EnemyState,
   type GameState,
   type InputState,
@@ -31,7 +31,6 @@ function enemy(overrides: Partial<EnemyState> = {}): EnemyState {
     telegraph: 0,
     stunUntil: 0,
     knockback: 0,
-    projectileCooldown: 0,
     ...overrides,
   };
 }
@@ -83,6 +82,29 @@ describe('Stick Man Running movement', () => {
 });
 
 describe('Stick Man Running combat', () => {
+  it('tracks attack pose timing and gives each strike forward momentum', () => {
+    let next = state({ enemies: [enemy({ x: 800, y: 0 })] });
+    next = updateGame(next, { ...idle, punchPressed: true }, 16, 17);
+    expect(next.player.attackStep).toBe(1);
+    expect(next.player.attackStartedAt).toBe(next.time);
+    expect(next.player.vx).toBeGreaterThan(0);
+
+    next = updateGame(next, idle, ATTACK_ANIMATION_MS, 17);
+    expect(next.player.attackStep).toBe(0);
+  });
+
+  it('turns the third combo hit into an airborne finisher', () => {
+    let next = state({ enemies: [enemy({ x: 800, y: 0 })] });
+    next = updateGame(next, { ...idle, punchPressed: true }, 16, 17);
+    next = updateGame(next, { ...idle, punchPressed: true }, 100, 17);
+    next = updateGame(next, { ...idle, punchPressed: true }, 100, 17);
+
+    expect(next.player.attackStep).toBe(3);
+    expect(next.player.vx).toBeGreaterThan(0);
+    expect(next.player.grounded).toBe(false);
+    expect(next.player.vy).toBe(FINISHER_JUMP_VELOCITY);
+  });
+
   it('advances a three-hit combo inside its timing window and resets after a late hit', () => {
     let next = state({ enemies: [enemy({ x: 700 })] });
     next = updateGame(next, { ...idle, punchPressed: true }, 16, 17);
@@ -127,101 +149,6 @@ describe('Stick Man Running combat', () => {
   });
 });
 
-describe('Stick Man Running projectiles', () => {
-  it('spawns a moving paper projectile before applying ranged damage', () => {
-    let next = state({ enemies: [enemy({ id: 4, kind: 'thrower', x: 700, projectileCooldown: 0 })] });
-    next = updateGame(next, idle, 16, 17);
-    expect(next.lives).toBe(5);
-    expect(next.projectiles).toHaveLength(1);
-    expect(next.projectiles[0]).toMatchObject({ kind: 'paper', owner: 'enemy', vx: -PAPER_PROJECTILE_SPEED });
-
-    for (let index = 0; index < 20 && next.lives === 5; index += 1) {
-      next = updateGame(next, idle, 50, 17);
-    }
-    expect(next.lives).toBe(4);
-    expect(next.projectiles).toHaveLength(0);
-  });
-
-  it('fires a straight pencil projectile that damages, stuns, and scores on impact', () => {
-    let next = state({
-      player: {
-        ...state().player,
-        weapon: 'pencil',
-        weaponExpiresAt: 10_000,
-      },
-      enemies: [enemy({ x: 650 })],
-    });
-    next = updateGame(next, { ...idle, punchPressed: true }, 16, 17);
-    expect(next.projectiles[0]).toMatchObject({ kind: 'pencil', owner: 'player', vx: 650 });
-
-    for (let index = 0; index < 12 && next.enemies[0]?.hp === 5; index += 1) {
-      next = updateGame(next, idle, 40, 17);
-    }
-    expect(next.enemies[0].hp).toBe(3);
-    expect(next.enemies[0].stunUntil).toBeGreaterThan(next.time);
-    expect(next.score).toBe(20);
-    expect(next.hitStopMs).toBeGreaterThan(0);
-    expect(next.projectiles).toHaveLength(0);
-  });
-
-  it('emits erase-lines when the Eraser Boss launches its paper attack', () => {
-    const next = updateGame(state({
-      enemies: [enemy({ id: 9, kind: 'boss', x: 700, hp: 18, maxHp: 18, projectileCooldown: 0 })],
-    }), idle, 16, 17);
-    expect(next.projectiles.some((projectile) => projectile.kind === 'paper' && projectile.sourceId === 9)).toBe(true);
-    expect(next.effects.some((effect) => effect.kind === 'erase-lines')).toBe(true);
-  });
-
-  it('expires projectiles without applying damage after their lifetime', () => {
-    const next = updateGame(state({
-      enemies: [enemy({ y: 0 })],
-      projectiles: [{
-        id: 3,
-        kind: 'paper',
-        owner: 'enemy',
-        sourceId: 1,
-        x: 600,
-        y: FLOOR_Y - 40,
-        vx: -PAPER_PROJECTILE_SPEED,
-        damage: 1,
-        knockback: -220,
-        expiresAt: 50,
-      }],
-    }), idle, 60, 17);
-    expect(next.projectiles).toHaveLength(0);
-    expect(next.lives).toBe(5);
-  });
-
-  it('produces identical projectile travel and collision outcomes from equal seeded state', () => {
-    const initial = state({ enemies: [enemy({ id: 7, kind: 'thrower', x: 700, projectileCooldown: 0 })] });
-    const run = () => {
-      let next = structuredClone(initial);
-      for (let index = 0; index < 14; index += 1) next = updateGame(next, idle, 50, 91);
-      return next;
-    };
-    expect(run()).toEqual(run());
-  });
-});
-
-describe('Stick Man Running pickups', () => {
-  it('collects a notebook weapon and expires it after its configured duration', () => {
-    let next = state({
-      pickups: [{ id: 4, kind: 'ruler', x: 480, y: FLOOR_Y - 18, active: true }],
-      enemies: [enemy({ x: 800, y: 0 })],
-    });
-    next = updateGame(next, idle, 16, 17);
-    expect(next.player.weapon).toBe('ruler');
-    expect(next.pickups[0].active).toBe(false);
-
-    const duration = WEAPON_TUNING.ruler.durationMs;
-    for (let elapsed = 0; elapsed <= duration; elapsed += 100) {
-      next = updateGame(next, idle, 100, 17);
-    }
-    expect(next.player.weapon).toBeUndefined();
-    expect(next.player.weaponExpiresAt).toBe(0);
-  });
-});
-
 describe('Stick Man Running waves', () => {
   it('spawns equal waves for the same seed and varies placement or roster for another seed', () => {
     expect(spawnWave(42, 4)).toEqual(spawnWave(42, 4));
@@ -230,19 +157,20 @@ describe('Stick Man Running waves', () => {
 
   it('unlocks all regular enemies and guarantees the Eraser Boss on milestone waves', () => {
     const regularKinds = new Set(Array.from({ length: 12 }, (_, index) => spawnWave(100 + index, 4)).flat().map((item) => item.kind));
-    expect(regularKinds).toEqual(new Set(['runner', 'blocker', 'thrower']));
+    expect(regularKinds).toEqual(new Set(['runner', 'blocker', 'kicker']));
     expect(spawnWave(7, BOSS_MILESTONE_WAVE).filter((item) => item.kind === 'boss')).toHaveLength(1);
     expect(spawnWave(7, BOSS_MILESTONE_WAVE - 1).some((item) => item.kind === 'boss')).toBe(false);
   });
 
-  it('escalates to the next wave and creates deterministic pickups', () => {
+  it('escalates to next melee wave deterministically', () => {
     const cleared = state({ wave: 1, enemies: [] });
     const a = updateGame(cleared, idle, 16, 55);
     const b = updateGame(cleared, idle, 16, 55);
     expect(a.wave).toBe(2);
     expect(a.enemies).toEqual(b.enemies);
-    expect(a.pickups).toEqual(b.pickups);
-    expect(a.pickups).toHaveLength(1);
+    expect(a.enemies).toEqual(b.enemies);
+    expect(a).not.toHaveProperty('pickups');
+    expect(a).not.toHaveProperty('projectiles');
   });
 });
 

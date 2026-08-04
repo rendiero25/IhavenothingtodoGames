@@ -158,6 +158,7 @@ export class StickManRunningEngine implements GameEngine {
   private reducedMotion = false;
   private initialized = false;
   private destroyed = false;
+  private paused = false;
   private finished = false;
   private fatalEmitted = false;
   private gameOverEmitted = false;
@@ -187,21 +188,25 @@ export class StickManRunningEngine implements GameEngine {
 
   start(): void {
     if (!this.readyToRun()) return;
+    this.paused = false;
     this.loop?.start((dtMs) => this.onFrame(dtMs));
   }
 
   pause(): void {
+    this.paused = true;
     this.loop?.pause();
     this.clearInput();
   }
 
   resume(): void {
+    if (this.destroyed || this.finished) return;
     this.start();
   }
 
   destroy(): void {
     if (this.destroyed) return;
     this.destroyed = true;
+    this.paused = true;
     this.finished = true;
     this.loop?.destroy();
     this.resources?.destroy();
@@ -229,7 +234,7 @@ export class StickManRunningEngine implements GameEngine {
   }
 
   private onFrame(dtMs: number): void {
-    if (!this.readyToRun() || !this.state || !this.opts) return;
+    if (this.paused || !this.readyToRun() || !this.state || !this.opts) return;
     try {
       const previous = this.state;
       this.state = updateGame(previous, this.consumeInput(), dtMs, this.opts.seed);
@@ -271,7 +276,6 @@ export class StickManRunningEngine implements GameEngine {
       stats: {
         wave: this.state.wave,
         enemiesRemaining: this.state.enemies.length,
-        pickupsRemaining: this.state.pickups.filter((pickup) => pickup.active).length,
       },
     });
   }
@@ -279,6 +283,7 @@ export class StickManRunningEngine implements GameEngine {
   private emitFatal(error: unknown): void {
     if (this.fatalEmitted || this.destroyed) return;
     this.fatalEmitted = true;
+    this.paused = true;
     this.finished = true;
     this.loop?.destroy();
     this.resources?.destroy();
@@ -357,10 +362,14 @@ export class StickManRunningEngine implements GameEngine {
     if (!this.resources || !this.canvas?.parentElement) return;
     const container = document.createElement('div');
     container.dataset.stickManControls = 'true';
+    container.style.position = 'absolute';
+    container.style.left = '12px';
+    container.style.right = '12px';
+    container.style.bottom = 'max(12px, env(safe-area-inset-bottom))';
+    container.style.zIndex = '6';
     container.style.display = 'grid';
     container.style.gridTemplateColumns = 'repeat(4, minmax(44px, 1fr))';
     container.style.gap = '8px';
-    container.style.paddingTop = '8px';
     container.style.touchAction = 'none';
     container.setAttribute('role', 'group');
     container.setAttribute('aria-label', this.opts?.locale === 'id' ? 'Kontrol permainan' : 'Game controls');

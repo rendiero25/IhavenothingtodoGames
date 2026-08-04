@@ -191,6 +191,27 @@ describe('EngineFrameLoop', () => {
     expect(loop.isRunning).toBe(true);
   });
 
+  it('mengabaikan callback frame lama setelah pause', () => {
+    let nextId = 0;
+    const frames = new Map<number, (time: number) => void>();
+    const loop = new EngineFrameLoop(
+      (callback) => {
+        nextId += 1;
+        frames.set(nextId, callback);
+        return nextId;
+      },
+      () => undefined,
+    );
+    const deltas: number[] = [];
+
+    loop.start((dtMs) => deltas.push(dtMs));
+    const staleFrame = frames.get(1);
+    loop.pause();
+    staleFrame?.(500);
+
+    expect(deltas).toEqual([]);
+  });
+
   it('destroy menghentikan loop secara idempoten dan mencegah restart', () => {
     let requests = 0;
     let cancellations = 0;

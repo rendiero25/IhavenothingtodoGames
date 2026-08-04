@@ -99,6 +99,15 @@ a {
   display: none;
 }
 
+.filter-scroll {
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.filter-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

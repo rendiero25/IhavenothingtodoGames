@@ -30,7 +30,6 @@ export function GameCard({
     <button
       type="button"
       id={`game-row-${meta.id}`}
-      onMouseEnter={onPreview}
       onFocus={onPreview}
       onClick={onSelect}
       aria-current={selected ? 'true' : undefined}
@@ -43,7 +42,7 @@ export function GameCard({
       <span className="font-mono text-[10px] tabular-nums opacity-70 sm:text-xs">
         {String(index + 1).padStart(2, '0')}
       </span>
-      <span className="min-w-0">
+      <span className="min-w-0 text-center">
         <span className="block font-pixel text-[clamp(2.35rem,5.7vw,6.5rem)] leading-[0.84] tracking-[-0.065em]">
           {meta.name[locale]}
         </span>

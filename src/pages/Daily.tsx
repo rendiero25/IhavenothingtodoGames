@@ -92,7 +92,7 @@ export default function Daily() {
 
   return (
     <div className="min-h-dvh">
-      <Header />
+      <Header wide />
 
       {phase.kind === 'intro' && (
         <main className="mx-auto flex max-w-md flex-col items-center px-6 pt-6 text-center">
@@ -106,7 +106,7 @@ export default function Daily() {
                 initial={{ opacity: 0, x: -12 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.08 }}
-                className="rounded-xl border-[3px] border-ink bg-paper px-4 py-2 text-left font-bold"
+                className="rounded-md border border-ink bg-paper px-4 py-2 text-left font-bold"
               >
                 {i + 1}. {metaAt(i).name[locale]}
               </motion.li>

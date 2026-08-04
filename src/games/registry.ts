@@ -126,14 +126,14 @@ export const GAMES: GameMeta[] = [
     icon: 'move',
     accent: 'amber',
     viewport: 'landscape',
-    name: { id: 'Stick Man Running', en: 'Stick Man Running' },
+    name: { id: 'Stick Man Brawl', en: 'Stick Man Brawl' },
     tagline: {
       id: 'Berlari, melompat, dan bertarung di atas halaman buku.',
       en: 'Run, jump, and brawl across a notebook page.',
     },
     howTo: {
-      id: 'Gunakan A/D atau panah untuk bergerak, W/spasi untuk melompat, dan klik kiri untuk merangkai tiga pukulan.',
-      en: 'Use A/D or arrow keys to move, W/space to jump, and left click to chain three punches.',
+      id: 'Gunakan A/D atau panah untuk bergerak, W/spasi untuk melompat, dan klik kiri untuk merangkai pukulan serta tendangan.',
+      en: 'Use A/D or arrow keys to move, W/space to jump, and left click to chain punches and kicks.',
     },
   },
 ];

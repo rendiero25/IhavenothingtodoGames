@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { type WheelEvent, useEffect, useMemo, useState } from 'react';
 import { Shuffle } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { Header } from '../components/Header';
@@ -104,16 +104,28 @@ export default function Home() {
     launch(pool[Math.floor(Math.random() * pool.length)]);
   };
 
+  const handleGameWheel = (event: WheelEvent<HTMLElement>) => {
+    if (!event.deltaY || filteredGames.length < 2) return;
+
+    event.preventDefault();
+    const direction = event.deltaY > 0 ? 1 : -1;
+    const nextIndex = Math.min(
+      Math.max(previewIndex + direction, 0),
+      filteredGames.length - 1,
+    );
+
+    if (nextIndex !== previewIndex) {
+      setPreviewId(filteredGames[nextIndex].id);
+    }
+  };
+
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-paper text-ink">
       <Header wide />
 
       <main className="mx-auto flex min-h-0 w-full max-w-[1800px] flex-1 flex-col overflow-y-auto px-4 sm:px-6 lg:overflow-hidden lg:px-8">
         <section className="flex min-h-12 items-center justify-between gap-4 py-2" aria-label={locale === 'id' ? 'Filter kategori' : 'Category filters'}>
-          <span className="shrink-0 font-mono text-[9px] uppercase tracking-[0.14em] text-ink">
-            {locale === 'id' ? 'Filter:' : 'Filter:'}
-          </span>
-          <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
+          <div className="filter-scroll flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
             {filters.map((item) => {
               const active = filter === item;
               const label = item === 'all'
@@ -125,7 +137,7 @@ export default function Home() {
                   type="button"
                   aria-pressed={active}
                   onClick={() => setFilter(item)}
-                  className={`min-h-8 shrink-0 cursor-pointer px-2.5 font-mono text-[9px] uppercase tracking-[0.1em] outline-none transition-colors duration-200 ${
+                  className={`min-h-8 shrink-0 snap-start cursor-pointer px-2.5 font-mono text-[9px] uppercase tracking-[0.1em] outline-none transition-colors duration-200 ${
                     active
                       ? 'bg-ink text-paper'
                       : 'text-ink/40 hover:text-ink focus-visible:bg-ink focus-visible:text-paper'
@@ -139,6 +151,7 @@ export default function Home() {
           <button
             type="button"
             onClick={randomGame}
+            aria-label={t('home.random')}
             className="inline-flex min-h-8 shrink-0 cursor-pointer items-center gap-2 pl-3 font-mono text-[9px] uppercase tracking-[0.1em] text-ink outline-none hover:text-ink/70 focus-visible:text-ink"
           >
             <Shuffle size={13} strokeWidth={1.6} />
@@ -152,7 +165,11 @@ export default function Home() {
               <span>{locale === 'id' ? 'Pilih game' : 'Choose a game'}</span>
               <span>{filteredGames.length} / {GAMES.length}</span>
             </div>
-            <nav aria-label={t('home.grid.title')} className="wheel-scroll lg:pr-8">
+            <nav
+              aria-label={t('home.grid.title')}
+              className="wheel-scroll lg:pr-8"
+              onWheel={handleGameWheel}
+            >
               {filteredGames.map((meta, index) => (
                 <GameCard
                   key={meta.id}
@@ -167,7 +184,7 @@ export default function Home() {
             </nav>
           </div>
 
-          <aside className="order-1 min-h-0 py-6 lg:order-2 lg:min-h-0 lg:py-8 lg:pl-8" aria-live="polite">
+          <aside className="order-1 hidden min-h-0 py-6 md:block lg:order-2 lg:min-h-0 lg:py-8 lg:pl-8" aria-live="polite">
             <PreviewPanel
               game={previewGame}
               reduceMotion={reduceMotion}
@@ -177,17 +194,16 @@ export default function Home() {
 
       </main>
 
-      <footer className="mx-auto grid min-h-12 w-full max-w-[1800px] shrink-0 grid-cols-2 items-center gap-x-4 gap-y-2 px-4 py-3 font-mono text-[9px] uppercase tracking-[0.12em] text-ink sm:grid-cols-[1fr_auto_1fr] sm:px-6 sm:py-0 lg:px-8">
-        <span>ihavenothingtodo</span>
+      <footer className="mx-auto flex min-h-12 w-full max-w-[1800px] shrink-0 items-center justify-center gap-3 overflow-hidden px-4 py-3 font-mono text-[8px] uppercase tracking-[0.1em] text-ink sm:gap-5 sm:px-6 sm:py-0 sm:text-[9px] lg:px-8">
         <a
           href="https://ko-fi.com/rendiero"
           target="_blank"
           rel="noopener noreferrer"
-          className="justify-self-start text-ink outline-none underline-offset-4 transition-colors duration-200 hover:text-ink/65 hover:underline focus-visible:text-ink focus-visible:underline sm:justify-self-center"
+          className="shrink-0 font-bold text-ink outline-none underline-offset-4 transition-colors duration-200 hover:text-ink/65 hover:underline focus-visible:text-ink focus-visible:underline"
         >
           {t('home.kofi')}
         </a>
-        <span className="col-span-2 sm:col-span-1 sm:justify-self-end">{t('home.footer')}</span>
+        <span className="shrink-0">{t('home.footer')}</span>
       </footer>
 
       {openGame && <GameModal meta={openGame} onClose={() => setOpenGame(null)} />}

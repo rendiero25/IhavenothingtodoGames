@@ -1,5 +1,5 @@
-import { FLOOR_Y, LOGICAL_HEIGHT, LOGICAL_WIDTH } from './config';
-import type { EffectState, EnemyState, GameState, PickupState, PlayerState, ProjectileState } from './logic';
+import { ATTACK_ANIMATION_MS, FLOOR_Y, HIT_STUN_MS, LOGICAL_HEIGHT, LOGICAL_WIDTH } from './config';
+import type { EffectState, EnemyState, GameState, PlayerState } from './logic';
 
 const WIDTH = LOGICAL_WIDTH;
 const HEIGHT = LOGICAL_HEIGHT;
@@ -8,6 +8,8 @@ const GRAPHITE = '#626262';
 const PAPER = '#f7f7f7';
 const RULE = '#d6d6d6';
 const MARGIN = '#c8c8c8';
+const CHARACTER_STROKE = 4;
+const CHARACTER_DETAIL_STROKE = 2;
 const OBSTACLES = [
   { x: 226, width: 58 },
   { x: 676, width: 58 },
@@ -95,57 +97,109 @@ function drawArena(ctx: CanvasRenderingContext2D, playerX: number): void {
   }
 }
 
-function drawPlayer(ctx: CanvasRenderingContext2D, player: PlayerState, time: number): void {
-  const dir = player.facing;
-  const attacking = player.comboStep > 0;
-  const recoil = attacking ? -dir * player.comboStep * 2 : 0;
-  const footY = player.y;
-  const hipY = footY - 34;
-  const shoulderY = footY - 74;
-  const headY = footY - 102;
-  const stride = Math.min(10, Math.abs(player.vx) / 30) * dir;
-
-  ctx.save();
-  ctx.globalAlpha = time < player.invulnerableUntil && Math.floor(time / 80) % 2 === 1 ? 0.42 : 1;
-  circle(ctx, player.x + recoil, headY, 16, 3.5);
-  line(ctx, player.x + recoil, headY + 16, player.x + recoil, hipY, 4);
-  line(ctx, player.x + recoil, shoulderY, player.x + recoil + dir * (attacking ? 44 + player.comboStep * 12 : 27), shoulderY + (attacking ? -4 : 18), 4);
-  line(ctx, player.x + recoil, shoulderY + 4, player.x + recoil - dir * 25, shoulderY + 24, 3);
-  line(ctx, player.x + recoil, hipY, player.x + recoil + 18 + stride, footY, 4);
-  line(ctx, player.x + recoil, hipY, player.x + recoil - 18 - stride, footY, 4);
-  if (player.weapon) drawWeapon(ctx, player.x + recoil + dir * 28, shoulderY - 1, dir, player.weapon);
-  ctx.restore();
+interface Point {
+  x: number;
+  y: number;
 }
 
-function drawWeapon(ctx: CanvasRenderingContext2D, x: number, y: number, dir: number, weapon: PickupState['kind']): void {
+function drawPlayer(ctx: CanvasRenderingContext2D, player: PlayerState, time: number, reducedMotion: boolean): void {
+  const attacking = player.attackStep > 0;
+  const dir = attacking ? player.attackFacing : player.facing;
+  const motionScale = reducedMotion ? 0.35 : 1;
+  const speedRatio = clamp(Math.abs(player.vx) / 280, 0, 1);
+  const runCycle = Math.sin(time / 78);
+  const attackAge = attacking ? clamp((time - player.attackStartedAt) / ATTACK_ANIMATION_MS, 0, 1) : 0;
+  const anticipation = attacking ? 1 - clamp(attackAge / 0.2, 0, 1) : 0;
+  const strike = attacking
+    ? clamp((attackAge - 0.16) / 0.22, 0, 1) * (1 - clamp((attackAge - 0.58) / 0.42, 0, 1) * 0.35)
+    : 0;
+  const recovery = attacking ? clamp((attackAge - 0.5) / 0.5, 0, 1) : 0;
+  const stride = runCycle * speedRatio * 18 * motionScale;
+  const bounce = player.grounded
+    ? (speedRatio > 0.2 ? Math.abs(runCycle) * 2.5 : Math.sin(time / 260) * 1.2) * motionScale
+    : 0;
+  const finisherLift = player.attackStep === 3
+    ? Math.sin(Math.PI * clamp((attackAge - 0.1) / 0.9, 0, 1)) * 28 * motionScale
+    : 0;
+  const forwardShift = attacking
+    ? dir * (-anticipation * 11 + strike * (player.attackStep === 3 ? 19 : 9)) * motionScale
+    : 0;
+  const bodyLean = attacking
+    ? dir * ((player.attackStep === 3 ? 0.17 : 0.1) * strike - (player.attackStep === 2 ? 0.12 : 0.08) * anticipation)
+    : dir * speedRatio * 0.045 * motionScale;
+  const footY = player.y - bounce - finisherLift;
+  const baseX = player.x + forwardShift;
+  const hip: Point = { x: 0, y: -34 };
+  const shoulder: Point = { x: -dir * 3, y: -74 };
+  const head: Point = { x: -dir * 5, y: -102 };
+
+  const punchHand: Point = !attacking
+    ? { x: dir * 28, y: -56 }
+    : player.attackStep === 1
+      ? { x: dir * (20 + 44 * strike - 17 * anticipation), y: -62 - 7 * strike }
+      : player.attackStep === 2
+        ? { x: dir * (18 + 60 * strike - 19 * anticipation), y: -82 - 13 * strike }
+        : { x: dir * (24 + 20 * strike), y: -57 - 12 * strike };
+  const punchElbow: Point = !attacking
+    ? { x: dir * 17, y: -54 }
+    : player.attackStep === 1
+      ? { x: dir * (14 + 24 * strike - 9 * anticipation), y: -53 }
+      : player.attackStep === 2
+        ? { x: dir * (4 + 20 * strike), y: -46 - 10 * strike }
+        : { x: dir * (13 + 7 * strike), y: -58 };
+  const counterElbow: Point = player.attackStep === 2
+    ? { x: -dir * (17 + 11 * strike), y: -91 }
+    : { x: -dir * (16 + stride * 0.18), y: -53 + recovery * 8 };
+  const counterHand: Point = player.attackStep === 2
+    ? { x: -dir * (31 + 16 * strike), y: -102 + recovery * 12 }
+    : { x: -dir * (29 + stride * 0.26), y: -35 + recovery * 10 };
+
   ctx.save();
-  ctx.strokeStyle = INK;
-  ctx.fillStyle = PAPER;
-  if (weapon === 'ruler') {
-    line(ctx, x, y, x + dir * 54, y - 3, 5);
-    for (let notch = 10; notch < 50; notch += 10) line(ctx, x + dir * notch, y - 4, x + dir * notch, y - 10, 1);
-  } else if (weapon === 'eraser') {
-    ctx.lineWidth = 3;
-    ctx.strokeRect(x + (dir < 0 ? -26 : 0), y - 11, 26, 17);
-    line(ctx, x + dir * 4, y - 8, x + dir * 20, y + 3, 1, GRAPHITE);
-  } else if (weapon === 'pencil') {
-    line(ctx, x, y, x + dir * 43, y - 18, 4);
-    line(ctx, x + dir * 43, y - 18, x + dir * 48, y - 19, 1);
+  ctx.translate(baseX, footY);
+  ctx.rotate(bodyLean);
+  ctx.globalAlpha = time < player.invulnerableUntil && Math.floor(time / 80) % 2 === 1 ? 0.42 : 1;
+
+  if (player.attackStep === 3) {
+    const supportKnee: Point = { x: -dir * 13, y: -13 };
+    const supportFoot: Point = { x: -dir * 22, y: 0 };
+    const kickKnee: Point = { x: dir * (22 + 9 * strike), y: -52 - 12 * strike };
+    const kickFoot: Point = { x: dir * (53 + 64 * strike), y: -65 - 29 * strike };
+    line(ctx, hip.x, hip.y, supportKnee.x, supportKnee.y, CHARACTER_STROKE);
+    line(ctx, supportKnee.x, supportKnee.y, supportFoot.x, supportFoot.y, CHARACTER_STROKE);
+    line(ctx, hip.x, hip.y, kickKnee.x, kickKnee.y, CHARACTER_STROKE);
+    line(ctx, kickKnee.x, kickKnee.y, kickFoot.x, kickFoot.y, CHARACTER_STROKE);
+    if (strike > 0.18) {
+      line(ctx, kickFoot.x - dir * 25, kickFoot.y + 10, kickFoot.x - dir * 65, kickFoot.y + 20, CHARACTER_DETAIL_STROKE, GRAPHITE);
+      line(ctx, kickFoot.x - dir * 22, kickFoot.y + 18, kickFoot.x - dir * 52, kickFoot.y + 35, CHARACTER_DETAIL_STROKE, GRAPHITE);
+    }
   } else {
-    ctx.beginPath();
-    ctx.ellipse(x + dir * 12, y - 6, 12, 7, dir * 0.55, 0, Math.PI * 2);
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.ellipse(x + dir * 20, y - 12, 8, 5, dir * 0.55, 0, Math.PI * 2);
-    ctx.stroke();
+    const frontKnee: Point = { x: dir * (15 + stride * 0.42), y: -12 - anticipation * 8 };
+    const frontFoot: Point = { x: dir * (25 + stride * 0.7), y: 0 };
+    const backKnee: Point = { x: -dir * (15 - stride * 0.42), y: -11 + anticipation * 8 };
+    const backFoot: Point = { x: -dir * (25 - stride * 0.7), y: 0 };
+    line(ctx, hip.x, hip.y, frontKnee.x, frontKnee.y, CHARACTER_STROKE);
+    line(ctx, frontKnee.x, frontKnee.y, frontFoot.x, frontFoot.y, CHARACTER_STROKE);
+    line(ctx, hip.x, hip.y, backKnee.x, backKnee.y, CHARACTER_STROKE);
+    line(ctx, backKnee.x, backKnee.y, backFoot.x, backFoot.y, CHARACTER_STROKE);
+  }
+
+  line(ctx, head.x, head.y + 16, hip.x, hip.y, CHARACTER_STROKE);
+  circle(ctx, head.x, head.y, 16, CHARACTER_STROKE);
+  line(ctx, shoulder.x, shoulder.y, counterElbow.x, counterElbow.y, CHARACTER_STROKE);
+  line(ctx, counterElbow.x, counterElbow.y, counterHand.x, counterHand.y, CHARACTER_STROKE);
+  line(ctx, shoulder.x, shoulder.y, punchElbow.x, punchElbow.y, CHARACTER_STROKE);
+  line(ctx, punchElbow.x, punchElbow.y, punchHand.x, punchHand.y, CHARACTER_STROKE);
+
+  if (attacking && strike > 0.16 && player.attackStep < 3) {
+    line(ctx, punchHand.x - dir * 20, punchHand.y + 5, punchHand.x - dir * 50, punchHand.y + 10, CHARACTER_DETAIL_STROKE, GRAPHITE);
+    line(ctx, punchHand.x - dir * 12, punchHand.y + 13, punchHand.x - dir * 34, punchHand.y + 22, CHARACTER_DETAIL_STROKE, GRAPHITE);
   }
   ctx.restore();
 }
 
 /** Draw only the controllable stickman, useful for isolated pose previews. */
 export function drawStickMan(ctx: CanvasRenderingContext2D, state: GameState, _reducedMotion = false): void {
-  drawPlayer(ctx, state.player, state.time);
+  drawPlayer(ctx, state.player, state.time, _reducedMotion);
 }
 
 function drawEnemy(ctx: CanvasRenderingContext2D, enemy: EnemyState, time: number): void {
@@ -155,51 +209,60 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: EnemyState, time: numbe
   const torsoY = footY - 47 * scale;
   const dir = enemy.facing;
   const stunned = time < enemy.stunUntil;
+  const stunAmount = stunned ? clamp((enemy.stunUntil - time) / HIT_STUN_MS, 0, 1) : 0;
+  const knockDirection = enemy.vx < 0 ? -1 : 1;
+  const lift = stunAmount * 18;
+  const characterStroke = CHARACTER_STROKE / scale;
+  const characterDetailStroke = CHARACTER_DETAIL_STROKE / scale;
   ctx.save();
-  ctx.translate(enemy.x, footY);
+  ctx.translate(enemy.x, footY - lift);
+  ctx.rotate(knockDirection * stunAmount * 0.3);
   ctx.scale(scale, scale);
   ctx.translate(-enemy.x, -footY);
   ctx.globalAlpha = stunned ? 0.6 : 1;
-  circle(ctx, enemy.x, headY, 15, enemy.kind === 'blocker' ? 5 : 3);
-  line(ctx, enemy.x, headY + 15, enemy.x, torsoY, enemy.kind === 'blocker' ? 5 : 3.5);
-  line(ctx, enemy.x, torsoY, enemy.x + dir * 18, footY, 3.5);
-  line(ctx, enemy.x, torsoY, enemy.x - dir * 18, footY, 3.5);
+  if (stunned) {
+    line(ctx, enemy.x - knockDirection * 26, footY - 44, enemy.x - knockDirection * 54, footY - 52, characterDetailStroke, GRAPHITE);
+    line(ctx, enemy.x - knockDirection * 22, footY - 29, enemy.x - knockDirection * 44, footY - 23, characterDetailStroke, GRAPHITE);
+  }
+  circle(ctx, enemy.x, headY, 15, characterStroke);
+  line(ctx, enemy.x, headY + 15, enemy.x, torsoY, characterStroke);
+  line(ctx, enemy.x, torsoY, enemy.x + dir * 18, footY, characterStroke);
+  line(ctx, enemy.x, torsoY, enemy.x - dir * 18, footY, characterStroke);
 
   if (enemy.kind === 'runner') {
-    line(ctx, enemy.x, headY + 39, enemy.x + dir * 31, headY + 48, 3);
-    line(ctx, enemy.x + dir * 19, footY - 25, enemy.x + dir * 44, footY - 7, 2, GRAPHITE);
+    line(ctx, enemy.x, headY + 39, enemy.x + dir * 31, headY + 48, characterStroke);
+    line(ctx, enemy.x + dir * 19, footY - 25, enemy.x + dir * 44, footY - 7, characterDetailStroke, GRAPHITE);
   } else if (enemy.kind === 'blocker') {
     ctx.strokeStyle = INK;
-    ctx.lineWidth = 4;
+    ctx.lineWidth = characterStroke;
     ctx.strokeRect(enemy.x + (dir < 0 ? -26 : 3), torsoY - 8, 23, 35);
-    line(ctx, enemy.x + dir * 8, headY + 37, enemy.x + dir * 30, headY + 40, 4);
-  } else if (enemy.kind === 'thrower') {
-    line(ctx, enemy.x, headY + 38, enemy.x + dir * 36, headY + 20, 3);
-    ctx.strokeStyle = GRAPHITE;
-    ctx.strokeRect(enemy.x + dir * 30 - 7, headY + 13, 14, 10);
+    line(ctx, enemy.x + dir * 8, headY + 37, enemy.x + dir * 30, headY + 40, characterStroke);
+  } else if (enemy.kind === 'kicker') {
+    line(ctx, enemy.x, headY + 38, enemy.x + dir * 30, headY + 24, characterStroke);
+    line(ctx, enemy.x + dir * 18, footY - 25, enemy.x + dir * 42, footY - 54, characterStroke);
     if (enemy.telegraph > 0) {
       ctx.setLineDash([5, 5]);
-      line(ctx, enemy.x + dir * 38, headY + 18, enemy.x + dir * 94, headY + 8, 2, GRAPHITE);
+      line(ctx, enemy.x + dir * 38, footY - 54, enemy.x + dir * 92, footY - 72, characterDetailStroke, GRAPHITE);
       ctx.setLineDash([]);
     }
   } else {
     ctx.strokeStyle = INK;
-    ctx.lineWidth = 4;
+    ctx.lineWidth = characterStroke;
     ctx.strokeRect(enemy.x - 22, headY - 20, 44, 38);
-    line(ctx, enemy.x - 28, torsoY - 10, enemy.x + 28, torsoY - 10, 4);
-    line(ctx, enemy.x - 31, torsoY + 10, enemy.x + 31, torsoY + 10, 3, GRAPHITE);
+    line(ctx, enemy.x - 28, torsoY - 10, enemy.x + 28, torsoY - 10, characterStroke);
+    line(ctx, enemy.x - 31, torsoY + 10, enemy.x + 31, torsoY + 10, characterDetailStroke, GRAPHITE);
   }
 
-  drawDamageHatching(ctx, enemy.x, headY, 30, 1 - enemy.hp / Math.max(1, enemy.maxHp));
+  drawDamageHatching(ctx, enemy.x, headY, 30, 1 - enemy.hp / Math.max(1, enemy.maxHp), characterDetailStroke);
   if (enemy.telegraph > 0) drawTelegraph(ctx, enemy.x, footY - 50 * scale, enemy.kind, enemy.telegraph);
   ctx.restore();
 }
 
-function drawDamageHatching(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, damage: number): void {
+function drawDamageHatching(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, damage: number, stroke: number): void {
   const count = Math.ceil(Math.max(0, damage) * 6);
   for (let index = 0; index < count; index += 1) {
     const offset = index * 6 - size / 2;
-    line(ctx, x + offset, y + 13, x + offset + 11, y + 25, 1.4, GRAPHITE);
+    line(ctx, x + offset, y + 13, x + offset + 11, y + 25, stroke, GRAPHITE);
   }
 }
 
@@ -214,9 +277,9 @@ function drawTelegraph(ctx: CanvasRenderingContext2D, x: number, y: number, kind
     line(ctx, x + 35, y + 16, x + 60, y + 8, 2, GRAPHITE);
   } else if (kind === 'blocker') {
     ctx.strokeRect(x - 31, y - 32, 62, 64);
-  } else if (kind === 'thrower') {
+  } else if (kind === 'kicker') {
     ctx.setLineDash([5, 5]);
-    line(ctx, x - 66, y - 18, x + 66, y - 18, 2, GRAPHITE);
+    line(ctx, x - 54, y + 12, x + 54, y - 42, 2, GRAPHITE);
     ctx.setLineDash([]);
   } else {
     ctx.beginPath();
@@ -226,66 +289,9 @@ function drawTelegraph(ctx: CanvasRenderingContext2D, x: number, y: number, kind
   ctx.restore();
 }
 
-function drawProjectile(ctx: CanvasRenderingContext2D, projectile: ProjectileState, time: number, reducedMotion: boolean): void {
-  const direction = projectile.vx < 0 ? -1 : 1;
-  const wobble = reducedMotion ? 0 : Math.sin((time + projectile.id * 71) / 90) * 0.08;
-  ctx.save();
-  ctx.translate(projectile.x, projectile.y);
-  ctx.rotate((direction < 0 ? Math.PI : 0) + wobble);
-  ctx.strokeStyle = INK;
-  ctx.fillStyle = PAPER;
-  ctx.lineJoin = 'round';
-  if (projectile.kind === 'paper') {
-    ctx.beginPath();
-    ctx.moveTo(-17, -9);
-    ctx.lineTo(17, -4);
-    ctx.lineTo(11, 9);
-    ctx.lineTo(-14, 6);
-    ctx.closePath();
-    ctx.lineWidth = projectile.owner === 'enemy' ? 3 : 2;
-    ctx.fill();
-    ctx.stroke();
-    line(ctx, -13, -6, 4, 5, 1, GRAPHITE);
-    line(ctx, 4, 5, 14, -2, 1, GRAPHITE);
-  } else {
-    line(ctx, -22, 0, 17, 0, 5);
-    line(ctx, 17, 0, 24, 0, 1);
-    line(ctx, -18, -4, -18, 4, 1, GRAPHITE);
-  }
-  ctx.restore();
-}
-
-function drawPickup(ctx: CanvasRenderingContext2D, pickup: PickupState): void {
-  if (!pickup.active) return;
-  const y = pickup.y - 16;
-  ctx.save();
-  ctx.strokeStyle = INK;
-  ctx.fillStyle = PAPER;
-  ctx.lineWidth = 3;
-  if (pickup.kind === 'ruler') {
-    ctx.strokeRect(pickup.x - 28, y - 7, 56, 14);
-    for (let notch = -18; notch <= 18; notch += 9) line(ctx, pickup.x + notch, y - 7, pickup.x + notch, y - 1, 1);
-  } else if (pickup.kind === 'eraser') {
-    ctx.strokeRect(pickup.x - 17, y - 13, 34, 25);
-    line(ctx, pickup.x - 13, y - 10, pickup.x + 11, y + 8, 1, GRAPHITE);
-  } else if (pickup.kind === 'pencil') {
-    line(ctx, pickup.x - 24, y + 12, pickup.x + 22, y - 13, 5);
-    line(ctx, pickup.x + 22, y - 13, pickup.x + 29, y - 16, 1);
-  } else {
-    ctx.beginPath();
-    ctx.ellipse(pickup.x - 5, y, 15, 8, -0.55, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.ellipse(pickup.x + 7, y - 8, 10, 5, -0.55, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-  line(ctx, pickup.x - 33, pickup.y + 5, pickup.x + 33, pickup.y + 5, 1, GRAPHITE);
-  ctx.restore();
-}
-
 function drawEffects(ctx: CanvasRenderingContext2D, effects: EffectState[], reducedMotion: boolean): void {
   for (const effect of effects) {
-    if (effect.kind === 'erase-lines' || (reducedMotion && effect.kind === 'page-shift')) continue;
+    if (reducedMotion && effect.kind === 'page-shift') continue;
     const shortenedLife = reducedMotion ? effect.life - effect.maxLife * 0.5 : effect.life;
     const ratio = Math.max(0, Math.min(1, shortenedLife / Math.max(1, effect.maxLife * (reducedMotion ? 0.5 : 1))));
     if (ratio <= 0) continue;
@@ -320,29 +326,6 @@ function drawEffects(ctx: CanvasRenderingContext2D, effects: EffectState[], redu
   }
 }
 
-function drawErasedLines(ctx: CanvasRenderingContext2D, effects: EffectState[], reducedMotion: boolean): void {
-  for (const effect of effects) {
-    if (effect.kind !== 'erase-lines') continue;
-    const remaining = lifeRatio(effect);
-    const progress = 1 - remaining;
-    const width = reducedMotion ? 120 : 46 + progress * 210;
-    const opacity = reducedMotion ? remaining * 0.8 : Math.sin(progress * Math.PI) * 0.9;
-    if (opacity <= 0) continue;
-    ctx.save();
-    ctx.globalAlpha = opacity;
-    for (let offset = -60; offset <= 60; offset += 30) {
-      const ruleY = Math.round((effect.y + offset - 48) / 30) * 30 + 48;
-      line(ctx, effect.x - width / 2, ruleY, effect.x + width / 2, ruleY, 5, PAPER);
-    }
-    ctx.globalAlpha = opacity * 0.7;
-    for (let crumb = 0; crumb < 5; crumb += 1) {
-      const side = crumb % 2 === 0 ? -1 : 1;
-      inkDot(ctx, effect.x + side * (width / 2 + crumb * 2), effect.y + (crumb - 2) * 7, 1 + (crumb % 2));
-    }
-    ctx.restore();
-  }
-}
-
 function drawHitStopCue(ctx: CanvasRenderingContext2D, state: GameState, reducedMotion: boolean): void {
   if (state.hitStopMs <= 0) return;
   const impact = [...state.effects].reverse().find((effect) => effect.kind === 'impact');
@@ -371,10 +354,7 @@ export function drawNotebookScene(ctx: CanvasRenderingContext2D, state: GameStat
   ctx.translate(pageShift, pageShift * 0.32);
   drawPaper(ctx);
   ctx.translate(cameraOffset(state, reducedMotion), 0);
-  drawErasedLines(ctx, state.effects, reducedMotion);
   drawArena(ctx, state.player.x);
-  for (const pickup of state.pickups) drawPickup(ctx, pickup);
-  for (const projectile of state.projectiles) drawProjectile(ctx, projectile, state.time, reducedMotion);
   for (const enemy of state.enemies) drawEnemy(ctx, enemy, state.time);
   drawStickMan(ctx, state, reducedMotion);
   drawEffects(ctx, state.effects, reducedMotion);
