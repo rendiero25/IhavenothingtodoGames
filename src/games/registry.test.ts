@@ -17,3 +17,34 @@ describe('arena-fps registry', () => {
     expect(engine.constructor.name).toBe('FpsEngine');
   });
 });
+
+describe('stick-man-running registry', () => {
+  it('terdaftar sekali sebagai dexterity landscape tanpa menghapus game lain', () => {
+    const ids = GAMES.map((game) => game.id);
+
+    expect(ids).toEqual([
+      'tap-panic',
+      'quick-math',
+      'simon',
+      'missing-number',
+      'word-scramble',
+      'bubble-sniper',
+      'dodge',
+      'beat-tap',
+      'arena-fps',
+      'stick-man-running',
+    ]);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(getMeta('stick-man-running')).toMatchObject({
+      category: 'dexterity',
+      icon: 'move',
+      viewport: 'landscape',
+    });
+  });
+
+  it('memuat StickManRunningEngine melalui loader registry', async () => {
+    const engine = await loadEngine('stick-man-running');
+
+    expect(engine.constructor.name).toBe('StickManRunningEngine');
+  });
+});

@@ -9,7 +9,8 @@ export type GameId =
   | 'quick-math'
   | 'dodge'
   | 'beat-tap'
-  | 'arena-fps';
+  | 'arena-fps'
+  | 'stick-man-running';
 
 export type Category =
   | 'reflex'

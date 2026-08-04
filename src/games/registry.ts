@@ -120,6 +120,22 @@ export const GAMES: GameMeta[] = [
       en: 'Move with WASD/joystick, click the mouse cursor to shoot, press R to reload, and 1-3 to switch weapons.',
     },
   },
+  {
+    id: 'stick-man-running',
+    category: 'dexterity',
+    icon: 'move',
+    accent: 'amber',
+    viewport: 'landscape',
+    name: { id: 'Stick Man Running', en: 'Stick Man Running' },
+    tagline: {
+      id: 'Berlari, melompat, dan bertarung di atas halaman buku.',
+      en: 'Run, jump, and brawl across a notebook page.',
+    },
+    howTo: {
+      id: 'Gunakan A/D atau panah untuk bergerak, W/spasi untuk melompat, dan klik kiri untuk merangkai tiga pukulan.',
+      en: 'Use A/D or arrow keys to move, W/space to jump, and left click to chain three punches.',
+    },
+  },
 ];
 
 const loaders: Partial<Record<GameId, () => Promise<GameEngine>>> = {
@@ -133,6 +149,7 @@ const loaders: Partial<Record<GameId, () => Promise<GameEngine>>> = {
   dodge: () => import('./dodge/engine').then((m) => new m.DodgeEngine()),
   'beat-tap': () => import('./beat-tap/engine').then((m) => new m.BeatTapEngine()),
   'arena-fps': () => import('./arena-fps/engine').then((m) => new m.FpsEngine()),
+  'stick-man-running': () => import('./stick-man-running/engine').then((m) => new m.StickManRunningEngine()),
 };
 
 export function getMeta(id: string): GameMeta | undefined {
