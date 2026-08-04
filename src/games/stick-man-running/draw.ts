@@ -1,5 +1,5 @@
 import { FLOOR_Y, LOGICAL_HEIGHT, LOGICAL_WIDTH } from './config';
-import type { EffectState, EnemyState, GameState, PickupState, PlayerState } from './logic';
+import type { EffectState, EnemyState, GameState, PickupState, PlayerState, ProjectileState } from './logic';
 
 const WIDTH = LOGICAL_WIDTH;
 const HEIGHT = LOGICAL_HEIGHT;
@@ -8,6 +8,14 @@ const GRAPHITE = '#626262';
 const PAPER = '#f7f7f7';
 const RULE = '#d6d6d6';
 const MARGIN = '#c8c8c8';
+const OBSTACLES = [
+  { x: 226, width: 58 },
+  { x: 676, width: 58 },
+] as const;
+
+function clamp(value: number, minimum: number, maximum: number): number {
+  return Math.max(minimum, Math.min(maximum, value));
+}
 
 function line(
   ctx: CanvasRenderingContext2D,
@@ -64,18 +72,26 @@ function drawPaper(ctx: CanvasRenderingContext2D): void {
   }
 }
 
-function drawArena(ctx: CanvasRenderingContext2D): void {
-  line(ctx, 30, FLOOR_Y, WIDTH - 30, FLOOR_Y, 5);
-  line(ctx, 30, FLOOR_Y + 5, WIDTH - 30, FLOOR_Y + 5, 1, GRAPHITE);
+function drawArena(ctx: CanvasRenderingContext2D, playerX: number): void {
+  line(ctx, 16, FLOOR_Y, WIDTH - 16, FLOOR_Y, 5);
+  line(ctx, 16, FLOOR_Y + 5, WIDTH - 16, FLOOR_Y + 5, 1, GRAPHITE);
   line(ctx, 30, FLOOR_Y - 1, 30, FLOOR_Y + 17, 3);
   line(ctx, WIDTH - 30, FLOOR_Y - 1, WIDTH - 30, FLOOR_Y + 17, 3);
 
-  for (const obstacle of [240, 690]) {
+  for (const obstacle of OBSTACLES) {
+    const centre = obstacle.x + obstacle.width / 2;
+    const nearby = Math.abs(playerX - centre) <= obstacle.width + 32;
     ctx.strokeStyle = GRAPHITE;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(obstacle, FLOOR_Y - 22, 58, 22);
-    line(ctx, obstacle + 4, FLOOR_Y - 4, obstacle + 22, FLOOR_Y - 18, 1, GRAPHITE);
-    line(ctx, obstacle + 24, FLOOR_Y - 4, obstacle + 48, FLOOR_Y - 18, 1, GRAPHITE);
+    ctx.lineWidth = nearby ? 3 : 2;
+    ctx.strokeRect(obstacle.x, FLOOR_Y - 22, obstacle.width, 22);
+    line(ctx, obstacle.x + 4, FLOOR_Y - 4, obstacle.x + 22, FLOOR_Y - 18, 1, GRAPHITE);
+    line(ctx, obstacle.x + 24, FLOOR_Y - 4, obstacle.x + 48, FLOOR_Y - 18, 1, GRAPHITE);
+    line(ctx, obstacle.x - 7, FLOOR_Y - 3, obstacle.x - 2, FLOOR_Y - 8, nearby ? 2 : 1, GRAPHITE);
+    line(ctx, obstacle.x + obstacle.width + 2, FLOOR_Y - 8, obstacle.x + obstacle.width + 7, FLOOR_Y - 3, nearby ? 2 : 1, GRAPHITE);
+    if (nearby) {
+      line(ctx, obstacle.x - 10, FLOOR_Y - 13, obstacle.x - 3, FLOOR_Y - 17, 2, GRAPHITE);
+      line(ctx, obstacle.x + obstacle.width + 3, FLOOR_Y - 17, obstacle.x + obstacle.width + 10, FLOOR_Y - 13, 2, GRAPHITE);
+    }
   }
 }
 
@@ -188,7 +204,7 @@ function drawDamageHatching(ctx: CanvasRenderingContext2D, x: number, y: number,
 }
 
 function drawTelegraph(ctx: CanvasRenderingContext2D, x: number, y: number, kind: EnemyState['kind'], amount: number): void {
-  const pulse = Math.min(1, amount / 300);
+  const pulse = clamp(amount, 0, 1);
   ctx.save();
   ctx.globalAlpha = 0.45 + pulse * 0.4;
   ctx.strokeStyle = GRAPHITE;
@@ -206,6 +222,35 @@ function drawTelegraph(ctx: CanvasRenderingContext2D, x: number, y: number, kind
     ctx.beginPath();
     ctx.ellipse(x, y + 42, 54 + pulse * 11, 12 + pulse * 5, 0, 0, Math.PI * 2);
     ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawProjectile(ctx: CanvasRenderingContext2D, projectile: ProjectileState, time: number, reducedMotion: boolean): void {
+  const direction = projectile.vx < 0 ? -1 : 1;
+  const wobble = reducedMotion ? 0 : Math.sin((time + projectile.id * 71) / 90) * 0.08;
+  ctx.save();
+  ctx.translate(projectile.x, projectile.y);
+  ctx.rotate((direction < 0 ? Math.PI : 0) + wobble);
+  ctx.strokeStyle = INK;
+  ctx.fillStyle = PAPER;
+  ctx.lineJoin = 'round';
+  if (projectile.kind === 'paper') {
+    ctx.beginPath();
+    ctx.moveTo(-17, -9);
+    ctx.lineTo(17, -4);
+    ctx.lineTo(11, 9);
+    ctx.lineTo(-14, 6);
+    ctx.closePath();
+    ctx.lineWidth = projectile.owner === 'enemy' ? 3 : 2;
+    ctx.fill();
+    ctx.stroke();
+    line(ctx, -13, -6, 4, 5, 1, GRAPHITE);
+    line(ctx, 4, 5, 14, -2, 1, GRAPHITE);
+  } else {
+    line(ctx, -22, 0, 17, 0, 5);
+    line(ctx, 17, 0, 24, 0, 1);
+    line(ctx, -18, -4, -18, 4, 1, GRAPHITE);
   }
   ctx.restore();
 }
@@ -240,15 +285,23 @@ function drawPickup(ctx: CanvasRenderingContext2D, pickup: PickupState): void {
 
 function drawEffects(ctx: CanvasRenderingContext2D, effects: EffectState[], reducedMotion: boolean): void {
   for (const effect of effects) {
-    if (reducedMotion && effect.kind === 'page-shift') continue;
+    if (effect.kind === 'erase-lines' || (reducedMotion && effect.kind === 'page-shift')) continue;
     const shortenedLife = reducedMotion ? effect.life - effect.maxLife * 0.5 : effect.life;
     const ratio = Math.max(0, Math.min(1, shortenedLife / Math.max(1, effect.maxLife * (reducedMotion ? 0.5 : 1))));
     if (ratio <= 0) continue;
-    const size = effect.strength * (reducedMotion ? 0.55 : 1) * (0.55 + ratio * 0.45);
+    const size = effect.strength * 24 * (reducedMotion ? 0.55 : 1) * (0.55 + ratio * 0.45);
     ctx.save();
     ctx.globalAlpha = ratio;
     if (effect.kind === 'dust') {
-      for (let dot = 0; dot < 4; dot += 1) inkDot(ctx, effect.x + dot * 5 - 8, effect.y - Math.abs(dot - 2) * 3, Math.max(1, size / 8));
+      for (let dot = 0; dot < 6; dot += 1) {
+        const spread = (dot - 2.5) * size * 0.38;
+        inkDot(ctx, effect.x + spread, effect.y - 2 - Math.abs(dot - 2.5) * 2, Math.max(1, size / 14));
+      }
+      ctx.strokeStyle = GRAPHITE;
+      ctx.beginPath();
+      ctx.ellipse(effect.x, effect.y + 1, size * 0.9, Math.max(2, size * 0.16), 0, Math.PI, Math.PI * 2);
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
     } else if (effect.kind === 'impact') {
       for (let ray = 0; ray < 8; ray += 1) {
         const angle = (Math.PI * 2 * ray) / 8;
@@ -267,6 +320,48 @@ function drawEffects(ctx: CanvasRenderingContext2D, effects: EffectState[], redu
   }
 }
 
+function drawErasedLines(ctx: CanvasRenderingContext2D, effects: EffectState[], reducedMotion: boolean): void {
+  for (const effect of effects) {
+    if (effect.kind !== 'erase-lines') continue;
+    const remaining = lifeRatio(effect);
+    const progress = 1 - remaining;
+    const width = reducedMotion ? 120 : 46 + progress * 210;
+    const opacity = reducedMotion ? remaining * 0.8 : Math.sin(progress * Math.PI) * 0.9;
+    if (opacity <= 0) continue;
+    ctx.save();
+    ctx.globalAlpha = opacity;
+    for (let offset = -60; offset <= 60; offset += 30) {
+      const ruleY = Math.round((effect.y + offset - 48) / 30) * 30 + 48;
+      line(ctx, effect.x - width / 2, ruleY, effect.x + width / 2, ruleY, 5, PAPER);
+    }
+    ctx.globalAlpha = opacity * 0.7;
+    for (let crumb = 0; crumb < 5; crumb += 1) {
+      const side = crumb % 2 === 0 ? -1 : 1;
+      inkDot(ctx, effect.x + side * (width / 2 + crumb * 2), effect.y + (crumb - 2) * 7, 1 + (crumb % 2));
+    }
+    ctx.restore();
+  }
+}
+
+function drawHitStopCue(ctx: CanvasRenderingContext2D, state: GameState, reducedMotion: boolean): void {
+  if (state.hitStopMs <= 0) return;
+  const impact = [...state.effects].reverse().find((effect) => effect.kind === 'impact');
+  if (!impact) return;
+  const strength = reducedMotion ? 0.55 : 1;
+  ctx.save();
+  ctx.globalAlpha = 0.75 * strength;
+  circle(ctx, impact.x, impact.y, 18 * impact.strength, 2.5);
+  circle(ctx, impact.x, impact.y, 25 * impact.strength, 1);
+  ctx.restore();
+}
+
+function cameraOffset(state: GameState, reducedMotion: boolean): number {
+  if (reducedMotion) return 0;
+  const positionLead = -(state.player.x - WIDTH / 2) * 0.025;
+  const velocityLead = -clamp(state.player.vx / 280, -1, 1) * 8;
+  return clamp(positionLead + velocityLead, -12, 12);
+}
+
 /** Draw the complete 960x540 notebook brawler scene without mutating gameplay state. */
 export function drawNotebookScene(ctx: CanvasRenderingContext2D, state: GameState, reducedMotion = false): void {
   const pageShift = reducedMotion
@@ -275,11 +370,15 @@ export function drawNotebookScene(ctx: CanvasRenderingContext2D, state: GameStat
   ctx.save();
   ctx.translate(pageShift, pageShift * 0.32);
   drawPaper(ctx);
-  drawArena(ctx);
+  ctx.translate(cameraOffset(state, reducedMotion), 0);
+  drawErasedLines(ctx, state.effects, reducedMotion);
+  drawArena(ctx, state.player.x);
   for (const pickup of state.pickups) drawPickup(ctx, pickup);
+  for (const projectile of state.projectiles) drawProjectile(ctx, projectile, state.time, reducedMotion);
   for (const enemy of state.enemies) drawEnemy(ctx, enemy, state.time);
   drawStickMan(ctx, state, reducedMotion);
   drawEffects(ctx, state.effects, reducedMotion);
+  drawHitStopCue(ctx, state, reducedMotion);
 
   ctx.restore();
 }
