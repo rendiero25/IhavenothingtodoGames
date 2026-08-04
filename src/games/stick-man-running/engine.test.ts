@@ -1,5 +1,35 @@
 import { describe, expect, it } from 'vitest';
-import { EngineFrameLoop, EngineResources } from './engine';
+import { EngineFrameLoop, EngineResources, handleCanvasPunch } from './engine';
+
+describe('handleCanvasPunch', () => {
+  it('touch canvas tidak memicu punch atau preventDefault', () => {
+    let punches = 0;
+    let prevented = false;
+
+    handleCanvasPunch(
+      { button: 0, pointerType: 'touch', preventDefault: () => { prevented = true; } },
+      true,
+      () => { punches += 1; },
+    );
+
+    expect(punches).toBe(0);
+    expect(prevented).toBe(false);
+  });
+
+  it('klik kiri mouse memicu tepat satu punch', () => {
+    let punches = 0;
+    let prevented = false;
+
+    handleCanvasPunch(
+      { button: 0, pointerType: 'mouse', preventDefault: () => { prevented = true; } },
+      true,
+      () => { punches += 1; },
+    );
+
+    expect(punches).toBe(1);
+    expect(prevented).toBe(true);
+  });
+});
 
 describe('EngineFrameLoop', () => {
   it('pause membatalkan frame aktif dan resume tidak menghitung waktu jeda', () => {

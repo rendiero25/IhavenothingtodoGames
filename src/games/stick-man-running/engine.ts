@@ -120,6 +120,23 @@ const CONTROL_LABELS = {
 
 type ControlAction = keyof typeof CONTROL_LABELS.en;
 
+interface CanvasPunchEvent {
+  button: number;
+  pointerType: string;
+  preventDefault(): void;
+}
+
+/** Canvas attacks are mouse-only; touch and stylus input belong to the DOM controls. */
+export function handleCanvasPunch(
+  event: CanvasPunchEvent,
+  enabled: boolean,
+  punch: () => void,
+): void {
+  if (!enabled || event.pointerType !== 'mouse' || event.button !== 0) return;
+  event.preventDefault();
+  punch();
+}
+
 function configureCanvas(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
   const dpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
   canvas.width = Math.round(LOGICAL_WIDTH * dpr);
@@ -326,9 +343,9 @@ export class StickManRunningEngine implements GameEngine {
       if (action === 'right') this.input.right = false;
     };
     const onPointerDown = (event: PointerEvent): void => {
-      if (event.button !== 0 || !this.loop?.isRunning) return;
-      event.preventDefault();
-      this.input.punchPressed = true;
+      handleCanvasPunch(event, this.loop?.isRunning === true, () => {
+        this.input.punchPressed = true;
+      });
     };
     this.resources.listen(window, 'keydown', onKeyDown as EventListener);
     this.resources.listen(window, 'keyup', onKeyUp as EventListener);
@@ -349,7 +366,7 @@ export class StickManRunningEngine implements GameEngine {
     container.setAttribute('aria-label', this.opts?.locale === 'id' ? 'Kontrol permainan' : 'Game controls');
 
     if (typeof matchMedia === 'function') {
-      const pointerQuery = matchMedia('(pointer: coarse)');
+      const pointerQuery = matchMedia('(any-pointer: coarse)');
       const syncVisibility = (): void => {
         container.hidden = !pointerQuery.matches;
         container.style.display = pointerQuery.matches ? 'grid' : 'none';
