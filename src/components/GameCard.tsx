@@ -38,7 +38,7 @@ export function GameCard({
         opacity: wheelOpacity,
         transform: `perspective(850px) rotateX(${wheelRotation}deg) scale(${wheelScale})`,
       }}
-      className={`game-list-item origin-center group grid w-full cursor-pointer grid-cols-[2.4rem_minmax(0,1fr)_auto] items-center gap-3 border-b border-ink/10 py-5 text-left outline-none transition-[color,transform,opacity] duration-300 ease-out sm:grid-cols-[3.5rem_minmax(0,1fr)_auto] sm:py-7 xl:py-8 ${selected ? 'text-ink' : 'text-ink/55 hover:text-ink/85 focus-visible:text-ink'}`}
+      className={`game-list-item origin-center group grid w-full cursor-pointer grid-cols-[2.4rem_minmax(0,1fr)_auto] items-center gap-3 py-5 text-left outline-none transition-[color,transform,opacity] duration-300 ease-out sm:grid-cols-[3.5rem_minmax(0,1fr)_auto] sm:py-7 xl:py-8 ${selected ? 'text-ink' : 'text-ink/55 hover:text-ink/85 focus-visible:text-ink'}`}
     >
       <span className="font-mono text-[10px] tabular-nums opacity-70 sm:text-xs">
         {String(index + 1).padStart(2, '0')}
@@ -55,7 +55,7 @@ export function GameCard({
         <span className="hidden font-mono text-[9px] uppercase tracking-[0.12em] opacity-70 sm:block">
           {t(catKey)}
         </span>
-        <span className="grid size-8 place-items-center border border-current opacity-70 transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5 sm:size-9">
+        <span className="grid size-8 place-items-center opacity-70 transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5 sm:size-9">
           <ArrowUpRight aria-hidden="true" size={16} strokeWidth={1.7} />
         </span>
       </span>

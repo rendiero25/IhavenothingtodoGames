@@ -51,7 +51,7 @@ export function Header({ wide = false }: { wide?: boolean }) {
               setMuted(sfx.toggleMute());
             }}
             aria-label={muted ? t('a11y.unmute') : t('a11y.mute')}
-            className="grid size-9 cursor-pointer place-items-center border-l border-ink/15 bg-paper outline-none transition-colors duration-200 hover:bg-ink hover:text-paper focus-visible:bg-ink focus-visible:text-paper"
+            className="grid size-9 cursor-pointer place-items-center bg-paper outline-none transition-colors duration-200 hover:bg-ink hover:text-paper focus-visible:bg-ink focus-visible:text-paper"
           >
             {muted ? <VolumeX size={16} strokeWidth={1.7} /> : <Volume2 size={16} strokeWidth={1.7} />}
           </button>

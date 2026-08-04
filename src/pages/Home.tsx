@@ -31,7 +31,7 @@ function PreviewPanel({
       transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
       className="flex h-full min-h-[30rem] flex-col"
     >
-      <div className="flex items-center justify-between border-b border-ink/10 pb-3 font-mono text-[9px] uppercase tracking-[0.14em] text-ink-soft">
+      <div className="flex items-center justify-between pb-3 font-mono text-[9px] uppercase tracking-[0.14em] text-ink-soft">
         <span>{t(`cat.${game.category}` as const)}</span>
         <span>{gameNumber} / {String(GAMES.length).padStart(2, '0')}</span>
       </div>
@@ -50,7 +50,7 @@ function PreviewPanel({
         <button
           type="button"
           onClick={onLaunch}
-          className="group mt-auto flex min-h-12 items-center justify-between border-t border-ink/20 pt-4 text-left font-mono text-[10px] uppercase tracking-[0.14em] outline-none hover:text-ink/65 focus-visible:text-ink/65"
+          className="group mt-auto flex min-h-12 items-center justify-between pt-4 text-left font-mono text-[10px] uppercase tracking-[0.14em] outline-none hover:text-ink/65 focus-visible:text-ink/65"
         >
           <span>{locale === 'id' ? 'Buka game' : 'Open game'}</span>
           <ArrowRight className="transition-transform duration-200 group-hover:translate-x-1" size={16} strokeWidth={1.6} />
@@ -118,7 +118,7 @@ export default function Home() {
       <Header wide />
 
       <main className="mx-auto max-w-[1800px] px-4 sm:px-6 lg:px-8">
-        <section className="flex min-h-12 items-center justify-between gap-4 border-b border-ink/15 py-2" aria-label={locale === 'id' ? 'Filter kategori' : 'Category filters'}>
+        <section className="flex min-h-12 items-center justify-between gap-4 py-2" aria-label={locale === 'id' ? 'Filter kategori' : 'Category filters'}>
           <span className="shrink-0 font-mono text-[9px] uppercase tracking-[0.14em] text-ink-soft">
             {locale === 'id' ? 'Filter:' : 'Filter:'}
           </span>
@@ -148,7 +148,7 @@ export default function Home() {
           <button
             type="button"
             onClick={randomGame}
-            className="inline-flex min-h-8 shrink-0 cursor-pointer items-center gap-2 border-l border-ink/15 pl-3 font-mono text-[9px] uppercase tracking-[0.1em] text-ink-soft outline-none hover:text-ink focus-visible:text-ink"
+            className="inline-flex min-h-8 shrink-0 cursor-pointer items-center gap-2 pl-3 font-mono text-[9px] uppercase tracking-[0.1em] text-ink-soft outline-none hover:text-ink focus-visible:text-ink"
           >
             <Shuffle size={13} strokeWidth={1.6} />
             <span className="hidden sm:inline">{locale === 'id' ? 'Acak' : 'Random'}</span>
@@ -157,7 +157,7 @@ export default function Home() {
 
         <section className="grid lg:grid-cols-[minmax(0,1.22fr)_minmax(23rem,0.78fr)]">
           <div className="wheel-viewport order-2 min-w-0 max-h-[58dvh] lg:order-1 lg:h-[calc(100dvh-7.25rem)] lg:max-h-none">
-            <div className="flex items-center justify-between border-b border-ink/10 py-3 font-mono text-[9px] uppercase tracking-[0.14em] text-ink-soft">
+            <div className="flex items-center justify-between py-3 font-mono text-[9px] uppercase tracking-[0.14em] text-ink-soft">
               <span>{locale === 'id' ? 'Pilih game' : 'Choose a game'}</span>
               <span>{filteredGames.length} / {GAMES.length}</span>
             </div>
@@ -176,7 +176,7 @@ export default function Home() {
             </nav>
           </div>
 
-          <aside className="order-1 min-h-[34rem] border-b border-ink/15 py-6 lg:order-2 lg:min-h-0 lg:border-b-0 lg:border-l lg:py-8 lg:pl-8" aria-live="polite">
+          <aside className="order-1 min-h-[34rem] py-6 lg:order-2 lg:min-h-0 lg:py-8 lg:pl-8" aria-live="polite">
             <PreviewPanel
               game={previewGame}
               onLaunch={() => launch(previewGame)}
@@ -185,7 +185,7 @@ export default function Home() {
           </aside>
         </section>
 
-        <footer className="flex min-h-12 items-center justify-between border-t border-ink/15 font-mono text-[9px] uppercase tracking-[0.12em] text-ink-soft">
+        <footer className="flex min-h-12 items-center justify-between font-mono text-[9px] uppercase tracking-[0.12em] text-ink-soft">
           <span>ihavenothingtodo</span>
           <span>{t('home.footer')}</span>
         </footer>
