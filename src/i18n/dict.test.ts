@@ -14,4 +14,9 @@ describe('kelengkapan i18n', () => {
       }
     }
   });
+
+  it('memiliki CTA Ko-fi yang konsisten', () => {
+    expect(dictionaries.id['home.kofi']).toBe('Buy me a Coffee');
+    expect(dictionaries.en['home.kofi']).toBe('Buy me a Coffee');
+  });
 });

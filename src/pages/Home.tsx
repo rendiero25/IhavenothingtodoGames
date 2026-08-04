@@ -175,9 +175,17 @@ export default function Home() {
           </aside>
         </section>
 
-        <footer className="flex min-h-12 items-center justify-between font-mono text-[9px] uppercase tracking-[0.12em] text-ink-soft">
+        <footer className="grid min-h-12 grid-cols-2 items-center gap-x-4 gap-y-2 py-3 font-mono text-[9px] uppercase tracking-[0.12em] text-ink-soft sm:grid-cols-[1fr_auto_1fr] sm:py-0">
           <span>ihavenothingtodo</span>
-          <span>{t('home.footer')}</span>
+          <a
+            href="https://ko-fi.com/rendiero"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="justify-self-start text-ink outline-none underline-offset-4 transition-colors duration-200 hover:text-ink/65 hover:underline focus-visible:text-ink focus-visible:underline sm:justify-self-center"
+          >
+            {t('home.kofi')}
+          </a>
+          <span className="col-span-2 sm:col-span-1 sm:justify-self-end">{t('home.footer')}</span>
         </footer>
       </main>
 

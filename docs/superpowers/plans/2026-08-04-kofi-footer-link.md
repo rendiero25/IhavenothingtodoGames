@@ -29,7 +29,7 @@
 **Interfaces:**
 - Produces the `DictKey` value `home.kofi`, consumed by `Home.tsx` through the existing `t()` helper.
 
-- [ ] **Step 1: Add the same CTA to both dictionaries**
+- [x] **Step 1: Add the same CTA to both dictionaries**
 
 Insert this entry after `home.footer` in both `id` and `en`:
 
@@ -37,7 +37,7 @@ Insert this entry after `home.footer` in both `id` and `en`:
   'home.kofi': 'Buy me a Coffee',
 ```
 
-- [ ] **Step 2: Extend the i18n test with an exact CTA assertion**
+- [x] **Step 2: Extend the i18n test with an exact CTA assertion**
 
 Add this test to `src/i18n/dict.test.ts`:
 
@@ -48,7 +48,7 @@ Add this test to `src/i18n/dict.test.ts`:
   });
 ```
 
-- [ ] **Step 3: Run the focused i18n test**
+- [x] **Step 3: Run the focused i18n test**
 
 Run: `npm.cmd test -- --run src/i18n/dict.test.ts`
 
@@ -63,7 +63,7 @@ Expected: PASS, including identical key sets, non-empty strings, and the exact K
 - Consumes: `t('home.kofi')`, `t('home.footer')`, and the existing `locale`-independent i18n contract.
 - Produces: semantic external anchor with `href="https://ko-fi.com/rendiero"`, `target="_blank"`, and `rel="noopener noreferrer"`.
 
-- [ ] **Step 1: Replace the two-item flex footer with a responsive three-area grid**
+- [x] **Step 1: Replace the two-item flex footer with a responsive three-area grid**
 
 Use this structure while preserving the existing footer typography classes:
 
@@ -82,7 +82,7 @@ Use this structure while preserving the existing footer typography classes:
         </footer>
 ```
 
-- [ ] **Step 2: Verify the static contract**
+- [x] **Step 2: Verify the static contract**
 
 Run: `rg -n "home.kofi|ko-fi.com/rendiero|noopener noreferrer|target=\"_blank\"" src/pages/Home.tsx src/i18n/dict.ts`
 
@@ -94,32 +94,32 @@ Expected: the key exists in both dictionaries and the footer contains exactly on
 - Test: repository test suite
 - Verify: production build and Git state
 
-- [ ] **Step 1: Run all tests**
+- [x] **Step 1: Run all tests**
 
 Run: `npm.cmd test -- --run`
 
 Expected: all existing test files pass.
 
-- [ ] **Step 2: Run the production build**
+- [x] **Step 2: Run the production build**
 
 Run: `npm.cmd run build`
 
 Expected: TypeScript check and Vite build pass. Existing chunk-size warning is acceptable if no new error appears.
 
-- [ ] **Step 3: Check whitespace and working tree**
+- [x] **Step 3: Check whitespace and working tree**
 
 Run: `git -c safe.directory=G:/WebsiteDevelopment/IhavenothingtodoWebsite diff --check` and `git -c safe.directory=G:/WebsiteDevelopment/IhavenothingtodoWebsite status -sb`
 
 Expected: no whitespace errors; only the intended Ko-fi implementation files are changed before commit.
 
-- [ ] **Step 4: Commit the implementation**
+- [x] **Step 4: Commit the implementation**
 
 ```bash
 git add src/i18n/dict.ts src/i18n/dict.test.ts src/pages/Home.tsx
 git commit -m "feat: add Ko-fi footer link"
 ```
 
-- [ ] **Step 5: Push `development`**
+- [x] **Step 5: Push `development`**
 
 ```bash
 git push origin development
