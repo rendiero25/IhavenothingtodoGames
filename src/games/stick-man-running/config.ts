@@ -45,8 +45,23 @@ export interface PickupState {
   active: boolean;
 }
 
+export type ProjectileKind = 'paper' | 'pencil';
+
+export interface ProjectileState {
+  id: number;
+  kind: ProjectileKind;
+  owner: 'player' | 'enemy';
+  sourceId: number;
+  x: number;
+  y: number;
+  vx: number;
+  damage: number;
+  knockback: number;
+  expiresAt: number;
+}
+
 export interface EffectState {
-  kind: 'impact' | 'dust' | 'burst' | 'page-shift';
+  kind: 'impact' | 'dust' | 'burst' | 'page-shift' | 'erase-lines';
   x: number;
   y: number;
   life: number;
@@ -65,7 +80,10 @@ export interface GameState {
   player: PlayerState;
   enemies: EnemyState[];
   pickups: PickupState[];
+  projectiles: ProjectileState[];
   effects: EffectState[];
+  hitStopMs: number;
+  nextProjectileId: number;
 }
 
 export const LOGICAL_WIDTH = 960;
@@ -88,6 +106,13 @@ export const PAPERCLIP_COMBO_WINDOW_MS = 570;
 export const ATTACK_HEIGHT = 82;
 export const BASE_ATTACK_RANGE = 68;
 export const HIT_STUN_MS = 150;
+export const HIT_STOP_MS = 48;
+export const FINISHER_HIT_STOP_MS = 72;
+export const PROJECTILE_LIFETIME_MS = 1_800;
+export const PAPER_PROJECTILE_SPEED = 330;
+export const PENCIL_PROJECTILE_SPEED = 650;
+export const PROJECTILE_HIT_RADIUS = 30;
+export const RUN_DUST_INTERVAL_MS = 140;
 
 export const BOSS_MILESTONE_WAVE = 5;
 export const MAX_ENEMIES_PER_WAVE = 10;

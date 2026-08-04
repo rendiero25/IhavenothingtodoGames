@@ -5,6 +5,8 @@ import {
   BOSS_MILESTONE_WAVE,
   COMBO_WINDOW_MS,
   FLOOR_Y,
+  HIT_STOP_MS,
+  PAPER_PROJECTILE_SPEED,
   PLAYER_HALF_WIDTH,
   PLAYER_INVULNERABILITY_MS,
   WEAPON_TUNING,
@@ -70,6 +72,13 @@ describe('Stick Man Running movement', () => {
       next = updateGame(next, idle, 32, 17);
     }
     expect(next.player).toMatchObject({ y: FLOOR_Y, vy: 0, grounded: true });
+    expect(next.effects.some((effect) => effect.kind === 'dust' && effect.strength > 1)).toBe(true);
+  });
+
+  it('emits deterministic graphite dust while running on the floor', () => {
+    const initial = state({ enemies: [enemy({ y: 0 })] });
+    const next = updateGame(initial, { ...idle, right: true }, 160, 17);
+    expect(next.effects.some((effect) => effect.kind === 'dust')).toBe(true);
   });
 });
 
@@ -100,12 +109,97 @@ describe('Stick Man Running combat', () => {
     expect(forward?.stunUntil).toBeGreaterThan(next.time);
     expect(behind?.hp).toBe(5);
     expect(next.bestCombo).toBe(3);
+    expect(next.hitStopMs).toBeGreaterThanOrEqual(HIT_STOP_MS);
   });
 
   it('does not attack when punchPressed is false', () => {
     const next = updateGame(state({ enemies: [enemy()] }), idle, 16, 17);
     expect(next.enemies[0].hp).toBe(5);
     expect(next.player.comboStep).toBe(0);
+  });
+
+  it('does not take contact damage from a stunned enemy', () => {
+    const next = updateGame(state({
+      time: 100,
+      enemies: [enemy({ x: 480, stunUntil: 500 })],
+    }), idle, 16, 17);
+    expect(next.lives).toBe(5);
+  });
+});
+
+describe('Stick Man Running projectiles', () => {
+  it('spawns a moving paper projectile before applying ranged damage', () => {
+    let next = state({ enemies: [enemy({ id: 4, kind: 'thrower', x: 700, projectileCooldown: 0 })] });
+    next = updateGame(next, idle, 16, 17);
+    expect(next.lives).toBe(5);
+    expect(next.projectiles).toHaveLength(1);
+    expect(next.projectiles[0]).toMatchObject({ kind: 'paper', owner: 'enemy', vx: -PAPER_PROJECTILE_SPEED });
+
+    for (let index = 0; index < 20 && next.lives === 5; index += 1) {
+      next = updateGame(next, idle, 50, 17);
+    }
+    expect(next.lives).toBe(4);
+    expect(next.projectiles).toHaveLength(0);
+  });
+
+  it('fires a straight pencil projectile that damages, stuns, and scores on impact', () => {
+    let next = state({
+      player: {
+        ...state().player,
+        weapon: 'pencil',
+        weaponExpiresAt: 10_000,
+      },
+      enemies: [enemy({ x: 650 })],
+    });
+    next = updateGame(next, { ...idle, punchPressed: true }, 16, 17);
+    expect(next.projectiles[0]).toMatchObject({ kind: 'pencil', owner: 'player', vx: 650 });
+
+    for (let index = 0; index < 12 && next.enemies[0]?.hp === 5; index += 1) {
+      next = updateGame(next, idle, 40, 17);
+    }
+    expect(next.enemies[0].hp).toBe(3);
+    expect(next.enemies[0].stunUntil).toBeGreaterThan(next.time);
+    expect(next.score).toBe(20);
+    expect(next.hitStopMs).toBeGreaterThan(0);
+    expect(next.projectiles).toHaveLength(0);
+  });
+
+  it('emits erase-lines when the Eraser Boss launches its paper attack', () => {
+    const next = updateGame(state({
+      enemies: [enemy({ id: 9, kind: 'boss', x: 700, hp: 18, maxHp: 18, projectileCooldown: 0 })],
+    }), idle, 16, 17);
+    expect(next.projectiles.some((projectile) => projectile.kind === 'paper' && projectile.sourceId === 9)).toBe(true);
+    expect(next.effects.some((effect) => effect.kind === 'erase-lines')).toBe(true);
+  });
+
+  it('expires projectiles without applying damage after their lifetime', () => {
+    const next = updateGame(state({
+      enemies: [enemy({ y: 0 })],
+      projectiles: [{
+        id: 3,
+        kind: 'paper',
+        owner: 'enemy',
+        sourceId: 1,
+        x: 600,
+        y: FLOOR_Y - 40,
+        vx: -PAPER_PROJECTILE_SPEED,
+        damage: 1,
+        knockback: -220,
+        expiresAt: 50,
+      }],
+    }), idle, 60, 17);
+    expect(next.projectiles).toHaveLength(0);
+    expect(next.lives).toBe(5);
+  });
+
+  it('produces identical projectile travel and collision outcomes from equal seeded state', () => {
+    const initial = state({ enemies: [enemy({ id: 7, kind: 'thrower', x: 700, projectileCooldown: 0 })] });
+    const run = () => {
+      let next = structuredClone(initial);
+      for (let index = 0; index < 14; index += 1) next = updateGame(next, idle, 50, 91);
+      return next;
+    };
+    expect(run()).toEqual(run());
   });
 });
 

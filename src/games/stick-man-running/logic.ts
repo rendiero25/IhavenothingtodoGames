@@ -9,15 +9,22 @@ import {
   ENEMY_TUNING,
   FLOOR_Y,
   GRAVITY,
+  FINISHER_HIT_STOP_MS,
+  HIT_STOP_MS,
   HIT_STUN_MS,
   JUMP_VELOCITY,
   MAX_ENEMIES_PER_WAVE,
   PAPERCLIP_COMBO_WINDOW_MS,
+  PAPER_PROJECTILE_SPEED,
+  PENCIL_PROJECTILE_SPEED,
   PLAYER_ACCELERATION,
   PLAYER_GROUND_DRAG,
   PLAYER_HALF_WIDTH,
   PLAYER_INVULNERABILITY_MS,
   PLAYER_SPEED,
+  PROJECTILE_HIT_RADIUS,
+  PROJECTILE_LIFETIME_MS,
+  RUN_DUST_INTERVAL_MS,
   WAVE_SCORE_BONUS,
   WEAPON_ORDER,
   WEAPON_TUNING,
@@ -28,6 +35,7 @@ import {
   type InputState,
   type PickupState,
   type PlayerState,
+  type ProjectileState,
 } from './config';
 
 export type {
@@ -38,12 +46,14 @@ export type {
   InputState,
   PickupState,
   PlayerState,
+  ProjectileKind,
+  ProjectileState,
   WeaponKind,
 } from './config';
 
 const EPSILON = 0.001;
 const CONTACT_DISTANCE = 37;
-const THROWER_DAMAGE_DISTANCE = 320;
+const THROWER_ATTACK_DISTANCE = 360;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
@@ -144,7 +154,10 @@ export function createInitialState(seed: number, lives: number): GameState {
     },
     enemies: spawnWave(seed, 1),
     pickups: [],
+    projectiles: [],
     effects: [],
+    hitStopMs: 0,
+    nextProjectileId: 1,
   };
 }
 
@@ -196,6 +209,26 @@ function applyPunch(state: GameState, input: InputState): GameState {
   const attackPlayer = { ...state.player, comboStep };
   const attack = attackValues(attackPlayer);
   const direction = attackPlayer.facing;
+  if (attackPlayer.weapon === 'pencil') {
+    const projectile: ProjectileState = {
+      id: state.nextProjectileId,
+      kind: 'pencil',
+      owner: 'player',
+      sourceId: 0,
+      x: attackPlayer.x + direction * 30,
+      y: attackPlayer.y - 42,
+      vx: direction * PENCIL_PROJECTILE_SPEED,
+      damage: attack.damage,
+      knockback: direction * attack.knockback,
+      expiresAt: state.time + PROJECTILE_LIFETIME_MS,
+    };
+    return {
+      ...state,
+      player: { ...attackPlayer, comboExpiresAt: state.time + attack.windowMs },
+      projectiles: [...state.projectiles, projectile],
+      nextProjectileId: state.nextProjectileId + 1,
+    };
+  }
   const hits = state.enemies.filter((enemy) => {
     const forwardDistance = (enemy.x - attackPlayer.x) * direction;
     return forwardDistance >= -8 && forwardDistance <= attack.range && Math.abs(enemy.y - attackPlayer.y) <= ATTACK_HEIGHT;
@@ -235,6 +268,9 @@ function applyPunch(state: GameState, input: InputState): GameState {
     score: state.score + successfulHits * 20 * attack.scoreMultiplier + defeated * 80,
     combo,
     bestCombo: Math.max(state.bestCombo, combo),
+    hitStopMs: successfulHits > 0
+      ? Math.max(state.hitStopMs, comboStep === 3 ? FINISHER_HIT_STOP_MS : HIT_STOP_MS)
+      : state.hitStopMs,
   };
 }
 
@@ -272,6 +308,134 @@ function updateEnemies(enemies: readonly EnemyState[], player: PlayerState, dt: 
   });
 }
 
+function spawnEnemyProjectiles(state: GameState): GameState {
+  let nextProjectileId = state.nextProjectileId;
+  const projectiles: ProjectileState[] = [];
+  const effects: EffectState[] = [];
+  const enemies = state.enemies.map((enemy) => {
+    const ranged = enemy.kind === 'thrower' || enemy.kind === 'boss';
+    const inRange = Math.abs(enemy.x - state.player.x) <= THROWER_ATTACK_DISTANCE;
+    if (!ranged || enemy.projectileCooldown > EPSILON || !inRange || state.time < enemy.stunUntil) return enemy;
+
+    const direction: -1 | 1 = state.player.x < enemy.x ? -1 : 1;
+    projectiles.push({
+      id: nextProjectileId,
+      kind: 'paper',
+      owner: 'enemy',
+      sourceId: enemy.id,
+      x: enemy.x + direction * 24,
+      y: enemy.y - 40,
+      vx: direction * PAPER_PROJECTILE_SPEED,
+      damage: ENEMY_TUNING[enemy.kind].contactDamage,
+      knockback: direction * (enemy.kind === 'boss' ? 310 : 220),
+      expiresAt: state.time + PROJECTILE_LIFETIME_MS,
+    });
+    nextProjectileId += 1;
+    if (enemy.kind === 'boss') {
+      effects.push({
+        kind: 'erase-lines',
+        x: (enemy.x + state.player.x) / 2,
+        y: FLOOR_Y - 90,
+        life: 900,
+        maxLife: 900,
+        strength: 1.5,
+      });
+    }
+    return {
+      ...enemy,
+      projectileCooldown: ENEMY_TUNING[enemy.kind].projectileIntervalMs,
+      telegraph: 0,
+    };
+  });
+
+  if (projectiles.length === 0) return state;
+  return {
+    ...state,
+    enemies,
+    projectiles: [...state.projectiles, ...projectiles],
+    effects: [...state.effects, ...effects],
+    nextProjectileId,
+  };
+}
+
+function crossesTarget(previousX: number, nextX: number, targetX: number, radius: number): boolean {
+  return targetX >= Math.min(previousX, nextX) - radius && targetX <= Math.max(previousX, nextX) + radius;
+}
+
+function updateProjectiles(state: GameState, dt: number): GameState {
+  let player = state.player;
+  let lives = state.lives;
+  let gameOver = state.gameOver;
+  let enemies = state.enemies;
+  let score = state.score;
+  let combo = state.combo;
+  let bestCombo = state.bestCombo;
+  let hitStopMs = state.hitStopMs;
+  const effects = [...state.effects];
+  const projectiles: ProjectileState[] = [];
+
+  for (const projectile of state.projectiles) {
+    if (state.time >= projectile.expiresAt) continue;
+    const x = projectile.x + projectile.vx * dt;
+    if (x < ARENA_LEFT - 36 || x > ARENA_RIGHT + 36) continue;
+
+    if (projectile.owner === 'player') {
+      const target = enemies
+        .filter((enemy) => Math.abs(enemy.y - projectile.y) <= PROJECTILE_HIT_RADIUS + 28
+          && crossesTarget(projectile.x, x, enemy.x, PROJECTILE_HIT_RADIUS))
+        .sort((a, b) => Math.abs(a.x - projectile.x) - Math.abs(b.x - projectile.x))[0];
+      if (!target) {
+        projectiles.push({ ...projectile, x });
+        continue;
+      }
+
+      const hp = target.hp - projectile.damage;
+      const defeated = hp <= 0;
+      enemies = enemies.flatMap((enemy) => {
+        if (enemy.id !== target.id) return [enemy];
+        if (defeated) return [];
+        return [{
+          ...enemy,
+          hp,
+          vx: projectile.knockback,
+          knockback: Math.abs(projectile.knockback),
+          stunUntil: state.time + HIT_STUN_MS,
+          telegraph: 0,
+        }];
+      });
+      combo += 1;
+      bestCombo = Math.max(bestCombo, combo);
+      score += 20 + (defeated ? 80 : 0);
+      hitStopMs = Math.max(hitStopMs, HIT_STOP_MS);
+      effects.push(
+        { kind: 'impact', x: target.x, y: target.y - 42, life: 125, maxLife: 125, strength: 1 },
+        { kind: 'burst', x: target.x, y: target.y - 42, life: 210, maxLife: 210, strength: 1 },
+      );
+      continue;
+    }
+
+    const hitPlayer = Math.abs((player.y - 38) - projectile.y) <= PROJECTILE_HIT_RADIUS + 24
+      && crossesTarget(projectile.x, x, player.x, PROJECTILE_HIT_RADIUS);
+    if (!hitPlayer) {
+      projectiles.push({ ...projectile, x });
+      continue;
+    }
+    if (state.time < player.invulnerableUntil || gameOver) continue;
+
+    lives = Math.max(0, lives - projectile.damage);
+    gameOver = lives === 0;
+    combo = 0;
+    player = {
+      ...player,
+      vx: projectile.knockback,
+      invulnerableUntil: gameOver ? Number.POSITIVE_INFINITY : state.time + PLAYER_INVULNERABILITY_MS,
+    };
+    effects.push({ kind: 'page-shift', x: player.x, y: player.y, life: 180, maxLife: 180, strength: 1.15 });
+  }
+
+  return { ...state, player, lives, gameOver, enemies, projectiles, effects, score, combo, bestCombo, hitStopMs };
+}
+
 function collectPickups(player: PlayerState, pickups: readonly PickupState[], time: number): { player: PlayerState; pickups: PickupState[]; effects: EffectState[] } {
   let nextPlayer = player;
   const effects: EffectState[] = [];
@@ -288,24 +452,15 @@ function collectPickups(player: PlayerState, pickups: readonly PickupState[], ti
   return { player: nextPlayer, pickups: nextPickups, effects };
 }
 
-function applyEnemyDamage(state: GameState): GameState {
+function applyEnemyContactDamage(state: GameState): GameState {
   if (state.gameOver || state.time < state.player.invulnerableUntil) return state;
   let attacker: EnemyState | undefined;
-  let ranged = false;
   for (const enemy of state.enemies) {
+    if (state.time < enemy.stunUntil) continue;
     const distance = Math.abs(enemy.x - state.player.x);
     const sharesVerticalSpace = Math.abs(enemy.y - state.player.y) <= ATTACK_HEIGHT;
     if (distance <= CONTACT_DISTANCE && sharesVerticalSpace) {
       attacker = enemy;
-      break;
-    }
-    const canThrow = (enemy.kind === 'thrower' || enemy.kind === 'boss')
-      && enemy.projectileCooldown <= EPSILON
-      && distance <= THROWER_DAMAGE_DISTANCE
-      && sharesVerticalSpace;
-    if (canThrow) {
-      attacker = enemy;
-      ranged = true;
       break;
     }
   }
@@ -313,17 +468,11 @@ function applyEnemyDamage(state: GameState): GameState {
 
   const lives = Math.max(0, state.lives - ENEMY_TUNING[attacker.kind].contactDamage);
   const gameOver = lives === 0;
-  const enemies = ranged
-    ? state.enemies.map((enemy) => enemy.id === attacker?.id
-      ? { ...enemy, projectileCooldown: ENEMY_TUNING[enemy.kind].projectileIntervalMs, telegraph: 0 }
-      : enemy)
-    : state.enemies;
   return {
     ...state,
     lives,
     gameOver,
     combo: 0,
-    enemies,
     player: {
       ...state.player,
       vx: -attacker.facing * 210,
@@ -343,6 +492,27 @@ function ageEffects(effects: readonly EffectState[], dtMs: number): EffectState[
   });
 }
 
+function movementEffects(previous: GameState, player: PlayerState, time: number): EffectState[] {
+  if (!previous.player.grounded && player.grounded) {
+    return [
+      { kind: 'dust', x: player.x, y: FLOOR_Y, life: 240, maxLife: 240, strength: 1.6 },
+      { kind: 'page-shift', x: player.x, y: FLOOR_Y, life: 110, maxLife: 110, strength: 0.35 },
+    ];
+  }
+  const crossedDustBeat = Math.floor(previous.time / RUN_DUST_INTERVAL_MS) < Math.floor(time / RUN_DUST_INTERVAL_MS);
+  if (player.grounded && Math.abs(player.vx) > PLAYER_SPEED * 0.35 && crossedDustBeat) {
+    return [{
+      kind: 'dust',
+      x: player.x - player.facing * 18,
+      y: FLOOR_Y,
+      life: 180,
+      maxLife: 180,
+      strength: 0.85,
+    }];
+  }
+  return [];
+}
+
 export function updateGame(state: GameState, input: InputState, dtMs: number, seed: number): GameState {
   if (state.gameOver) return state;
   const elapsedMs = Math.max(0, Number.isFinite(dtMs) ? dtMs : 0);
@@ -352,9 +522,11 @@ export function updateGame(state: GameState, input: InputState, dtMs: number, se
   let next: GameState = {
     ...state,
     time,
+    hitStopMs: Math.max(0, state.hitStopMs - elapsedMs),
     effects: ageEffects(state.effects, elapsedMs),
     player: updatePlayer(state.player, input, dt, time),
   };
+  next = { ...next, effects: [...next.effects, ...movementEffects(state, next.player, time)] };
 
   const collected = collectPickups(next.player, next.pickups, time);
   next = {
@@ -365,7 +537,9 @@ export function updateGame(state: GameState, input: InputState, dtMs: number, se
   };
   next = applyPunch(next, input);
   next = { ...next, enemies: updateEnemies(next.enemies, next.player, dt, time) };
-  next = applyEnemyDamage(next);
+  next = spawnEnemyProjectiles(next);
+  next = updateProjectiles(next, dt);
+  next = applyEnemyContactDamage(next);
 
   if (!next.gameOver && next.enemies.length === 0) {
     const wave = next.wave + 1;
