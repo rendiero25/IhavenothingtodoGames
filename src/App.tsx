@@ -25,6 +25,7 @@ export default function App() {
       <Route path="/play/:gameId" element={<Play />} />
       <Route path="/daily" element={<Daily />} />
       <Route path="/education" element={<Education />} />
+      <Route path="/education/below-the-surface" element={<Education />} />
       <Route path="/weird" element={<SectionPlaceholder section="weird" />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
