@@ -267,6 +267,7 @@ Files:
 - Create src/components/education/ObjectScene.test.ts
 - Create src/components/education/DiscoveryCard.tsx
 - Create src/components/education/DiscoveryCard.test.ts
+- Modify src/i18n/dict.ts — add shared Education labels used by the card.
 
 Interfaces:
 
@@ -291,9 +292,9 @@ Expected: FAIL because components and helpers do not exist.
 
 Use small inline SVG/HTML scenes keyed by visual.kind. Every scene has a visible text label and line-art fallback. Active scenes run reveal/settle classes; idle motion is subtle and disabled when reducedMotion is true. Decorative shapes may be aria-hidden, but the object label remains accessible.
 
-- [ ] Step 4: Implement DiscoveryCard.
+- [ ] Step 4: Add shared card labels to both dictionaries and implement DiscoveryCard.
 
-Render title, category, depth, fact, comparison, and source link. Source opens in the same tab, has visible focus, and uses supplied label and URL. Copy comes from the active locale; shared UI strings are not hard-coded.
+Add matching ID/EN keys for category labels, depth, comparison, and source label to src/i18n/dict.ts. Render title, category, depth, fact, comparison, and source link. Source opens in the same tab, has visible focus, and uses supplied label and URL. Copy comes from the active locale; shared UI strings are not hard-coded.
 
 - [ ] Step 5: Run focused tests and typecheck.
 
@@ -307,7 +308,7 @@ Expected: PASS.
 - [ ] Step 6: Commit.
 
 ~~~powershell
-git add src/components/education/ObjectScene.tsx src/components/education/ObjectScene.test.ts src/components/education/DiscoveryCard.tsx src/components/education/DiscoveryCard.test.ts
+git add src/components/education/ObjectScene.tsx src/components/education/ObjectScene.test.ts src/components/education/DiscoveryCard.tsx src/components/education/DiscoveryCard.test.ts src/i18n/dict.ts
 git commit -m "feat: add education object scenes and discovery cards"
 ~~~
 
@@ -328,9 +329,9 @@ Interfaces:
 - DepthJourney owns activeStopId, observer setup/cleanup, and reduced-motion state.
 - Education owns page title, header, intro, ending, and link back to games.
 
-- [ ] Step 1: Add complete ID/EN dictionary keys.
+- [ ] Step 1: Add remaining page-level ID/EN dictionary keys.
 
-Add matching keys for page title, intro, surface/depth labels, category labels, source label, ending copy, back-to-games CTA, and fallback copy. Keep DictKey inferred from the ID dictionary and make EN satisfy Record<DictKey, string>.
+Add matching keys for page title, intro, surface/depth journey labels, ending copy, back-to-games CTA, and fallback copy. Preserve the shared category/depth/comparison/source keys added by Task 4. Keep DictKey inferred from the ID dictionary and make EN satisfy Record<DictKey, string>.
 
 - [ ] Step 2: Implement DepthJourney.
 
