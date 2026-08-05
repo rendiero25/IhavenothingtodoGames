@@ -6,6 +6,43 @@ export interface ObjectSceneProps {
   reducedMotion: boolean;
 }
 
+const SCENE_KEYFRAMES = `
+@keyframes scene-reveal {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0) scale(0.985);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes scene-settle {
+  0% {
+    opacity: 0.96;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  100% {
+    opacity: 0.9;
+    transform: translate3d(0, 6px, 0) scale(0.992);
+  }
+}
+
+@keyframes scene-idle {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(0, -4px, 0);
+  }
+}
+`;
+
 const VISUAL_KIND_TO_RENDERER = {
   cutaway: 'surface',
   roots: 'network',
@@ -155,6 +192,7 @@ function renderScene(kind: VisualRendererKind) {
 export function ObjectScene({ stop, active, reducedMotion }: ObjectSceneProps) {
   const rendererKind = getVisualRendererKind(stop.visual);
   const categoryToken = getCategoryToken(stop.category);
+  const idleClassName = reducedMotion ? '' : 'motion-safe:animate-[scene-idle_6s_ease-in-out_infinite]';
 
   return (
     <figure
@@ -164,11 +202,12 @@ export function ObjectScene({ stop, active, reducedMotion }: ObjectSceneProps) {
       data-category-token={categoryToken}
       data-renderer-kind={rendererKind}
     >
+      <style>{SCENE_KEYFRAMES}</style>
       <div className="pointer-events-none absolute inset-0 opacity-[0.08]" aria-hidden="true">
         <div className="h-full w-full bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.22),transparent_55%)]" />
       </div>
       <div className="relative">
-        <div className="mx-auto aspect-[3/2] w-full max-w-[15rem] text-ink">
+        <div className={`mx-auto aspect-[3/2] w-full max-w-[15rem] text-ink ${idleClassName}`}>
           {renderScene(rendererKind)}
         </div>
         <figcaption className="mt-4 text-center font-mono text-[11px] uppercase tracking-[0.16em] text-ink/78">

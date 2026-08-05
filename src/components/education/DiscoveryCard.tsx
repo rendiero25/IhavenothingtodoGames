@@ -1,4 +1,5 @@
 import type { EducationCategory, EducationSource, EducationStop } from '../../education/types';
+import type { DictKey } from '../../i18n/dict';
 import { useI18n } from '../../i18n';
 import { getCategoryToken } from './ObjectScene';
 
@@ -6,18 +7,12 @@ export interface DiscoveryCardProps {
   stop: EducationStop;
 }
 
-const CATEGORY_COPY: Record<EducationCategory, { id: string; en: string }> = {
-  life: { id: 'Kehidupan', en: 'Life' },
-  human: { id: 'Manusia', en: 'Human' },
-  geology: { id: 'Geologi', en: 'Geology' },
-  tech: { id: 'Teknologi', en: 'Technology' },
-};
-
-const LABEL_COPY = {
-  depth: { id: 'Kedalaman', en: 'Depth' },
-  comparison: { id: 'Perbandingan', en: 'Comparison' },
-  source: { id: 'Sumber', en: 'Source' },
-} as const;
+const CATEGORY_LABEL_KEYS = {
+  life: 'education.category.life',
+  human: 'education.category.human',
+  geology: 'education.category.geology',
+  tech: 'education.category.tech',
+} as const satisfies Record<EducationCategory, DictKey>;
 
 export function formatSourceLabel(source: EducationSource): string {
   const trimmed = source.label.trim();
@@ -26,7 +21,7 @@ export function formatSourceLabel(source: EducationSource): string {
   try {
     return new URL(source.url).hostname.replace(/^www\./, '');
   } catch {
-    return 'Source';
+    return source.url.trim() || '—';
   }
 }
 
@@ -39,11 +34,11 @@ function formatDepth(depthMeters: number, locale: 'id' | 'en') {
 }
 
 export function DiscoveryCard({ stop }: DiscoveryCardProps) {
-  const { locale } = useI18n();
-  const categoryLabel = CATEGORY_COPY[stop.category][locale];
-  const depthLabel = LABEL_COPY.depth[locale];
-  const comparisonLabel = LABEL_COPY.comparison[locale];
-  const sourceLabel = LABEL_COPY.source[locale];
+  const { locale, t } = useI18n();
+  const categoryLabel = t(CATEGORY_LABEL_KEYS[stop.category]);
+  const depthLabel = t('education.label.depth');
+  const comparisonLabel = t('education.label.comparison');
+  const sourceLabel = t('education.label.source');
   const sourceText = formatSourceLabel(stop.source);
   const categoryToken = getCategoryToken(stop.category);
 

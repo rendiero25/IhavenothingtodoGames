@@ -40,6 +40,10 @@ describe('ObjectScene helpers', () => {
     expect(markup).toContain('data-active="true"');
     expect(markup).toContain('data-renderer-kind="surface"');
     expect(markup).toContain('motion-safe:animate-[scene-reveal_560ms_ease-out]');
+    expect(markup).toContain('motion-safe:animate-[scene-idle_6s_ease-in-out_infinite]');
+    expect(markup).toContain('@keyframes scene-reveal');
+    expect(markup).toContain('@keyframes scene-settle');
+    expect(markup).toContain('@keyframes scene-idle');
   });
 
   it('uses the line-art fallback and removes motion classes when reduced', () => {
