@@ -33,6 +33,16 @@ const id = {
   'education.label.depth': 'Kedalaman',
   'education.label.comparison': 'Perbandingan',
   'education.label.source': 'Sumber',
+  'education.page.title': 'Below the Surface',
+  'education.page.intro':
+    'Mulai dari tanah tempat kita berpijak, lalu turun melewati akar, air tanah, infrastruktur, kerak, mantel, sampai inti Bumi. Setiap pemberhentian memakai sumber nyata agar jarak ke bawah terasa lebih masuk akal.',
+  'education.page.surfaceLabel': 'Permukaan',
+  'education.page.depthJourneyLabel': 'Perjalanan ke bawah',
+  'education.page.endingTitle': 'Masih banyak yang tersembunyi di bawah kaki kita',
+  'education.page.endingBody':
+    'Perjalanan ini berakhir di inti, tetapi rasa ingin tahu bisa lanjut ke mana-mana. Kembali ke arcade kalau kamu ingin pindah dari eksplorasi kedalaman ke refleks yang lebih ringan.',
+  'education.page.backToGames': 'Kembali ke games',
+  'education.page.empty': 'Perjalanan kedalaman belum tersedia saat ini. Coba lagi nanti.',
   'cat.reflex': 'Refleks',
   'cat.aim': 'Aim',
   'cat.memory': 'Memori',
@@ -116,6 +126,16 @@ const en: Record<DictKey, string> = {
   'education.label.depth': 'Depth',
   'education.label.comparison': 'Comparison',
   'education.label.source': 'Source',
+  'education.page.title': 'Below the Surface',
+  'education.page.intro':
+    'Start at the ground beneath us, then move past roots, groundwater, infrastructure, crust, mantle, and down toward Earth’s core. Every stop uses a real source so the distance downward feels easier to grasp.',
+  'education.page.surfaceLabel': 'Surface',
+  'education.page.depthJourneyLabel': 'Depth journey',
+  'education.page.endingTitle': 'There is still more hidden beneath our feet',
+  'education.page.endingBody':
+    'This trip ends at the core, but the curiosity can keep going. Head back to the arcade when you want to swap deep exploration for something more reflex-driven.',
+  'education.page.backToGames': 'Back to games',
+  'education.page.empty': 'The depth journey is not available right now. Please check back later.',
   'cat.reflex': 'Reflex',
   'cat.aim': 'Aim',
   'cat.memory': 'Memory',
