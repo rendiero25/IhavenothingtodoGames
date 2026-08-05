@@ -6,14 +6,25 @@ import {
   getStopProgress,
   type EducationScrollEntry,
 } from '../../education/scroll';
-import type { EducationStop } from '../../education/types';
+import type { EducationLayer, EducationStop } from '../../education/types';
 import { useI18n } from '../../i18n';
+import type { DictKey } from '../../i18n/dict';
 import { DepthRuler, getDepthLabel } from './DepthRuler';
 import { DiscoveryCard } from './DiscoveryCard';
 import { LayerBand } from './LayerBand';
 import { ObjectScene } from './ObjectScene';
 
 const OBSERVER_ROOT_MARGIN = '-45% 0px -45% 0px';
+
+const LAYER_LABEL_KEYS: Record<EducationLayer, DictKey> = {
+  surface: 'education.layer.surface',
+  soil: 'education.layer.soil',
+  groundwater: 'education.layer.groundwater',
+  underground: 'education.layer.underground',
+  crust: 'education.layer.crust',
+  mantle: 'education.layer.mantle',
+  core: 'education.layer.core',
+};
 
 interface EducationScrollAnchor {
   stopId: string;
@@ -82,7 +93,7 @@ export interface DepthJourneyProps {
 }
 
 export function DepthJourney({ stops }: DepthJourneyProps) {
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
   const reducedMotion = useReducedMotion() ?? false;
   const sectionRefs = useRef(new Map<string, HTMLElement>());
   const scrollAnchorRef = useRef<EducationScrollAnchor | null>(null);
@@ -325,7 +336,7 @@ export function DepthJourney({ stops }: DepthJourneyProps) {
                             isActive ? 'border-ink/22 text-ink journey-idle' : 'border-ink/12 text-ink/58',
                           ].join(' ')}
                         >
-                          {stop.layer}
+                          {t(LAYER_LABEL_KEYS[stop.layer])}
                         </span>
                       </div>
 
