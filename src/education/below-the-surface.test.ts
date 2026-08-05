@@ -24,7 +24,8 @@ describe('below the surface education dataset', () => {
       expect(stop.comparison.id.trim().length).toBeGreaterThan(0);
       expect(stop.comparison.en.trim().length).toBeGreaterThan(0);
       expect(stop.source.url).toMatch(/^https:\/\//);
-      expect(stop.visual.label.trim().length).toBeGreaterThan(0);
+      expect(stop.visual.label.id.trim().length).toBeGreaterThan(0);
+      expect(stop.visual.label.en.trim().length).toBeGreaterThan(0);
     }
   });
 });
@@ -41,7 +42,7 @@ describe('validateEducationStops', () => {
         fact: { id: 'Fakta', en: '' },
         comparison: { id: 'Perbandingan', en: 'Comparison' },
         source: { label: 'Source', url: 'http://example.com' },
-        visual: { kind: '', label: '' },
+        visual: { kind: '', label: { id: '', en: '' } },
       },
       {
         id: 'surface-life',
@@ -52,7 +53,7 @@ describe('validateEducationStops', () => {
         fact: { id: 'Fakta', en: 'Fact' },
         comparison: { id: 'Perbandingan', en: 'Comparison' },
         source: { label: 'Source', url: 'https://example.com' },
-        visual: { kind: 'marker', label: 'Marker' },
+        visual: { kind: 'marker', label: { id: 'Marker', en: 'Marker' } },
       },
     ] as unknown as readonly EducationStop[];
 
@@ -62,7 +63,8 @@ describe('validateEducationStops', () => {
       'Stop "surface-life" is missing fact.en copy.',
       'Stop "surface-life" source.url must start with https://.',
       'Stop "surface-life" is missing visual.kind.',
-      'Stop "surface-life" is missing visual.label.',
+      'Stop "surface-life" is missing visual.label.id copy.',
+      'Stop "surface-life" is missing visual.label.en copy.',
       'Stop "surface-life" has a duplicate id.',
       'Stop "surface-life" must have a depth greater than 0 meters.',
       'Stop "surface-life" must be deeper than the previous stop.',

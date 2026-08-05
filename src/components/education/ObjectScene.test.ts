@@ -3,11 +3,13 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { BELOW_THE_SURFACE_STOPS } from '../../education/below-the-surface';
 import type { EducationVisual } from '../../education/types';
-import { ObjectScene, getCategoryToken, getVisualRendererKind } from './ObjectScene';
+import { ObjectScene, getCategoryToken, getVisualLabel, getVisualRendererKind } from './ObjectScene';
+
+const localeState = vi.hoisted(() => ({ value: 'en' as 'id' | 'en' }));
 
 vi.mock('../../i18n', () => ({
   useI18n: () => ({
-    locale: 'en',
+    locale: localeState.value,
     setLocale: vi.fn(),
     t: (key: string) => key,
   }),
@@ -15,7 +17,10 @@ vi.mock('../../i18n', () => ({
 
 describe('ObjectScene helpers', () => {
   it('falls back to line-art for unknown visual kinds', () => {
-    const visual: EducationVisual = { kind: 'mystery-shape', label: 'Unknown object' };
+    const visual: EducationVisual = {
+      kind: 'mystery-shape',
+      label: { id: 'Objek tidak dikenal', en: 'Unknown object' },
+    };
 
     expect(getVisualRendererKind(visual)).toBe('line');
   });
@@ -36,7 +41,7 @@ describe('ObjectScene helpers', () => {
       }),
     );
 
-    expect(markup).toContain(BELOW_THE_SURFACE_STOPS[0].visual.label);
+    expect(markup).toContain('Grass and leaf litter above dark soil');
     expect(markup).toContain('data-active="true"');
     expect(markup).toContain('data-renderer-kind="surface"');
     expect(markup).toContain('motion-safe:animate-[scene-reveal_560ms_ease-out]');
@@ -46,12 +51,46 @@ describe('ObjectScene helpers', () => {
     expect(markup).toContain('@keyframes scene-idle');
   });
 
+  it('renders locale-aware visual captions', () => {
+    const markup = renderToStaticMarkup(
+      createElement(ObjectScene, {
+        stop: BELOW_THE_SURFACE_STOPS[0],
+        active: true,
+        reducedMotion: true,
+      }),
+    );
+
+    expect(markup).toContain('Grass and leaf litter above dark soil');
+    expect(markup).not.toContain('Rumput dan serasah di atas tanah gelap');
+
+    localeState.value = 'id';
+    const indonesianMarkup = renderToStaticMarkup(
+      createElement(ObjectScene, {
+        stop: BELOW_THE_SURFACE_STOPS[0],
+        active: true,
+        reducedMotion: true,
+      }),
+    );
+
+    expect(indonesianMarkup).toContain('Rumput dan serasah di atas tanah gelap');
+    expect(getVisualLabel(BELOW_THE_SURFACE_STOPS[0].visual, 'en')).toBe(
+      'Grass and leaf litter above dark soil',
+    );
+    expect(getVisualLabel(BELOW_THE_SURFACE_STOPS[0].visual, 'id')).toBe(
+      'Rumput dan serasah di atas tanah gelap',
+    );
+    localeState.value = 'en';
+  });
+
   it('uses the line-art fallback and removes motion classes when reduced', () => {
     const stop = {
       ...BELOW_THE_SURFACE_STOPS[0],
       visual: {
         kind: 'mystery-shape',
-        label: 'Unknown object',
+        label: {
+          id: 'Objek tidak dikenal',
+          en: 'Unknown object',
+        },
       },
     };
 

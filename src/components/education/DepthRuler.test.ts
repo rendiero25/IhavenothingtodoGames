@@ -16,7 +16,7 @@ const STOPS: readonly EducationStop[] = [
     fact: { id: 'Fakta', en: 'Fact' },
     comparison: { id: 'Perbandingan', en: 'Comparison' },
     source: { label: 'Source', url: 'https://example.com/surface' },
-    visual: { kind: 'cutaway', label: 'Cutaway' },
+    visual: { kind: 'cutaway', label: { id: 'Potongan', en: 'Cutaway' } },
   },
   {
     id: 'root-zone',
@@ -27,7 +27,7 @@ const STOPS: readonly EducationStop[] = [
     fact: { id: 'Fakta', en: 'Fact' },
     comparison: { id: 'Perbandingan', en: 'Comparison' },
     source: { label: 'Source', url: 'https://example.com/root-zone' },
-    visual: { kind: 'roots', label: 'Roots' },
+    visual: { kind: 'roots', label: { id: 'Akar', en: 'Roots' } },
   },
 ] as const;
 

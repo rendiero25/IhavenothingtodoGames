@@ -9,6 +9,11 @@ export type EducationLayer =
   | 'mantle'
   | 'core';
 
+export interface EducationLocalizedText {
+  id: string;
+  en: string;
+}
+
 export interface EducationSource {
   label: string;
   url: string;
@@ -16,7 +21,7 @@ export interface EducationSource {
 
 export interface EducationVisual {
   kind: string;
-  label: string;
+  label: EducationLocalizedText;
 }
 
 export interface EducationStop {
@@ -24,9 +29,9 @@ export interface EducationStop {
   depthMeters: number;
   layer: EducationLayer;
   category: EducationCategory;
-  title: { id: string; en: string };
-  fact: { id: string; en: string };
-  comparison: { id: string; en: string };
+  title: EducationLocalizedText;
+  fact: EducationLocalizedText;
+  comparison: EducationLocalizedText;
   source: EducationSource;
   visual: EducationVisual;
 }

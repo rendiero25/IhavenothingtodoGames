@@ -1,4 +1,5 @@
 import type { EducationCategory, EducationStop, EducationVisual } from '../../education/types';
+import { useI18n } from '../../i18n';
 
 export interface ObjectSceneProps {
   stop: EducationStop;
@@ -74,6 +75,10 @@ export function getVisualRendererKind(visual: EducationVisual): VisualRendererKi
 
 export function getCategoryToken(category: EducationCategory): string {
   return CATEGORY_TOKENS[category];
+}
+
+export function getVisualLabel(visual: EducationVisual, locale: 'id' | 'en'): string {
+  return visual.label[locale];
 }
 
 function sceneClassName(active: boolean, reducedMotion: boolean) {
@@ -190,6 +195,7 @@ function renderScene(kind: VisualRendererKind) {
 }
 
 export function ObjectScene({ stop, active, reducedMotion }: ObjectSceneProps) {
+  const { locale } = useI18n();
   const rendererKind = getVisualRendererKind(stop.visual);
   const categoryToken = getCategoryToken(stop.category);
   const idleClassName = reducedMotion ? '' : 'motion-safe:animate-[scene-idle_6s_ease-in-out_infinite]';
@@ -211,7 +217,7 @@ export function ObjectScene({ stop, active, reducedMotion }: ObjectSceneProps) {
           {renderScene(rendererKind)}
         </div>
         <figcaption className="mt-4 text-center font-mono text-[11px] uppercase tracking-[0.16em] text-ink/78">
-          {stop.visual.label}
+          {getVisualLabel(stop.visual, locale)}
         </figcaption>
       </div>
     </figure>

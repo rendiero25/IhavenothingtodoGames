@@ -35,7 +35,10 @@ export const BELOW_THE_SURFACE_STOPS: readonly EducationStop[] = Object.freeze([
     },
     visual: {
       kind: 'cutaway',
-      label: 'Rumput dan serasah di atas tanah gelap',
+      label: {
+        id: 'Rumput dan serasah di atas tanah gelap',
+        en: 'Grass and leaf litter above dark soil',
+      },
     },
   },
   {
@@ -61,7 +64,10 @@ export const BELOW_THE_SURFACE_STOPS: readonly EducationStop[] = Object.freeze([
     },
     visual: {
       kind: 'roots',
-      label: 'Jaringan akar tipis menyebar dari batang tanaman',
+      label: {
+        id: 'Jaringan akar tipis menyebar dari batang tanaman',
+        en: 'Fine root network spreads from a plant stem',
+      },
     },
   },
   {
@@ -87,7 +93,10 @@ export const BELOW_THE_SURFACE_STOPS: readonly EducationStop[] = Object.freeze([
     },
     visual: {
       kind: 'soil-food-web',
-      label: 'Penampang tanah dengan cacing, jamur, dan akar',
+      label: {
+        id: 'Penampang tanah dengan cacing, jamur, dan akar',
+        en: 'Soil cross-section with worms, fungi, and roots',
+      },
     },
   },
   {
@@ -113,7 +122,10 @@ export const BELOW_THE_SURFACE_STOPS: readonly EducationStop[] = Object.freeze([
     },
     visual: {
       kind: 'pipes',
-      label: 'Pipa dan kabel warna-warni melintas horizontal',
+      label: {
+        id: 'Pipa dan kabel warna-warni melintas horizontal',
+        en: 'Colorful pipes and cables run horizontally',
+      },
     },
   },
   {
@@ -139,7 +151,10 @@ export const BELOW_THE_SURFACE_STOPS: readonly EducationStop[] = Object.freeze([
     },
     visual: {
       kind: 'water-table',
-      label: 'Lapisan biru mengisi pori batuan dan tanah',
+      label: {
+        id: 'Lapisan biru mengisi pori batuan dan tanah',
+        en: 'Blue layer fills pores in rock and soil',
+      },
     },
   },
   {
@@ -165,7 +180,10 @@ export const BELOW_THE_SURFACE_STOPS: readonly EducationStop[] = Object.freeze([
     },
     visual: {
       kind: 'tunnel',
-      label: 'Peron kereta berada jauh di bawah jalan kota',
+      label: {
+        id: 'Peron kereta berada jauh di bawah jalan kota',
+        en: 'Subway platform sits far below city streets',
+      },
     },
   },
   {
@@ -191,7 +209,10 @@ export const BELOW_THE_SURFACE_STOPS: readonly EducationStop[] = Object.freeze([
     },
     visual: {
       kind: 'fossil-wall',
-      label: 'Dinding batu kapur dengan jejak fosil laut',
+      label: {
+        id: 'Dinding batu kapur dengan jejak fosil laut',
+        en: 'Limestone wall with traces of marine fossils',
+      },
     },
   },
   {
@@ -217,7 +238,10 @@ export const BELOW_THE_SURFACE_STOPS: readonly EducationStop[] = Object.freeze([
     },
     visual: {
       kind: 'mine-shaft',
-      label: 'Shaft tambang turun ke batuan emas yang panas',
+      label: {
+        id: 'Shaft tambang turun ke batuan emas yang panas',
+        en: 'Mine shaft descends into hot gold-bearing rock',
+      },
     },
   },
   {
@@ -243,7 +267,10 @@ export const BELOW_THE_SURFACE_STOPS: readonly EducationStop[] = Object.freeze([
     },
     visual: {
       kind: 'drill',
-      label: 'Lubang bor sempit menembus jauh ke kerak',
+      label: {
+        id: 'Lubang bor sempit menembus jauh ke kerak',
+        en: 'Narrow borehole reaches deep into the crust',
+      },
     },
   },
   {
@@ -269,7 +296,10 @@ export const BELOW_THE_SURFACE_STOPS: readonly EducationStop[] = Object.freeze([
     },
     visual: {
       kind: 'boundary',
-      label: 'Garis terang menandai peralihan kerak ke mantel',
+      label: {
+        id: 'Garis terang menandai peralihan kerak ke mantel',
+        en: 'Bright line marks the crust-to-mantle transition',
+      },
     },
   },
   {
@@ -295,7 +325,10 @@ export const BELOW_THE_SURFACE_STOPS: readonly EducationStop[] = Object.freeze([
     },
     visual: {
       kind: 'mantle-flow',
-      label: 'Lapisan mantel berpijar dengan arus lambat',
+      label: {
+        id: 'Lapisan mantel berpijar dengan arus lambat',
+        en: 'Glowing mantle layer with slow currents',
+      },
     },
   },
   {
@@ -321,7 +354,10 @@ export const BELOW_THE_SURFACE_STOPS: readonly EducationStop[] = Object.freeze([
     },
     visual: {
       kind: 'liquid-core',
-      label: 'Cincin logam cair mengelilingi pusat Bumi',
+      label: {
+        id: 'Cincin logam cair mengelilingi pusat Bumi',
+        en: 'Ring of liquid metal surrounds Earth\'s center',
+      },
     },
   },
   {
@@ -347,7 +383,10 @@ export const BELOW_THE_SURFACE_STOPS: readonly EducationStop[] = Object.freeze([
     },
     visual: {
       kind: 'solid-core',
-      label: 'Bola logam padat di pusat Bumi',
+      label: {
+        id: 'Bola logam padat di pusat Bumi',
+        en: 'Solid metal sphere at Earth\'s center',
+      },
     },
   },
 ]);
@@ -412,8 +451,11 @@ export function validateEducationStops(stops: readonly EducationStop[]): string[
       issues.push(`Stop "${stop.id}" is missing visual.kind.`);
     }
 
-    if (stop.visual.label.trim().length === 0) {
-      issues.push(`Stop "${stop.id}" is missing visual.label.`);
+    if (stop.visual.label.id.trim().length === 0) {
+      issues.push(`Stop "${stop.id}" is missing visual.label.id copy.`);
+    }
+    if (stop.visual.label.en.trim().length === 0) {
+      issues.push(`Stop "${stop.id}" is missing visual.label.en copy.`);
     }
 
     previousDepth = stop.depthMeters;
