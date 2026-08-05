@@ -1,6 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useReducedMotion } from 'motion/react';
-import { getActiveStopId, getStopProgress, type EducationScrollEntry } from '../../education/scroll';
+import {
+  getActiveStopId,
+  getScrollAnchorDelta,
+  getStopProgress,
+  type EducationScrollEntry,
+} from '../../education/scroll';
 import type { EducationStop } from '../../education/types';
 import { useI18n } from '../../i18n';
 import { DepthRuler, getDepthLabel } from './DepthRuler';
@@ -9,6 +14,12 @@ import { LayerBand } from './LayerBand';
 import { ObjectScene } from './ObjectScene';
 
 const OBSERVER_ROOT_MARGIN = '-45% 0px -45% 0px';
+
+interface EducationScrollAnchor {
+  stopId: string;
+  top: number;
+  scrollY: number;
+}
 
 const JOURNEY_MOTION_STYLES = `
 @keyframes journey-reveal {
@@ -74,8 +85,11 @@ export function DepthJourney({ stops }: DepthJourneyProps) {
   const { locale } = useI18n();
   const reducedMotion = useReducedMotion() ?? false;
   const sectionRefs = useRef(new Map<string, HTMLElement>());
+  const scrollAnchorRef = useRef<EducationScrollAnchor | null>(null);
+  const previousLocaleRef = useRef(locale);
   const [activeStopId, setActiveStopId] = useState(stops[0]?.id ?? '');
   const [progressById, setProgressById] = useState<Record<string, number>>({});
+  const stopIdsKey = useMemo(() => stops.map((stop) => stop.id).join('\u0000'), [stops]);
 
   const refreshJourneyState = useCallback(() => {
     if (typeof window === 'undefined') {
@@ -104,6 +118,17 @@ export function DepthJourney({ stops }: DepthJourneyProps) {
     }
 
     const nextActiveStopId = getActiveStopId(entries, viewportHeight / 2) ?? stops[0]?.id ?? '';
+    const activeSection = sectionRefs.current.get(nextActiveStopId);
+
+    if (activeSection) {
+      const activeRect = activeSection.getBoundingClientRect();
+      scrollAnchorRef.current = {
+        stopId: nextActiveStopId,
+        top: activeRect.top,
+        scrollY: Number.isFinite(window.scrollY) ? window.scrollY : 0,
+      };
+    }
+
     setActiveStopId((current) => (current === nextActiveStopId ? current : nextActiveStopId));
     setProgressById(nextProgress);
   }, [stops]);
@@ -113,7 +138,52 @@ export function DepthJourney({ stops }: DepthJourneyProps) {
     setProgressById(
       Object.fromEntries(stops.map((stop) => [stop.id, 0])) as Record<string, number>,
     );
-  }, [stops]);
+    scrollAnchorRef.current = null;
+  }, [stopIdsKey]);
+
+  useLayoutEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const previousLocale = previousLocaleRef.current;
+    previousLocaleRef.current = locale;
+
+    if (previousLocale === locale) {
+      return;
+    }
+
+    const anchor = scrollAnchorRef.current;
+
+    if (anchor) {
+      const section = sectionRefs.current.get(anchor.stopId);
+
+      if (section) {
+        const nextTop = section.getBoundingClientRect().top;
+        const correction = getScrollAnchorDelta(anchor.top, nextTop);
+
+        if (correction !== 0 && typeof window.scrollBy === 'function') {
+          window.scrollBy({ top: correction, left: 0, behavior: 'auto' });
+        }
+
+        scrollAnchorRef.current = {
+          ...anchor,
+          top: section.getBoundingClientRect().top,
+          scrollY: Number.isFinite(window.scrollY) ? window.scrollY : anchor.scrollY,
+        };
+      } else if (typeof window.scrollTo === 'function') {
+        window.scrollTo({ top: anchor.scrollY, left: 0, behavior: 'auto' });
+      }
+
+      setActiveStopId(anchor.stopId);
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      refreshJourneyState();
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [locale, refreshJourneyState]);
 
   useEffect(() => {
     if (stops.length === 0 || typeof window === 'undefined') {
@@ -162,6 +232,15 @@ export function DepthJourney({ stops }: DepthJourneyProps) {
     (stopId: string) => {
       setActiveStopId(stopId);
       const section = sectionRefs.current.get(stopId);
+
+      if (section && typeof window !== 'undefined') {
+        scrollAnchorRef.current = {
+          stopId,
+          top: section.getBoundingClientRect().top,
+          scrollY: Number.isFinite(window.scrollY) ? window.scrollY : 0,
+        };
+      }
+
       section?.scrollIntoView({
         block: 'center',
         inline: 'nearest',

@@ -18,7 +18,7 @@ export default function Education() {
   }, [t]);
 
   return (
-    <div className="flex min-h-dvh min-w-0 flex-col overflow-x-hidden bg-paper text-ink">
+    <div className="flex min-h-dvh min-w-0 flex-col overflow-x-clip bg-paper text-ink">
       <Header wide />
 
       <main className="mx-auto flex w-full min-w-0 max-w-[1800px] flex-1 flex-col px-4 pb-16 sm:px-6 lg:px-8">

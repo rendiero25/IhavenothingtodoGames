@@ -5,6 +5,14 @@ export type EducationScrollEntry = EducationStop & {
   height: number;
 };
 
+export function getScrollAnchorDelta(previousTop: number, nextTop: number): number {
+  if (!Number.isFinite(previousTop) || !Number.isFinite(nextTop)) {
+    return 0;
+  }
+
+  return nextTop - previousTop;
+}
+
 export function clampProgress(value: number): number {
   if (!Number.isFinite(value)) {
     return 0;
