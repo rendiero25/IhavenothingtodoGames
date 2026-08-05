@@ -265,7 +265,7 @@ export function DepthJourney({ stops }: DepthJourneyProps) {
           <DepthRuler stops={stops} activeStopId={activeStop.id} onSelect={handleSelectStop} />
         </aside>
 
-        <aside className="min-w-0 space-y-4 lg:sticky lg:top-20 lg:self-start" aria-live="polite">
+        <aside className="min-w-0 space-y-4 lg:sticky lg:top-20 lg:self-start">
           <div className="journey-reveal">
             <LayerBand layer={activeStop.layer} active progress={activeProgress} />
           </div>
