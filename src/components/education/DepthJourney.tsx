@@ -178,7 +178,7 @@ export function DepthJourney({ stops }: DepthJourneyProps) {
   const activeProgress = progressById[activeStop.id] ?? 0;
 
   return (
-    <div className="min-w-0 overflow-x-hidden" data-reduced-motion={reducedMotion ? 'true' : 'false'}>
+    <div className="min-w-0" data-reduced-motion={reducedMotion ? 'true' : 'false'}>
       <style>{JOURNEY_MOTION_STYLES}</style>
 
       <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(12rem,15rem)_minmax(0,1fr)_minmax(18rem,24rem)] lg:gap-8">

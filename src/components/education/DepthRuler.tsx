@@ -23,15 +23,15 @@ export function DepthRuler({ stops, activeStopId, onSelect }: DepthRulerProps) {
   const { locale } = useI18n();
 
   return (
-    <nav className="flex min-w-max flex-col gap-2 py-1">
-      <ol className="flex list-none flex-col gap-2">
+    <nav className="flex w-full min-w-0 flex-col gap-2 py-1">
+      <ol className="flex w-full min-w-0 list-none flex-col gap-2">
         {stops.map((stop) => {
           const isActive = stop.id === activeStopId;
           const depthLabel = getDepthLabel(stop.depthMeters, locale);
           const title = `${stop.title[locale]} (${depthLabel})`;
 
           return (
-            <li key={stop.id}>
+            <li key={stop.id} className="min-w-0">
               <button
                 type="button"
                 title={title}
@@ -40,13 +40,15 @@ export function DepthRuler({ stops, activeStopId, onSelect }: DepthRulerProps) {
                 data-active={isActive}
                 onClick={() => onSelect?.(stop.id)}
                 className={[
-                  'flex min-h-11 w-full min-w-40 items-center justify-between gap-3 rounded-full border px-4 py-2 text-left transition-colors',
+                  'flex min-h-11 w-full min-w-0 max-w-full items-center gap-3 rounded-full border px-4 py-2 text-left transition-colors',
                   'border-white/15 bg-white/[0.03] text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
                   isActive ? 'border-white bg-white text-black' : 'hover:border-white/40 hover:bg-white/[0.08]',
                 ].join(' ')}
               >
-                <span className="truncate text-sm font-medium">{stop.title[locale]}</span>
-                <span className="shrink-0 font-mono text-xs uppercase tracking-[0.18em]">
+                <span className="min-w-0 flex-1 text-sm font-medium leading-tight [overflow-wrap:anywhere]">
+                  {stop.title[locale]}
+                </span>
+                <span className="shrink-0 text-right font-mono text-xs uppercase tracking-[0.18em]">
                   {depthLabel}
                 </span>
               </button>

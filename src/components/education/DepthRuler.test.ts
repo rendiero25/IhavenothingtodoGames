@@ -83,6 +83,29 @@ describe('DepthRuler', () => {
     expect(markup).toContain('min-h-11');
   });
 
+  it('keeps the ruler column shrinkable on narrow layouts', () => {
+    const markup = renderWithLocale(
+      'en',
+      createElement(DepthRuler, {
+        stops: [
+          {
+            ...STOPS[0],
+            title: {
+              id: 'Permukaan dengan judul yang sangat panjang untuk uji mobile',
+              en: 'Surface with an intentionally long title for mobile sizing checks',
+            },
+          },
+        ],
+        activeStopId: 'surface-life',
+      }),
+    );
+
+    expect(markup).toContain('w-full min-w-0');
+    expect(markup).toContain('[overflow-wrap:anywhere]');
+    expect(markup).not.toContain('min-w-max');
+    expect(markup).not.toContain('min-w-40');
+  });
+
   it('uses localized titles and depth labels', () => {
     const markup = renderWithLocale(
       'id',
