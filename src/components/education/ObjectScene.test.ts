@@ -49,6 +49,7 @@ describe('ObjectScene helpers', () => {
     expect(markup).toContain('@keyframes scene-reveal');
     expect(markup).toContain('@keyframes scene-settle');
     expect(markup).toContain('@keyframes scene-idle');
+    expect(markup).not.toContain('radial-gradient');
   });
 
   it('renders locale-aware visual captions', () => {

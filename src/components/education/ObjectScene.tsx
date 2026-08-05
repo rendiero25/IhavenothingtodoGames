@@ -209,9 +209,6 @@ export function ObjectScene({ stop, active, reducedMotion }: ObjectSceneProps) {
       data-renderer-kind={rendererKind}
     >
       <style>{SCENE_KEYFRAMES}</style>
-      <div className="pointer-events-none absolute inset-0 opacity-[0.08]" aria-hidden="true">
-        <div className="h-full w-full bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.22),transparent_55%)]" />
-      </div>
       <div className="relative">
         <div className={`mx-auto aspect-[3/2] w-full max-w-[15rem] text-ink ${idleClassName}`}>
           {renderScene(rendererKind)}
