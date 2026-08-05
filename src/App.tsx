@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import Play from './pages/Play';
 import Daily from './pages/Daily';
 import Education from './pages/Education';
+import EducationHome from './pages/EducationHome';
 import NotFound from './pages/NotFound';
 import SectionPlaceholder from './pages/SectionPlaceholder';
 
@@ -24,7 +25,7 @@ export default function App() {
       <Route path="/" element={<Home />} />
       <Route path="/play/:gameId" element={<Play />} />
       <Route path="/daily" element={<Daily />} />
-      <Route path="/education" element={<Education />} />
+      <Route path="/education" element={<EducationHome />} />
       <Route path="/education/below-the-surface" element={<Education />} />
       <Route path="/weird" element={<SectionPlaceholder section="weird" />} />
       <Route path="*" element={<NotFound />} />
