@@ -106,6 +106,18 @@ describe('DepthRuler', () => {
     expect(markup).not.toContain('min-w-40');
   });
 
+  it('uses theme-safe ink and paper tokens for marker contrast', () => {
+    const markup = renderWithLocale(
+      'en',
+      createElement(DepthRuler, { stops: STOPS, activeStopId: 'surface-life' }),
+    );
+
+    expect(markup).toContain('border-ink');
+    expect(markup).toContain('bg-paper');
+    expect(markup).toContain('text-ink');
+    expect(markup).not.toContain('white');
+  });
+
   it('uses localized titles and depth labels', () => {
     const markup = renderWithLocale(
       'id',

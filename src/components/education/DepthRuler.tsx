@@ -41,8 +41,8 @@ export function DepthRuler({ stops, activeStopId, onSelect }: DepthRulerProps) {
                 onClick={() => onSelect?.(stop.id)}
                 className={[
                   'flex min-h-11 w-full min-w-0 max-w-full items-center gap-3 rounded-full border px-4 py-2 text-left transition-colors',
-                  'border-white/15 bg-white/[0.03] text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
-                  isActive ? 'border-white bg-white text-black' : 'hover:border-white/40 hover:bg-white/[0.08]',
+                  'border-ink/15 bg-paper text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
+                  isActive ? 'border-ink bg-ink text-paper' : 'hover:border-ink/40 hover:bg-ink/5',
                 ].join(' ')}
               >
                 <span className="min-w-0 flex-1 text-sm font-medium leading-tight [overflow-wrap:anywhere]">
