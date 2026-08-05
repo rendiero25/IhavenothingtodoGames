@@ -115,6 +115,7 @@ describe('DepthRuler', () => {
     expect(markup).toContain('border-ink');
     expect(markup).toContain('bg-paper');
     expect(markup).toContain('text-ink');
+    expect(markup).toContain('border-ink bg-ink text-paper');
     expect(markup).not.toContain('white');
   });
 
