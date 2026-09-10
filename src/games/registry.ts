@@ -138,7 +138,30 @@ export const GAMES: GameMeta[] = [
   },
 ];
 
+GAMES.push(
+  { id: 'kurir-gabut', category: 'adventure', icon: 'move', accent: 'amber', viewport: 'landscape',
+    name: { id: 'Kurir Gabut', en: 'Little Courier' },
+    tagline: { id: 'Lima titipan. Satu kampung. Banyak senyum.', en: 'Five parcels. One village. Plenty of smiles.' },
+    howTo: { id: 'W/S atau ↑/↓ untuk maju/mundur; A/D atau ←/→ untuk belok. Bisa juga tap jalan untuk berjalan otomatis. Dekati warga bertanda untuk mengambil dan mengantar lima titipan.', en: 'W/S or ↑/↓ to walk forward/back; A/D or ←/→ to turn. Or tap a street to auto-walk. Approach marked residents to collect and deliver five parcels.' } },
+  { id: 'highway-rush', category: 'racing', icon: 'move', accent: 'teal', viewport: 'portrait',
+    name: { id: 'Highway Rush', en: 'Highway Rush' },
+    tagline: { id: 'Selip di antara mobil. Kuasai jalan malam.', en: 'Thread the traffic. Own the night road.' },
+    howTo: { id: 'Panah kiri/kanan atau geser layar untuk menyetir. Tahan spasi atau Rem untuk melambat. Salip mobil tanpa menabrak.', en: 'Arrow keys or drag to steer. Hold space or Brake to slow down. Overtake without crashing.' } },
+  { id: 'apex-rally', category: 'racing', icon: 'move', accent: 'amber', viewport: 'portrait',
+    name: { id: 'Apex Rally', en: 'Apex Rally' },
+    tagline: { id: 'Baca tikungan. Tembus setiap gerbang.', en: 'Read the bends. Hit every gate.' },
+    howTo: { id: 'Panah kiri/kanan atau geser untuk menyetir melewati gerbang putih. Tahan spasi atau Rem sebelum tikungan. Keluar lintasan mengurangi nyawa.', en: 'Arrow keys or drag to steer through white gates. Hold space or Brake before bends. Leaving the road costs a life.' } },
+  { id: 'slipstream', category: 'racing', icon: 'move', accent: 'coral', viewport: 'portrait',
+    name: { id: 'Slipstream', en: 'Slipstream' },
+    tagline: { id: 'Ikuti rival. Isi tenaga. Salip tepat waktu.', en: 'Follow rivals. Build speed. Time the pass.' },
+    howTo: { id: 'Panah kiri/kanan atau geser untuk menyetir. Ikuti mobil dari belakang untuk mengisi boost otomatis, lalu menyingkir sebelum tabrakan. Spasi atau Rem untuk melambat.', en: 'Arrow keys or drag to steer. Follow a rival to charge automatic boost, then pull out before impact. Space or Brake slows you down.' } },
+);
+
 const loaders: Partial<Record<GameId, () => Promise<GameEngine>>> = {
+  'kurir-gabut': () => import('./kurir-gabut/engine').then(m => new m.CourierEngine()),
+  'highway-rush': () => import('./racing/engine').then((m) => new m.RacingEngine('highway')),
+  'apex-rally': () => import('./racing/engine').then((m) => new m.RacingEngine('rally')),
+  slipstream: () => import('./racing/engine').then((m) => new m.RacingEngine('slipstream')),
   // Diisi per task game.
   'tap-panic': () => import('./tap-panic/engine').then((m) => new m.TapPanicEngine()),
   'quick-math': () => import('./quick-math/engine').then((m) => new m.QuickMathEngine()),

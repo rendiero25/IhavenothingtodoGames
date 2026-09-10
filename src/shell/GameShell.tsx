@@ -88,7 +88,7 @@ export function GameShell({
   const [shocked, setShocked] = useState(false);
   const shellWidth = wide ? 'max-w-none' : 'max-w-md md:max-w-3xl lg:max-w-5xl';
   const shellPadding = immersive ? 'p-0' : wide ? 'px-3 sm:px-6 lg:px-10' : 'px-3 sm:px-5';
-  const landscapeGame = gameId === 'arena-fps' || gameId === 'stick-man-running';
+  const landscapeGame = gameId === 'arena-fps' || gameId === 'stick-man-running' || gameId === 'kurir-gabut';
 
   const setPhase = useCallback((p: Phase) => {
     phaseRef.current = p;
@@ -276,8 +276,10 @@ export function GameShell({
           <X size={16} strokeWidth={1.7} />
         </button>
         <div className="flex items-center gap-2">
-          <span className={shocked ? 'opacity-35' : ''}>{locale === 'id' ? 'Nyawa' : 'Lives'}</span>
-          <LivesBar lives={lives} max={startLives} />
+          {gameId === 'kurir-gabut' ? <span>{t('courier.title')}</span> : <>
+            <span className={shocked ? 'opacity-35' : ''}>{locale === 'id' ? 'Nyawa' : 'Lives'}</span>
+            <LivesBar lives={lives} max={startLives} />
+          </>}
         </div>
         <button
           onClick={togglePause}

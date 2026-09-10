@@ -39,7 +39,7 @@ export default function Daily() {
     () =>
       dailyRunSnapshot(
         availableDateKey,
-        GAMES.map((g) => g.id),
+        GAMES.filter((g) => g.id !== 'kurir-gabut').map((g) => g.id),
       ),
     [availableDateKey],
   );

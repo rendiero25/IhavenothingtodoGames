@@ -1,6 +1,10 @@
 import type { Locale } from '../i18n/dict';
 
 export type GameId =
+  | 'kurir-gabut'
+  | 'highway-rush'
+  | 'apex-rally'
+  | 'slipstream'
   | 'tap-panic'
   | 'bubble-sniper'
   | 'simon'
@@ -13,6 +17,8 @@ export type GameId =
   | 'stick-man-running';
 
 export type Category =
+  | 'adventure'
+  | 'racing'
   | 'reflex'
   | 'aim'
   | 'memory'
@@ -23,7 +29,7 @@ export type Category =
   | 'rhythm'
   | 'shooter';
 
-export type EndReason = 'lives' | 'timeup';
+export type EndReason = 'lives' | 'timeup' | 'complete';
 
 export interface GameResult {
   score: number;

@@ -33,6 +33,10 @@ describe('stick-man-running registry', () => {
       'beat-tap',
       'arena-fps',
       'stick-man-running',
+      'kurir-gabut',
+      'highway-rush',
+      'apex-rally',
+      'slipstream',
     ]);
     expect(new Set(ids).size).toBe(ids.length);
     expect(getMeta('stick-man-running')).toMatchObject({
