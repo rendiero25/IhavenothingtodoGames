@@ -22,7 +22,9 @@ class Element extends EventTarget {
   append(...children:Element[]){this.children.push(...children);}
 }
 function setup(){
-  let frame:FrameRequestCallback|undefined,now=performance.now();
+  let frame:FrameRequestCallback|undefined,now=0;
+  // Engine start/resume and synthetic frames must share the same clock.
+  vi.stubGlobal('performance',{now:()=>now});
   vi.stubGlobal('requestAnimationFrame',(callback:FrameRequestCallback)=>{frame=callback;return 1;});
   vi.stubGlobal('cancelAnimationFrame',()=>{frame=undefined;});
   const win=Object.assign(new EventTarget(),{performance,devicePixelRatio:1,matchMedia:()=>Object.assign(new EventTarget(),{matches:true})});

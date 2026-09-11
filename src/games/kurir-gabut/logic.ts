@@ -44,7 +44,33 @@ for(const p of RESIDENTS){
     {x:(parking.x+nearest.x)/2,z:parking.z,w:Math.abs(parking.x-nearest.x)+4,d:4},
     {x:nearest.x,z:(parking.z+nearest.z)/2,w:4,d:Math.abs(parking.z-nearest.z)+4});
 }
+// Infill the empty lots only after delivery driveways have been reserved.
+// Fixed spacing and palette keep the city identical across runs and locales.
+const infillColors=[0xd3c6b2,0xc6c8bf,0xc5b19b,0xbcc6c9];
+const reservedLots:Street[]=[...STREETS,
+  ...[-39,39].map(x=>({x,z:0,w:1.8,d:89})),
+  ...[-44,44].map(z=>({x:0,z,w:79,d:1.8})),
+  {x:22,z:38,w:7,d:3},{x:-33,z:20,w:4,d:2},
+];
+for(let row=0,z=-62;z<=62;row++,z+=2){
+  for(let column=0,x=-56;x<=56;column++,x+=2){
+    const lot={x,z,w:5.5,d:5.6,h:5.6+(row+column)%3*1.4,color:infillColors[(row+column)%infillColors.length]};
+    // Include roof overhang, porch and a walking margin in the reserved lot.
+    const footprint={x,z:z+.45,w:lot.w+1.8,d:lot.d+2.7};
+    const overlaps=(other:Street)=>Math.abs(footprint.x-other.x)<(footprint.w+other.w)/2
+      && Math.abs(footprint.z-other.z)<(footprint.d+other.d)/2;
+    if(reservedLots.some(overlaps)||BUILDINGS.some(overlaps))continue;
+    BUILDINGS.push(lot);
+  }
+}
 export const TREES=Array.from({length:34},(_,i)=>({x:(i%2?-1:1)*(62+i%3*1.5),z:-55+Math.floor(i/2)*6.6}));
+// Street gardens occupy unpaved gaps, leaving sidewalks and door approaches free.
+for(let z=-60;z<=60;z+=6)for(let x=-60;x<=60;x+=6){
+  if(reservedLots.some(s=>Math.abs(x-s.x)<s.w/2+1.4&&Math.abs(z-s.z)<s.d/2+1.4)
+    ||BUILDINGS.some(b=>Math.abs(x-b.x)<b.w/2+1.7&&Math.abs(z-b.z)<b.d/2+1.7)
+    ||TREES.some(p=>Math.hypot(x-p.x,z-p.z)<4))continue;
+  TREES.push({x,z});
+}
 export const LAMPS=[-39.4,39.4].flatMap(x=>[-38,-4,36].map(z=>({x,z})));
 export const STREET_PROPS=[...BUILDINGS.flatMap(b=>[
   {x:b.x-1.05,z:b.z+b.d/2+.85,r:.09}, {x:b.x+1.05,z:b.z+b.d/2+.85,r:.09},
@@ -81,11 +107,13 @@ export function targetFor(state: CourierState): Point {
   return RESIDENTS[state.carrying ? task.to : task.from];
 }
 export function walkable(x: number, z: number,clearance=.4): boolean {
-  return STREETS.some(s=>Math.abs(x-s.x)<=s.w/2 && Math.abs(z-s.z)<=s.d/2)
+  return paved(x,z)
     && !BUILDINGS.some((b) => Math.abs(x-b.x)<b.w/2+clearance && Math.abs(z-b.z)<b.d/2+clearance)
     && !STREET_PROPS.some(p=>Math.hypot(x-p.x,z-p.z)<p.r+clearance);
 }
-export function paved(x:number,z:number){return STREETS.some(s=>Math.abs(x-s.x)<=s.w/2&&Math.abs(z-s.z)<=s.d/2);}
+// Rapier returns float32 positions. Permit rounding at a paved boundary so
+// an exact route waypoint does not strand the courier at a driveway corner.
+export function paved(x:number,z:number){return STREETS.some(s=>Math.abs(x-s.x)<=s.w/2+.0001&&Math.abs(z-s.z)<=s.d/2+.0001);}
 /** Camera-relative forward and sideways walking; yaw zero faces north (-Z). */
 export function movementDirection(horizontal:number, vertical:number, yaw:number):Point {
   return {x:Math.cos(yaw)*horizontal+Math.sin(yaw)*vertical,z:-Math.sin(yaw)*horizontal+Math.cos(yaw)*vertical};

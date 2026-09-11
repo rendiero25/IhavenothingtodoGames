@@ -1,7 +1,33 @@
 import { describe, it, expect } from 'vitest';
-import { canKnock, knock, createState, tickDelivery,tickChallenge,crash,levelBudgets,deliveryDistances, targetFor, move, walkable, RESIDENTS, BUILDINGS, routeTo, movementDirection } from './logic';
+import { canKnock, knock, createState, tickDelivery,tickChallenge,crash,levelBudgets,deliveryDistances, targetFor, move, walkable, RESIDENTS, BUILDINGS, STREETS, TREES, paved, routeTo, movementDirection } from './logic';
 
 describe('courier delivery loop',()=>{
+  it('tolerates physics rounding at a driveway edge without opening the lawn',()=>{
+    expect(paved(-29,21)).toBe(true);
+    expect(paved(-28.9999942779541,21)).toBe(true);
+    expect(paved(-28.99,21)).toBe(false);
+  });
+  it('keeps new street gardens clear of paved routes and building entrances',()=>{
+    expect(TREES.length).toBeGreaterThan(50);
+    for(const tree of TREES.slice(34)){
+      expect(paved(tree.x,tree.z)).toBe(false);
+      for(const p of RESIDENTS)expect(Math.hypot(tree.x-p.x,tree.z-p.z)).toBeGreaterThan(2);
+    }
+  });
+  it('fills empty city blocks without obstructing roads or overlapping buildings',()=>{
+    expect(BUILDINGS.length).toBeGreaterThanOrEqual(55);
+    for(const [i,b] of BUILDINGS.entries()){
+      if(i<24)continue;
+      for(const road of STREETS){
+        expect(Math.abs(b.x-road.x)>=(b.w+road.w)/2+.8
+          || Math.abs(b.z+.45-road.z)>=(b.d+road.d)/2+1.3).toBe(true);
+      }
+      for(const other of BUILDINGS.slice(0,i)){
+        expect(Math.abs(b.x-other.x)>=(b.w+other.w)/2
+          || Math.abs(b.z-other.z)>=(b.d+other.d)/2).toBe(true);
+      }
+    }
+  });
   it('routes along streets around buildings and keeps forward aligned with the camera',()=>{
     let start={x:createState().x,z:createState().z};
     for(const goal of RESIDENTS){

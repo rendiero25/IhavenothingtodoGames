@@ -8,22 +8,28 @@ export function createVillage(activity:Activity=createActivity()) {
   const camera=new T.PerspectiveCamera(58,1,.08,260);
   const assets=createAssets(),{mesh,box,round,sphere,cylinder,material,geometry}=assets;
   const streets=new T.Group();scene.add(streets);
-  const ambient=new T.HemisphereLight(0xe7f2ff,0x72795d,2);scene.add(ambient);
+  const ambient=new T.HemisphereLight(0xf2f7ff,0x71844e,2);scene.add(ambient);
   const sun=new T.DirectionalLight(0xffeccd,2.7);sun.position.set(-35,55,22);scene.add(sun);
   assets.surface(0x646b6a,'road');assets.surface(0x736c60,'roof');assets.surface(0x9b7560,'roof');
-  mesh(streets,box,0x819473,0,-.15,0,320,.2,320);
-  for(let i=0;i<12;i++){
-    const a=i/12*Math.PI*2;
-    mesh(streets,sphere,0x839c88,Math.sin(a)*140,1,Math.cos(a)*140,30,12+i%3*4,25);
-  }
+  mesh(streets,box,0x91bb40,0,-.15,0,320,.2,320);
   // Shared geometry, merged by material: street detail costs few draw calls.
   STREETS.forEach((s,i)=>{
-    mesh(streets,box,0xaaa99f,s.x,-.016+i*.0001,s.z,s.w+.4,.08,s.d+.4);
-    mesh(streets,box,i===0||i>=9&&i<=12?0x646b6a:0xb8b4a6,s.x,.03+i*.0001,s.z,s.w-.55,.025,s.d-.55);
+    mesh(streets,box,0xe5e5de,s.x,-.016+i*.0001,s.z,s.w+.4,.08,s.d+.4);
+    mesh(streets,box,i<13?0x646b6a:0xbec1bb,s.x,.03+i*.0001,s.z,s.w-.55,.025,s.d-.55);
   });
   for(const x of [-39,39])mesh(streets,box,0xc1bdb0,x,.025,0,1.8,.05,89);
   for(const z of [-44,44])mesh(streets,box,0xc1bdb0,0,.025,z,79,.05,1.8);
-  for(const z of [2,-52,52])for(let x=-38;x<=38;x+=4)mesh(streets,box,0xe0dcc7,x,.075,z,1.8,.012,.1);
+  for(const z of [2,-14.4,26,-52,52])for(let x=-38;x<=38;x+=4){
+    if(Math.abs(x+14)<6||Math.abs(x-16)<6)continue;
+    mesh(streets,box,0xf4f2e8,x,.075,z,1.8,.012,.14);
+  }
+  for(const x of [-14,16])for(let z=-42;z<=42;z+=4){
+    if([2,-14.4,26].some(cross=>Math.abs(z-cross)<6))continue;
+    mesh(streets,box,0xf4f2e8,x,.075,z,.14,.012,1.8);
+  }
+  for(const x of [-14,16])for(const z of [2,26])for(const side of [-1,1])for(let stripe=0;stripe<6;stripe++){
+    mesh(streets,box,0xf4f2e8,x-2.5+stripe,.079,z+side*5,.55,.012,2);
+  }
   for(const x of [-44,44])for(let z=-46;z<=46;z+=4)mesh(streets,box,0xe0dcc7,x,.075,z,.1,.012,1.8);
   for(const z of [-14,26])for(let i=0;i<10;i++)mesh(streets,box,0xe7e2d5,40+i*.8,.078,z,.4,.012,2.2);
 
@@ -31,25 +37,45 @@ export function createVillage(activity:Activity=createActivity()) {
   const roof=geometry(new T.ExtrudeGeometry(roofShape,{depth:1,bevelEnabled:false}));roof.translate(0,0,-.5);
   const doorPivots:T.Group[]=[];
   const collisionRoot=new T.Group();
+  const smallSphere=geometry(new T.SphereGeometry(1,8,4));
+  const smallCylinder=geometry(new T.CylinderGeometry(1,1,1,6));
   for(const [i,b] of BUILDINGS.entries()){
-    assets.surface(b.color,'wall');
+    const trim=box;
+    const foliage=smallSphere,pole=smallCylinder;
+    const wall=[0xf0eee5,0xe4e5de,0xd8d2bf,0xe8ebe6][i%4];
+    const accent=[0x309e89,0xe6b62d,0x9a72bf,0xdf6944,0x3b97b5][i%5];
     assets.shadow(streets,b.x+.5,b.z+.5,b.w+3,b.d+3);
-    mesh(streets,box,b.color,b.x,b.h/2,b.z,b.w,b.h,b.d);
+    mesh(streets,box,0xd8dad3,b.x,.055,b.z,b.w+1.5,.11,b.d+1.5);
+    mesh(streets,box,wall,b.x,b.h/2,b.z,b.w,b.h,b.d);
     mesh(collisionRoot,box,b.color,b.x,b.h/2,b.z,b.w,b.h,b.d);
-    mesh(streets,roof,i%2?0x736c60:0x9b7560,b.x,b.h,b.z,b.w+.7,3,b.d+.8);
+    if(i%7===0){
+      mesh(streets,roof,0x525c60,b.x,b.h,b.z,b.w+.5,2,b.d+.5);
+    }else{
+      mesh(streets,box,0xbfc3ba,b.x,b.h+.06,b.z,b.w,.12,b.d);
+      for(const side of [-1,1]){
+        mesh(streets,box,wall,b.x+side*(b.w/2-.1),b.h+.35,b.z,.2,.7,b.d);
+        mesh(streets,box,wall,b.x,b.h+.35,b.z+side*(b.d/2-.1),b.w,.7,.2);
+      }
+      if(i%3===0){
+        mesh(streets,box,0xa8b1ad,b.x+.6,b.h+.38,b.z-.5,1,.6,.8);
+        for(let vent=0;vent<4;vent++)mesh(streets,box,0x737f7e,b.x+.25+vent*.22,b.h+.69,b.z-.5,.09,.025,.6);
+      }
+    }
     const front=b.z+b.d/2;
-    mesh(streets,box,0xe1ddcc,b.x,b.h,front+.16,b.w+.45,.16,.28);
+    mesh(streets,box,0xf7f5eb,b.x,b.h,front+.16,b.w+.45,.16,.28);
     mesh(streets,box,0xa49f90,b.x,.22,b.z,b.w+.08,.44,b.d+.08);
-    mesh(streets,round,0xaaa79d,b.x,.12,front+.4,b.w*.73,.24,1.15);
+    mesh(streets,trim,0xaaa79d,b.x,.12,front+.4,b.w*.73,.24,1.15);
     mesh(streets,box,0x393e3c,b.x,1.09,front+.035,1.08,2.18,.08);
     const door=new T.Group();door.position.set(b.x-.46,0,front+.09);scene.add(door);doorPivots.push(door);
-    mesh(door,round,0x796b58,.46,1.04,0,.93,2.06,.085);
+    mesh(door,trim,accent,.46,1.04,0,.93,2.06,.085);
     mesh(door,box,0x9db3b4,.46,1.46,.052,.58,.57,.025);
-    mesh(door,sphere,0xc6bc9d,.8,.98,.075,.04,.04,.055,0.5);
+    mesh(door,foliage,0xc6bc9d,.8,.98,.075,.04,.04,.055,0.5);
+    // Only delivery doors animate; merge all other doors with the static city.
+    if(!HOME_BUILDINGS.some(index=>index===i))streets.add(door);
     for(const side of [-1,1])for(const face of [-1,1]){
       const x=b.x+side*b.w*.30,z=b.z+face*(b.d/2+.04);
-      mesh(streets,box,0xe0ddcf,x,2.13,z,1.12,1.24,.08);
-      mesh(streets,box,0x7f9d9e,x,2.13,z+face*.05,.94,1.05,.04);
+      mesh(streets,box,0xf7f5eb,x,1.65,z,1.35,1.9,.08);
+      mesh(streets,box,0x7f9d9e,x,1.65,z+face*.05,1.13,1.7,.04);
       mesh(streets,box,0xe6e2d6,x,2.13,z+face*.08,.04,1.05,.025);
       mesh(streets,box,0xd2cfc1,x,1.48,z+face*.09,1.2,.09,.24);
     }
@@ -60,18 +86,51 @@ export function createVillage(activity:Activity=createActivity()) {
       mesh(streets,box,0xe0ddcf,x+side*.08,2.1,z,.025,1.04,.04);
       mesh(streets,box,0xd2cfc1,x+side*.10,1.44,z,.25,.09,1.12);
     }
-    for(const side of [-1,1])mesh(streets,cylinder,0xa29c89,b.x+side*(b.w/2-.10),b.h/2,front+.1,.035,b.h,.035);
-    for(const side of [-1,1])mesh(streets,cylinder,0xd6d0bc,b.x+side*1.05,1.32,front+.85,.065,2.64,.065);
-    mesh(streets,round,0xc4b8a0,b.x,2.68,front+.35,2.4,.15,1.55);
-    for(let tile=0;tile<6;tile++)mesh(streets,box,0x7e6756,b.x-b.w/2+tile*b.w/5,b.h+.015,front+.18,.035,.025,.36);
-    mesh(streets,cylinder,0xa48468,b.x+b.w*.36,.29,front+.48,.25,.55,.25);
-    mesh(streets,sphere,0x5c7751,b.x+b.w*.36,.82,front+.48,.45,.58,.4);
+    for(const side of [-1,1])mesh(streets,pole,0xa29c89,b.x+side*(b.w/2-.10),b.h/2,front+.1,.035,b.h,.035);
+    for(let y=4.7;y<b.h-.6;y+=2.6){
+      for(const face of [-1,1]){
+        const z=b.z+face*(b.d/2+.06);
+        mesh(streets,box,0xe1ddcc,b.x,y-.85,z,b.w+.1,.12,.18);
+        for(const side of [-1,1]){
+          const x=b.x+side*b.w*.28;
+          mesh(streets,box,0xe0ddcf,x,y,z,1.15,1.4,.1);
+          mesh(streets,box,0x7f9d9e,x,y,z+face*.06,.95,1.2,.04);
+          mesh(streets,box,0xe0ddcf,x,y,z+face*.09,.05,1.2,.025);
+        }
+      }
+      for(const side of [-1,1])for(const offset of [-.24,.24]){
+        const x=b.x+side*(b.w/2+.06),z=b.z+offset*b.d;
+        mesh(streets,box,0xe0ddcf,x,y,z,.1,1.4,1.15);
+        mesh(streets,box,0x7f9d9e,x+side*.06,y,z,.04,1.2,.95);
+      }
+    }
+    for(const side of [-1,1])mesh(streets,pole,0xd6d0bc,b.x+side*1.05,1.32,front+.85,.065,2.64,.065);
+    const awningWidth=b.w*.88;
+    for(let stripe=0;stripe<10;stripe++){
+      const x=b.x-awningWidth/2+(stripe+.5)*awningWidth/10,color=stripe%2?0xfff8e6:accent;
+      mesh(streets,box,color,x,2.75,front+.42,awningWidth/10,.1,1.1).rotation.x=.16;
+      mesh(streets,box,color,x,2.53,front+.95,awningWidth/10,.32,.08);
+    }
+    if(i%3===0){
+      mesh(streets,box,accent,b.x,3.35,front+.08,1.45,.65,.15);
+      // A parcel pictogram identifies shops without introducing untranslated copy.
+      mesh(streets,box,0xfff8e6,b.x,3.35,front+.17,.42,.38,.025);
+      mesh(streets,box,accent,b.x,3.35,front+.19,.055,.38,.015);
+    }
+    mesh(streets,pole,0xa48468,b.x+b.w*.36,.29,front+.48,.25,.55,.25);
+    mesh(streets,foliage,0x5c7751,b.x+b.w*.36,.82,front+.48,.45,.58,.4);
   }
   collisionRoot.updateMatrixWorld(true);
-  const canopies=[0x627e57,0x708a5f,0x8a9d6e].map(color=>{const m=new T.InstancedMesh(sphere,material(color),TREES.length);scene.add(m);return m;});
+  const treeGeometry=geometry(new T.SphereGeometry(1,10,5));
+  const canopies=[0,1,2].map(()=>{
+    const m=new T.InstancedMesh(treeGeometry,material(0xffffff),TREES.length);
+    TREES.forEach((_,i)=>m.setColorAt(i,new T.Color([0x21845c,0x83b82f,0xa0c63d][i%3])));
+    scene.add(m);return m;
+  });
   const treeMatrix=new T.Matrix4(),treeScale=new T.Vector3(),treePosition=new T.Vector3(),treeRotation=new T.Quaternion();
   for(const {x,z} of TREES){
-    mesh(streets,cylinder,0x796d58,x,1.7,z,.17,3.4,.17);
+    assets.shadow(streets,x+.4,z+.3,4,4);
+    mesh(streets,smallCylinder,0x796d58,x,1.7,z,.17,3.4,.17);
   }
   const lamps:T.Mesh[]=[];
   for(const {x,z} of LAMPS){
@@ -113,7 +172,7 @@ export function createVillage(activity:Activity=createActivity()) {
     scene.add(person.group);return {...p,person};
   });
   const traffic=activity.traffic.map((c,i)=>{
-    const vehicle=assets.vehicle(c.motorcycle,[0xe0d8c7,0x6e878c,0xa98b75,0x697575,0x9c785f][i]);
+    const vehicle=assets.vehicle(c.motorcycle,[0xefbf27,0xe85d4c,0x329ccc,0x299b86,0xec8742][i]);
     scene.add(vehicle.group);return {...c,vehicle};
   });
   const dogs=activity.dogs.map(d=>{
@@ -196,8 +255,10 @@ export function createVillage(activity:Activity=createActivity()) {
     });
     dogs.forEach(({dog,group,legs,tail})=>{group.position.set(dog.state.x,0,dog.state.z);group.rotation.y=dog.state.yaw;legs.forEach((leg,i)=>leg.rotation.x=dog.phase!=='idle'&&!reduced?Math.sin(time*14+i%2*Math.PI)*.5:0);tail.rotation.z=reduced?0:Math.sin(time*6)*.2;});
     canopies.forEach((canopy,j)=>{TREES.forEach((p,i)=>{
-      treePosition.set(p.x+(j-1)*.65+(reduced?0:Math.sin(time*1.5+i)* (wind?.35:.035)),3.4+j*.65,p.z);
-      treeScale.set(1.25,1.6,1.25);treeMatrix.compose(treePosition,treeRotation,treeScale);canopy.setMatrixAt(i,treeMatrix);
+      const evergreen=i%3===0;
+      treePosition.set(p.x+(evergreen?0:(j-1)*.55)+(reduced?0:Math.sin(time*1.5+i)*(wind?.35:.035)),3.3+j*(evergreen?.95:.4),p.z);
+      const width=evergreen?1.35-j*.3:1.5;
+      treeScale.set(width,evergreen?1.7:1.45,width);treeMatrix.compose(treePosition,treeRotation,treeScale);canopy.setMatrixAt(i,treeMatrix);
     });canopy.instanceMatrix.needsUpdate=true;if(!canopy.boundingSphere){canopy.computeBoundingSphere();canopy.boundingSphere!.radius+=1;}});
     rain.visible=wet;
     if(wet){rain.position.set(state.x,0,state.z);for(let i=0;i<160;i++){
@@ -208,7 +269,7 @@ export function createVillage(activity:Activity=createActivity()) {
     if(dust.visible){const age=1.3-state.crashTime;dust.position.set(state.x,.2,state.z);dustMaterial.opacity=Math.max(0,state.crashTime/1.3);
       for(let i=0;i<24;i++){dustPositions[i*3]=Math.sin(i*2.4)*age*1.6;dustPositions[i*3+1]=Math.max(0,Math.sin(age*2)*.7+i%3*.08);dustPositions[i*3+2]=Math.cos(i*2.4)*age*1.6;}dustGeometry.attributes.position.needsUpdate=true;}
     clouds.position.x=reduced?0:Math.sin(time*(wind?.05:.012))*6;
-    const boom=state.riding?5.6:4.2,height=state.riding?3.5:2.9;
+    const boom=state.riding?16:14,height=state.riding?11:9;
     cameraTarget.set(state.x,1.45,state.z);desiredCamera.set(state.x+Math.sin(yaw)*boom,height,state.z+Math.cos(yaw)*boom);
     cameraDirection.copy(desiredCamera).sub(cameraTarget);const boomLength=cameraDirection.length();cameraDirection.normalize();
     cameraRay.set(cameraTarget,cameraDirection);cameraRay.far=boomLength;
