@@ -88,7 +88,8 @@ export function GameShell({
   const [shocked, setShocked] = useState(false);
   const shellWidth = wide ? 'max-w-none' : 'max-w-md md:max-w-3xl lg:max-w-5xl';
   const shellPadding = immersive ? 'p-0' : wide ? 'px-3 sm:px-6 lg:px-10' : 'px-3 sm:px-5';
-  const landscapeGame = gameId === 'arena-fps' || gameId === 'stick-man-running' || gameId === 'kurir-gabut';
+  const courierGame = gameId === 'kurir-gabut';
+  const landscapeGame = gameId === 'arena-fps' || gameId === 'stick-man-running';
 
   const setPhase = useCallback((p: Phase) => {
     phaseRef.current = p;
@@ -294,8 +295,8 @@ export function GameShell({
       <div className={`relative flex min-h-0 items-center justify-center overflow-hidden bg-navy ${immersive ? 'h-full w-full' : 'mt-3 aspect-[2/3] rounded-md border border-ink p-2 md:aspect-[4/3] lg:aspect-[16/9]'}`}>
         <div
           data-game-stage="true"
-          className="relative flex h-auto w-full max-h-full max-w-full items-center justify-center"
-          style={{ aspectRatio: landscapeGame ? '16 / 9' : '2 / 3' }}
+          className={`flex items-center justify-center ${courierGame ? (immersive ? 'absolute inset-0' : 'absolute inset-2') : 'relative h-auto w-full max-h-full max-w-full'}`}
+          style={{ aspectRatio: courierGame ? undefined : landscapeGame ? '16 / 9' : '2 / 3' }}
         >
           <canvas ref={canvasRef} className="block size-full touch-none rounded-sm" />
         </div>

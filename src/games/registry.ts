@@ -141,8 +141,8 @@ export const GAMES: GameMeta[] = [
 GAMES.push(
   { id: 'kurir-gabut', category: 'adventure', icon: 'move', accent: 'amber', viewport: 'landscape',
     name: { id: 'Kurir Gabut', en: 'Little Courier' },
-    tagline: { id: 'Lima titipan. Satu kampung. Banyak senyum.', en: 'Five parcels. One village. Plenty of smiles.' },
-    howTo: { id: 'W/S atau ↑/↓ untuk maju/mundur; A/D atau ←/→ untuk belok. Bisa juga tap jalan untuk berjalan otomatis. Dekati warga bertanda untuk mengambil dan mengantar lima titipan.', en: 'W/S or ↑/↓ to walk forward/back; A/D or ←/→ to turn. Or tap a street to auto-walk. Approach marked residents to collect and deliver five parcels.' } },
+    tagline: { id: 'Lima titipan. Gas motor. Kejar waktu.', en: 'Five parcels. Ride out. Beat the clock.' },
+    howTo: { id: 'W/S atau panah untuk maju/mundur, A/D untuk belok. Shift untuk ngebut, spasi untuk rem. Tap jalan untuk rute otomatis. B untuk naik/turun motor saat berhenti. Bawa paket ke penanda sebelum waktu habis, turun lalu tekan E untuk ketuk pintu. Waspadai kendaraan, anjing, dan cuaca. Kontrol sentuh tersedia.', en: 'W/S or arrows to move, A/D to turn. Shift to boost, space to brake. Tap a street for automatic routing. B to mount/dismount while stopped. Bring the parcel to the marker before time runs out, dismount, then press E to knock. Watch for traffic, dogs, and weather. Touch controls available.' } },
   { id: 'highway-rush', category: 'racing', icon: 'move', accent: 'teal', viewport: 'portrait',
     name: { id: 'Highway Rush', en: 'Highway Rush' },
     tagline: { id: 'Selip di antara mobil. Kuasai jalan malam.', en: 'Thread the traffic. Own the night road.' },
@@ -158,7 +158,7 @@ GAMES.push(
 );
 
 const loaders: Partial<Record<GameId, () => Promise<GameEngine>>> = {
-  'kurir-gabut': () => import('./kurir-gabut/engine').then(m => new m.CourierEngine()),
+  'kurir-gabut': () => import('./kurir-gabut/engine').then(async m => {await m.prepareCourierPhysics();return new m.CourierEngine();}),
   'highway-rush': () => import('./racing/engine').then((m) => new m.RacingEngine('highway')),
   'apex-rally': () => import('./racing/engine').then((m) => new m.RacingEngine('rally')),
   slipstream: () => import('./racing/engine').then((m) => new m.RacingEngine('slipstream')),
