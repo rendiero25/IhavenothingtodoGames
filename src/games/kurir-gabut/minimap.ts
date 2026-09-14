@@ -16,7 +16,7 @@ export function createMinimap(){
     Object.entries(attributes).forEach(([key,value])=>node.setAttribute(key,String(value)));svg.append(node);return node;
   };
   shape('rect',{width:136,height:136,rx:5,fill:'#c6cfbd'});
-  for(const s of STREETS)shape('rect',{x:coordinate(s.x-s.w/2),y:coordinate(s.z-s.d/2),width:s.w*scale,height:s.d*scale,fill:'#f7f4e9'});
+  for(const kind of ['pedestrian','road'])for(const s of STREETS.filter(street=>street.kind===kind))shape('rect',{x:coordinate(s.x-s.w/2),y:coordinate(s.z-s.d/2),width:s.w*scale,height:s.d*scale,fill:kind==='road'?'#b5b8b0':'#f7f4e9'});
   for(const b of BUILDINGS)shape('rect',{x:coordinate(b.x-b.w/2),y:coordinate(b.z-b.d/2),width:b.w*scale,height:b.d*scale,rx:1,fill:'#879083'});
   const dogs=[0,1].map(()=>shape('circle',{r:2.5,fill:'#a63e2c',stroke:'#fffaf0','stroke-width':1}));
   const bike=shape('rect',{width:5,height:5,rx:1,fill:'#466a70',stroke:'#fffaf0','stroke-width':1});

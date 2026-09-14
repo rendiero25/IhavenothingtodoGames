@@ -11,10 +11,11 @@ it('builds a bounded procedural village and disposes shared resources',()=>{
   const textures=new Set<T.Texture>();
   v.scene.traverse(o=>{if(o instanceof T.Mesh){
     meshes++;geometries.add(o.geometry);triangles+=(o.geometry.index?.count??o.geometry.attributes.position.count)/3*(o instanceof T.InstancedMesh?o.count:1);
-    const mat=o.material as T.MeshBasicMaterial;if(mat.map)textures.add(mat.map);
+    const mat=o.material as T.MeshStandardMaterial;if(mat.map)textures.add(mat.map);if(mat.bumpMap)textures.add(mat.bumpMap);
   }});
   console.info('Courier geometry budget',{meshes,triangles});
   expect(meshes).toBeLessThan(500);expect(triangles).toBeLessThan(200000);
+  expect(textures.size).toBeGreaterThanOrEqual(8);
   v.update(s,1,true,true,.5);expect(v.camera).toBeInstanceOf(T.PerspectiveCamera);
   expect(v.camera.aspect).toBe(.5);expect(v.camera.position.y).toBeGreaterThan(10);
   expect(v.camera.position.z).toBeGreaterThan(s.z);

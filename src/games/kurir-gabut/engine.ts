@@ -105,7 +105,7 @@ export class CourierEngine implements GameEngine {
       const activity=this.simulation!.activity;
       const obstacles=[...activity.dogs.map(d=>({...d.state,r:.65})),...activity.pedestrians.map(p=>({...p.state,r:.45})),
         ...activity.traffic.map(c=>({...c.state,r:c.motorcycle?1:2.2})),...(this.state.riding?[]:[{...this.state.bike,r:.95}])];
-      this.route=routeTo(this.state,goal,this.state.riding?1.2:.4,obstacles);this.destination=this.route.shift()??null;
+      this.route=routeTo(this.state,goal,this.state.riding?1.2:.4,obstacles,this.state.riding);this.destination=this.route.shift()??null;
     }
   };
   private buildUI():void {

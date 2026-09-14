@@ -10,12 +10,12 @@ it('parks a solid motorcycle, dismounts beside it, and mounts again nearby',()=>
   expect(sim.toggleBike(Math.PI/2)).toBe(true);expect(s.riding).toBe(true);
   s.speed=7;expect(sim.toggleBike(0)).toBe(false);sim.dispose();
 });
-it('triggers a dog chase and gives up when the courier leaves its territory',()=>{
+it('triggers a dog chase and switches to roaming when the courier escapes',()=>{
   const s=createState(),sim=createSimulation(s),dog=sim.activity.dogs[0];
   s.x=dog.home.x+4;s.z=dog.home.z;sim.physics.teleport('courier',s);
   sim.update(.05,{x:0,z:0},0,false,false);expect(dog.phase).toBe('chase');
   s.x=dog.home.x+30;sim.physics.teleport('courier',s);sim.update(.05,{x:0,z:0},0,false,false);
-  expect(dog.phase).not.toBe('chase');expect(dog.cooldown).toBeGreaterThan(0);sim.dispose();
+  expect(dog.phase).toBe('wander');expect(dog.cooldown).toBeGreaterThan(0);sim.dispose();
 });
 it('makes pedestrians dodge a speeding rider and reduces wet-road braking',()=>{
   const s=createState(),sim=createSimulation(s),person=sim.activity.pedestrians[0];

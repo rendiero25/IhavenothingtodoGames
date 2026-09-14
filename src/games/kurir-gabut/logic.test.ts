@@ -87,9 +87,17 @@ describe('courier delivery loop',()=>{
   });
   it('connects every delivery to a motorcycle parking approach',()=>{
     let start={x:createState().x,z:createState().z};
-    for(const p of RESIDENTS){const parking={x:p.x,z:p.z+3.4},path=routeTo(start,parking,1);
+    for(const p of RESIDENTS){const parking={x:p.x,z:p.z+3.4},path=routeTo(start,parking,1,[],true);
+      expect(path.every(p=>paved(p.x,p.z,true))).toBe(true);
       expect(path.length,JSON.stringify({start,parking})).toBeGreaterThan(0);expect(Math.hypot(path.at(-1)!.x-parking.x,path.at(-1)!.z-parking.z)).toBeLessThan(1);start=parking;
     }
+  });
+  it('reserves the sidewalk for walking and keeps motorcycle routes on roads',()=>{
+    const footpath={x:39,z:-35},start={x:44,z:-35};
+    expect(paved(footpath.x,footpath.z)).toBe(true);expect(paved(footpath.x,footpath.z,true)).toBe(false);
+    const walking=routeTo(start,footpath),riding=routeTo(start,footpath,1,[],true);
+    expect(walking.at(-1)).toEqual(footpath);expect(riding.length).toBeGreaterThan(0);
+    expect(riding.every(p=>paved(p.x,p.z,true))).toBe(true);expect(riding.at(-1)).not.toEqual(footpath);
   });
 });
 it('budgets every level from reachable street distance with decreasing deadlines',()=>{

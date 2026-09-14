@@ -1,8 +1,8 @@
 export interface Point { x: number; z: number }
 export interface Building extends Point { w: number; d: number; h: number; color: number }
-export interface Street extends Point { w: number; d: number }
+export interface Street extends Point { w: number; d: number; kind:'road'|'pedestrian' }
 /** Connected streets and alleys; the courier stays on these paved corridors. */
-const ORIGINAL_STREETS: Street[] = [
+const ORIGINAL_STREETS: Omit<Street,'kind'>[] = [
   {x:0,z:.5,w:25,d:3.2},
   {x:0,z:-3.6,w:23,d:2.4},
   {x:0,z:6.5,w:23,d:2.4},
@@ -32,22 +32,27 @@ export const RESIDENTS: Point[]=HOME_BUILDINGS.map(index=>{
   const b=BUILDINGS[index];return {x:b.x,z:b.z+b.d/2+.95};
 });
 export const STREETS: Street[]=[
-  ...ORIGINAL_STREETS.map(s=>({x:s.x*4,z:s.z*4,w:s.w*4,d:s.d*4})),
-  {x:-44,z:0,w:8,d:108},{x:44,z:0,w:8,d:108},
-  {x:0,z:-52,w:96,d:8},{x:0,z:52,w:96,d:8},
+  ...ORIGINAL_STREETS.map(s=>({x:s.x*4,z:s.z*4,w:s.w*4,d:s.d*4,kind:'road' as const})),
+  {x:-44,z:0,w:8,d:108,kind:'road'},{x:44,z:0,w:8,d:108,kind:'road'},
+  {x:0,z:-52,w:96,d:8,kind:'road'},{x:0,z:52,w:96,d:8,kind:'road'},
 ];
 const roads=[...STREETS];
 for(const p of RESIDENTS){
   const parking={x:p.x,z:p.z+3.4};
   const nearest=roads.map(s=>({x:Math.max(s.x-s.w/2,Math.min(s.x+s.w/2,parking.x)),z:Math.max(s.z-s.d/2,Math.min(s.z+s.d/2,parking.z))})).sort((a,b)=>Math.hypot(a.x-parking.x,a.z-parking.z)-Math.hypot(b.x-parking.x,b.z-parking.z))[0];
-  STREETS.push({x:p.x,z:p.z+1.7,w:3,d:6.4},{...parking,w:6,d:4},
-    {x:(parking.x+nearest.x)/2,z:parking.z,w:Math.abs(parking.x-nearest.x)+4,d:4},
-    {x:nearest.x,z:(parking.z+nearest.z)/2,w:4,d:Math.abs(parking.z-nearest.z)+4});
+  STREETS.push({x:p.x,z:p.z+1.7,w:3,d:6.4,kind:'pedestrian'},{...parking,w:6,d:4,kind:'road'},
+    {x:(parking.x+nearest.x)/2,z:parking.z,w:Math.abs(parking.x-nearest.x)+4,d:4,kind:'road'},
+    {x:nearest.x,z:(parking.z+nearest.z)/2,w:4,d:Math.abs(parking.z-nearest.z)+4,kind:'road'});
 }
 // Infill the empty lots only after delivery driveways have been reserved.
 // Fixed spacing and palette keep the city identical across runs and locales.
 const infillColors=[0xd3c6b2,0xc6c8bf,0xc5b19b,0xbcc6c9];
-const reservedLots:Street[]=[...STREETS,
+export const SIDEWALKS:Street[]=[
+  ...[-39,39].map(x=>({x,z:0,w:1.8,d:89,kind:'pedestrian' as const})),
+  ...[-44,44].map(z=>({x:0,z,w:79,d:1.8,kind:'pedestrian' as const})),
+];
+STREETS.push(...SIDEWALKS);
+const reservedLots=[...STREETS.map(({x,z,w,d})=>({x,z,w,d})),
   ...[-39,39].map(x=>({x,z:0,w:1.8,d:89})),
   ...[-44,44].map(z=>({x:0,z,w:79,d:1.8})),
   {x:22,z:38,w:7,d:3},{x:-33,z:20,w:4,d:2},
@@ -57,7 +62,7 @@ for(let row=0,z=-62;z<=62;row++,z+=2){
     const lot={x,z,w:5.5,d:5.6,h:5.6+(row+column)%3*1.4,color:infillColors[(row+column)%infillColors.length]};
     // Include roof overhang, porch and a walking margin in the reserved lot.
     const footprint={x,z:z+.45,w:lot.w+1.8,d:lot.d+2.7};
-    const overlaps=(other:Street)=>Math.abs(footprint.x-other.x)<(footprint.w+other.w)/2
+    const overlaps=(other:{x:number;z:number;w:number;d:number})=>Math.abs(footprint.x-other.x)<(footprint.w+other.w)/2
       && Math.abs(footprint.z-other.z)<(footprint.d+other.d)/2;
     if(reservedLots.some(overlaps)||BUILDINGS.some(overlaps))continue;
     BUILDINGS.push(lot);
@@ -113,14 +118,28 @@ export function walkable(x: number, z: number,clearance=.4): boolean {
 }
 // Rapier returns float32 positions. Permit rounding at a paved boundary so
 // an exact route waypoint does not strand the courier at a driveway corner.
-export function paved(x:number,z:number){return STREETS.some(s=>Math.abs(x-s.x)<=s.w/2+.0001&&Math.abs(z-s.z)<=s.d/2+.0001);}
+export function paved(x:number,z:number,riding=false){return STREETS.some(s=>(!riding||s.kind==='road')&&Math.abs(x-s.x)<=s.w/2+.0001&&Math.abs(z-s.z)<=s.d/2+.0001);}
 /** Camera-relative forward and sideways walking; yaw zero faces north (-Z). */
 export function movementDirection(horizontal:number, vertical:number, yaw:number):Point {
   return {x:Math.cos(yaw)*horizontal+Math.sin(yaw)*vertical,z:-Math.sin(yaw)*horizontal+Math.cos(yaw)*vertical};
 }
+// Static half-metre cells are checked once per clearance; moving obstacles stay uncached.
+const gridSize=MAP_HALF_SIZE*4+1,navigationGrids=new Map<string,Uint8Array>();
+function navigationGrid(clearance:number,riding:boolean){
+  const key=`${clearance}:${riding}`;
+  let grid=navigationGrids.get(key);
+  if(!grid){if(navigationGrids.size>=8)navigationGrids.clear();grid=new Uint8Array(gridSize*gridSize);navigationGrids.set(key,grid);}
+  return grid;
+}
 /** Small fixed-grid route search keeps tap-to-walk on streets, around houses. */
-export function routeTo(start:Point,goal:Point,clearance=.4,obstacles:Array<Point&{r:number}>=[]):Point[] {
-  const openAt=(x:number,z:number)=>walkable(x,z,clearance)&&!obstacles.some(p=>Math.hypot(p.x-x,p.z-z)<p.r+clearance);
+export function routeTo(start:Point,goal:Point,clearance=.4,obstacles:Array<Point&{r:number}>=[],riding=false):Point[] {
+  const grid=navigationGrid(clearance,riding);
+  const openAt=(x:number,z:number)=>{
+    if(Math.abs(x)>MAP_HALF_SIZE||Math.abs(z)>MAP_HALF_SIZE)return false;
+    const cell=(x*2+MAP_HALF_SIZE*2)*gridSize+z*2+MAP_HALF_SIZE*2;
+    if(!grid[cell])grid[cell]=(!riding||paved(x,z,true))&&walkable(x,z,clearance)?2:1;
+    return grid[cell]===2&&!obstacles.some(p=>Math.hypot(p.x-x,p.z-z)<p.r+clearance);
+  };
   const nearest=(p:Point):Point|null=>{
     let best:Point|null=null,distance=Infinity;
     for(let x=Math.round(p.x*2)-3;x<=Math.round(p.x*2)+3;x++)for(let z=Math.round(p.z*2)-3;z<=Math.round(p.z*2)+3;z++){

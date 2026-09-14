@@ -1,6 +1,7 @@
 import { advanceTraveler,createTraveler,INNER_TRAFFIC,TRAFFIC_LOOP,WALK_LOOPS } from './activity';
-import { BUILDINGS,HOME_BUILDINGS,crash,paved,RESIDENTS,routeTo,type CourierState,type Point } from './logic';
+import { BUILDINGS,HOME_BUILDINGS,crash,paved,RESIDENTS,type CourierState,type Point } from './logic';
 import { createPhysics } from './physics';
+import { createDog,updateDog } from './dogs';
 
 export function createActivity(){
   const pedestrians=Array.from({length:8},(_,i)=>{
@@ -15,7 +16,7 @@ export function createActivity(){
   });
   const dogs=[1,4].map((resident,i)=>{
     const home={x:RESIDENTS[resident].x-3,z:RESIDENTS[resident].z+4};
-    return {id:`dog${i}`,home,state:{...home,yaw:0},phase:'idle' as 'idle'|'chase'|'return',route:[] as Point[],replan:0,cooldown:0};
+    return createDog(home,i);
   });
   const residents=RESIDENTS.map((p,i)=>({id:`resident${i}`,active:false,state:{x:p.x,z:BUILDINGS[HOME_BUILDINGS[i]].z+BUILDINGS[HOME_BUILDINGS[i]].d/2-.7}}));
   return {pedestrians,traffic,dogs,residents};
@@ -74,29 +75,14 @@ export function createSimulation(s:CourierState){
     if(length)coastSign=direction.x*(-Math.sin(yaw))+direction.z*(-Math.cos(yaw))>=0?1:-1;
     let dx=length?direction.x/length*step:-Math.sin(yaw)*coastSign*step,dz=length?direction.z/length*step:-Math.cos(yaw)*coastSign*step;
     if(s.riding&&moving&&s.crashTime===0&&(s.weather==='wind'||s.weather==='storm')){dx+=Math.cos(yaw)*Math.sin(s.elapsed*1.7)*dt*.8;dz-=Math.sin(yaw)*Math.sin(s.elapsed*1.7)*dt*.8;}
-    if(!paved(s.x+dx,s.z))dx=0;if(!paved(s.x,s.z+dz))dz=0;
+    if(!paved(s.x+dx,s.z,s.riding))dx=0;if(!paved(s.x+dx,s.z+dz,s.riding))dz=0;
     const result=physics.move('courier',dx,dz);
     // Cars and bikes cause a crash only when the courier is riding. A person on
     // foot is blocked by the swept collider and can step around the vehicle.
     if(s.riding&&(result.hits.some(id=>id.startsWith('traffic'))||s.speed>6&&result.hits.length))collide();
     if(result.hits.length)s.speed*=.5;
     s.x=result.x;s.z=result.z;if(s.riding)s.bike={x:s.x,z:s.z};
-    for(const dog of activity.dogs){
-      dog.cooldown=Math.max(0,dog.cooldown-dt);dog.replan-=dt;
-      const distance=Math.hypot(dog.state.x-s.x,dog.state.z-s.z),fromHome=Math.hypot(s.x-dog.home.x,s.z-dog.home.z);
-      if(dog.phase==='idle'&&distance<7&&dog.cooldown===0){dog.phase='chase';dog.replan=0;}
-      if(dog.phase==='chase'&&(distance>16||fromHome>23||s.completed)){dog.phase='return';dog.replan=0;dog.cooldown=6;}
-      if(dog.phase==='chase'&&distance<1.5){collide();dog.phase='return';dog.replan=0;dog.cooldown=10;}
-      if(dog.phase==='idle')continue;
-      if(dog.replan<=0){dog.route=routeTo(dog.state,dog.phase==='chase'?s:dog.home,.45,s.riding?[]:[{...s.bike,r:.95}]);dog.replan=1;}
-      while(dog.route[0]&&Math.hypot(dog.route[0].x-dog.state.x,dog.route[0].z-dog.state.z)<.25)dog.route.shift();
-      const goal=dog.route[0];
-      if(goal){const x=goal.x-dog.state.x,z=goal.z-dog.state.z,d=Math.hypot(x,z),speed=dog.phase==='chase'?5.6:2;
-        const amount=Math.min(d,speed*dt),next=physics.move(dog.id,x/d*amount,z/d*amount);
-        dog.state.yaw=Math.atan2(next.x-dog.state.x,next.z-dog.state.z);dog.state.x=next.x;dog.state.z=next.z;
-      }
-      if(dog.phase==='return'&&Math.hypot(dog.state.x-dog.home.x,dog.state.z-dog.home.z)<.7){dog.phase='idle';dog.route=[];}
-    }
+    for(const dog of activity.dogs)updateDog(dog,s,dt,physics,collide);
     return {crashed:didCrash,chased:activity.dogs.some(d=>d.phase==='chase')};
   }
   function toggleBike(yaw:number){
@@ -112,7 +98,7 @@ export function createSimulation(s:CourierState){
       }
       physics.radius('courier',.95);return false;
     }
-    if(Math.hypot(s.x-s.bike.x,s.z-s.bike.z)>4.5)return false;
+    if(Math.hypot(s.x-s.bike.x,s.z-s.bike.z)>4.5||!paved(s.bike.x,s.bike.z,true))return false;
     physics.enable('bike',false);physics.teleport('courier',s.bike);physics.radius('courier',.95);s.x=s.bike.x;s.z=s.bike.z;s.riding=true;return true;
   }
   function makeRoom(goal:Point){const next=physics.move('courier',goal.x-s.x,goal.z+1.25-s.z);s.x=next.x;s.z=next.z;}
