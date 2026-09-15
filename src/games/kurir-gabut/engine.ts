@@ -202,7 +202,7 @@ export class CourierEngine implements GameEngine {
       }
       const oldX=this.state.x,oldZ=this.state.z;
       const activity=this.simulation!.update(dt,{x:dx,z:dz},this.yaw,this.keys.has(' '),this.keys.has('shift'),distanceLimit);
-      if(activity.crashed){this.clearInput();this.notice!.textContent=this.t('courier.crash');this.notice!.hidden=false;this.feedbackUntil=this.state.elapsed+3;}
+      if(activity.crashed){this.keys.clear();this.notice!.textContent=this.t('courier.crash');this.notice!.hidden=false;this.feedbackUntil=this.state.elapsed+3;}
       else if(activity.chased&&!this.chased){this.notice!.textContent=this.t('courier.dogChase');this.notice!.hidden=false;this.feedbackUntil=this.state.elapsed+4;}
       this.chased=activity.chased;
       if(tickChallenge(this.state,dt)){this.end('timeup');return;}

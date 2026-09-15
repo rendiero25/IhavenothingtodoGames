@@ -23,11 +23,18 @@ const ORIGINAL_BUILDINGS: Building[] = [
   { x: -.1, z: -2.1, w: 3.1, d: 1.4, h: 3.6, color: 0xb9bda4 },
   { x: -.1, z: 5, w: 3.2, d: 1.3, h: 3.2, color: 0xd4b49b },
 ];
-export const MAP_HALF_SIZE=68;
+export const MAP_HALF_SIZE=88;
 export const BUILDINGS: Building[] = ORIGINAL_BUILDINGS.map(b=>({...b,x:b.x*4,z:b.z*4,w:b.w*1.65,d:b.d*1.65,h:b.h*1.35}));
 BUILDINGS.push(...[-56,56].flatMap(x=>[-36,-14,14,36].map((z,i)=>({x,z,w:6,d:6,h:4.1+i*.45,color:[0xd3c6b2,0xc6c8bf,0xc5b19b,0xbcc6c9][i]}))));
 BUILDINGS.push(...[-32,-24,24,32].flatMap(x=>[-40,40].map(z=>({x,z,w:5.4,d:6,h:4.4,color:0xc7c0ad}))));
-export const HOME_BUILDINGS=[7,0,2,3,4,1] as const;
+BUILDINGS.push(...[-80,80].flatMap((x,side)=>[-58,-34,-10,18,44,68].map((z,i)=>({
+  x,z,w:6,d:7.2,h:4.8+(i%3)*.7,color:[0xd3c6b2,0xbcc6c9,0xc5b19b,0xc6c8bf][(i+side)%4],
+}))));
+export const HOME_BUILDINGS=[7,24,2,3,35,29] as const;
+export function buildingKind(index:number):'house'|'office'|'shophouse'|'minimarket'|'apartment'{
+  if(HOME_BUILDINGS.some(home=>home===index))return 'house';
+  return (['house','shophouse','office','house','minimarket','apartment','shophouse'] as const)[index%7];
+}
 export const RESIDENTS: Point[]=HOME_BUILDINGS.map(index=>{
   const b=BUILDINGS[index];return {x:b.x,z:b.z+b.d/2+.95};
 });
@@ -35,12 +42,15 @@ export const STREETS: Street[]=[
   ...ORIGINAL_STREETS.map(s=>({x:s.x*4,z:s.z*4,w:s.w*4,d:s.d*4,kind:'road' as const})),
   {x:-44,z:0,w:8,d:108,kind:'road'},{x:44,z:0,w:8,d:108,kind:'road'},
   {x:0,z:-52,w:96,d:8,kind:'road'},{x:0,z:52,w:96,d:8,kind:'road'},
+  {x:-68,z:0,w:8,d:152,kind:'road'},{x:68,z:0,w:8,d:152,kind:'road'},
+  {x:0,z:-72,w:144,d:8,kind:'road'},{x:0,z:72,w:144,d:8,kind:'road'},
+  ...[-52,52].flatMap(z=>[-58,58].map(x=>({x,z,w:28,d:8,kind:'road' as const}))),
 ];
 const roads=[...STREETS];
 for(const p of RESIDENTS){
   const parking={x:p.x,z:p.z+3.4};
   const nearest=roads.map(s=>({x:Math.max(s.x-s.w/2,Math.min(s.x+s.w/2,parking.x)),z:Math.max(s.z-s.d/2,Math.min(s.z+s.d/2,parking.z))})).sort((a,b)=>Math.hypot(a.x-parking.x,a.z-parking.z)-Math.hypot(b.x-parking.x,b.z-parking.z))[0];
-  STREETS.push({x:p.x,z:p.z+1.7,w:3,d:6.4,kind:'pedestrian'},{...parking,w:6,d:4,kind:'road'},
+  STREETS.push({x:p.x,z:p.z+1.7,w:3.2,d:6.4,kind:'pedestrian'},{...parking,w:6,d:4,kind:'road'},
     {x:(parking.x+nearest.x)/2,z:parking.z,w:Math.abs(parking.x-nearest.x)+4,d:4,kind:'road'},
     {x:nearest.x,z:(parking.z+nearest.z)/2,w:4,d:Math.abs(parking.z-nearest.z)+4,kind:'road'});
 }
@@ -50,6 +60,8 @@ const infillColors=[0xd3c6b2,0xc6c8bf,0xc5b19b,0xbcc6c9];
 export const SIDEWALKS:Street[]=[
   ...[-39,39].map(x=>({x,z:0,w:1.8,d:89,kind:'pedestrian' as const})),
   ...[-44,44].map(z=>({x:0,z,w:79,d:1.8,kind:'pedestrian' as const})),
+  ...[-63,63].map(x=>({x,z:0,w:1.8,d:135,kind:'pedestrian' as const})),
+  ...[-67,67].map(z=>({x:0,z,w:127,d:1.8,kind:'pedestrian' as const})),
 ];
 STREETS.push(...SIDEWALKS);
 const reservedLots=[...STREETS.map(({x,z,w,d})=>({x,z,w,d})),
@@ -68,7 +80,7 @@ for(let row=0,z=-62;z<=62;row++,z+=2){
     BUILDINGS.push(lot);
   }
 }
-export const TREES=Array.from({length:34},(_,i)=>({x:(i%2?-1:1)*(62+i%3*1.5),z:-55+Math.floor(i/2)*6.6}));
+export const TREES=Array.from({length:34},(_,i)=>({x:(i%2?-1:1)*86,z:-75+Math.floor(i/2)*9.4}));
 // Street gardens occupy unpaved gaps, leaving sidewalks and door approaches free.
 for(let z=-60;z<=60;z+=6)for(let x=-60;x<=60;x+=6){
   if(reservedLots.some(s=>Math.abs(x-s.x)<s.w/2+1.4&&Math.abs(z-s.z)<s.d/2+1.4)
@@ -77,10 +89,8 @@ for(let z=-60;z<=60;z+=6)for(let x=-60;x<=60;x+=6){
   TREES.push({x,z});
 }
 export const LAMPS=[-39.4,39.4].flatMap(x=>[-38,-4,36].map(z=>({x,z})));
-export const STREET_PROPS=[...BUILDINGS.flatMap(b=>[
-  {x:b.x-1.05,z:b.z+b.d/2+.85,r:.09}, {x:b.x+1.05,z:b.z+b.d/2+.85,r:.09},
-  {x:b.x+b.w*.36,z:b.z+b.d/2+.48,r:.42},
-]),...TREES.map(p=>({...p,r:.2})),...LAMPS.map(p=>({...p,r:.1})),
+export const STREET_PROPS=[...BUILDINGS.map(b=>({x:b.x+b.w*.36,z:b.z+b.d/2+.48,r:.42})),
+...TREES.map(p=>({...p,r:.2})),...LAMPS.map(p=>({...p,r:.1})),
 ...Array.from({length:4},(_,i)=>({x:-34+i*.7,z:20,r:.5})),
 ... [20,24].flatMap(x=>[{x,z:38,r:.72},{x:x-.95,z:38,r:.3},{x:x+.95,z:38,r:.3}])];
 export const DELIVERIES = [
@@ -206,10 +216,10 @@ export function tickDelivery(state: CourierState, dt: number): 'pickup' | 'deliv
 
 let budgets:number[]|undefined;
 export function deliveryDistances(){return DELIVERIES.map(t=>{const path=routeTo(RESIDENTS[t.from],RESIDENTS[t.to]);return path.reduce((n,p,i)=>n+(i?Math.hypot(p.x-path[i-1].x,p.z-path[i-1].z):0),0);});}
-/** Budget actual street distance at a cautious 6 m/s, door time and obstacle allowance.
+/** Budget actual street distance at a cautious 5 m/s plus door, traffic and obstacle allowance.
  * Work backwards so every later level has a strictly shorter, still feasible deadline. */
 export function levelBudgets(){
-  if(!budgets){budgets=deliveryDistances().map((distance,i)=>Math.ceil(distance/6+22-i));for(let i=3;i>=0;i--)budgets[i]=Math.max(budgets[i],budgets[i+1]+8);}
+  if(!budgets){budgets=deliveryDistances().map(distance=>Math.ceil(distance/5+35));for(let i=3;i>=0;i--)budgets[i]=Math.max(budgets[i],budgets[i+1]+8);}
   return budgets;
 }
 export function tickChallenge(s:CourierState,dt:number){

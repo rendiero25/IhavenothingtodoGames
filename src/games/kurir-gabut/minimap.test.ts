@@ -15,12 +15,13 @@ it('tracks heading, delivery changes, parked bike and dogs in a localized bounde
   const root=map.root as unknown as Element,svg=root.children[1];
   const paths=svg.children.filter(e=>e.tag==='path'),[goal,player]=paths;
   const line=svg.children.find(e=>e.tag==='line')!;
+  const scale=136/176,coordinate=(value:number)=>(value+MAP_HALF_SIZE)*scale;
   map.update(state,Math.PI/2,'en','Mr Post',activity);
   expect(player.attributes.transform).toContain('rotate(-90)');
-  expect(goal.attributes.transform).toBe(`translate(${RESIDENTS[0].x+MAP_HALF_SIZE} ${RESIDENTS[0].z+MAP_HALF_SIZE})`);
+  expect(goal.attributes.transform).toBe(`translate(${coordinate(RESIDENTS[0].x)} ${coordinate(RESIDENTS[0].z)})`);
   expect(svg.attributes['aria-label']).toContain('Neighborhood map');
   state.carrying=true;map.update(state,0,'id','Rani',activity);
-  expect(goal.attributes.transform).toBe(`translate(${RESIDENTS[1].x+MAP_HALF_SIZE} ${RESIDENTS[1].z+MAP_HALF_SIZE})`);
+  expect(goal.attributes.transform).toBe(`translate(${coordinate(RESIDENTS[1].x)} ${coordinate(RESIDENTS[1].z)})`);
   expect(root.children[0].textContent).toBe('Tujuan: Rani');
   expect(svg.children.filter(e=>e.tag==='circle').every(e=>e.attributes.visibility==='visible')).toBe(true);
   state.riding=false;map.update(state,0,'id','Rani',activity);

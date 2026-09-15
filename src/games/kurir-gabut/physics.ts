@@ -7,13 +7,20 @@ export function createPhysics(){
   const world=new R.World({x:0,y:0,z:0});world.timestep=1/60;
   const controller=world.createCharacterController(.025);controller.setSlideEnabled(true);
   const colliders=new Map<string,R.Collider>(),names=new Map<number,string>();
+  let batchDepth=0,dirty=false;
   BUILDINGS.forEach((b,i)=>{const c=world.createCollider(R.ColliderDesc.cuboid(b.w/2,b.h/2,b.d/2).setTranslation(b.x,b.h/2,b.z));names.set(c.handle,`building${i}`);});
   for(const p of STREET_PROPS)world.createCollider(R.ColliderDesc.cylinder(1,p.r).setTranslation(p.x,1,p.z));
   function add(id:string,p:Point,radius:number,car=false){
     const desc=car?R.ColliderDesc.cuboid(.95,.8,1.9):R.ColliderDesc.capsule(.45,radius);
     const collider=world.createCollider(desc.setTranslation(p.x,1,p.z));colliders.set(id,collider);names.set(collider.handle,id);return collider;
   }
-  function sync(){world.step();}
+  function sync(){world.step();dirty=false;}
+  function commit(){dirty=true;if(batchDepth===0)sync();}
+  function batch<T>(run:()=>T):T{
+    batchDepth++;
+    try{return run();}
+    finally{batchDepth--;if(batchDepth===0&&dirty)sync();}
+  }
   function position(id:string){const p=colliders.get(id)!.translation();return {x:p.x,z:p.z};}
   function move(id:string,dx:number,dz:number,yaw?:number,ignore?:string){
     const collider=colliders.get(id)!;
@@ -23,13 +30,13 @@ export function createPhysics(){
     for(let i=0;i<controller.numComputedCollisions();i++){
       const hit=controller.computedCollision(i);if(hit?.collider)hits.push(names.get(hit.collider.handle)??'building');
     }
-    collider.setTranslation({x:p.x+actual.x,y:1,z:p.z+actual.z});sync();
+    collider.setTranslation({x:p.x+actual.x,y:1,z:p.z+actual.z});commit();
     return {...position(id),hits};
   }
-  function teleport(id:string,p:Point){colliders.get(id)!.setTranslation({x:p.x,y:1,z:p.z});sync();}
-  function radius(id:string,r:number){colliders.get(id)!.setShape(new R.Capsule(.45,r));sync();}
-  function enable(id:string,value:boolean){colliders.get(id)!.setEnabled(value);sync();}
+  function teleport(id:string,p:Point){colliders.get(id)!.setTranslation({x:p.x,y:1,z:p.z});commit();}
+  function radius(id:string,r:number){colliders.get(id)!.setShape(new R.Capsule(.45,r));commit();}
+  function enable(id:string,value:boolean){colliders.get(id)!.setEnabled(value);commit();}
   function dispose(){world.removeCharacterController(controller);world.free();colliders.clear();names.clear();}
-  return {add,move,position,teleport,radius,enable,sync,dispose};
+  return {add,move,position,teleport,radius,enable,sync,batch,dispose};
 }
 export type CourierPhysics=ReturnType<typeof createPhysics>;

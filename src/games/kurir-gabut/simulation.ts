@@ -4,15 +4,16 @@ import { createPhysics } from './physics';
 import { createDog,updateDog } from './dogs';
 
 export function createActivity(){
-  const pedestrians=Array.from({length:8},(_,i)=>{
-    const path=WALK_LOOPS[i>=6?2:i%2],travel=createTraveler(path,i%4,1.1+i%3*.1);
+  const pedestrians=Array.from({length:10},(_,i)=>{
+    const path=WALK_LOOPS[i>=8?3:i>=6?2:i%2],travel=createTraveler(path,i%4,1.1+i%3*.1);
     for(let j=0;j<i*35;j++)advanceTraveler(travel,path,.05);
-    return {id:`person${i}`,path,travel,state:{...travel},offset:{x:0,z:0},dodging:false};
+    return {id:`person${i}`,path,travel,state:{...travel},offset:{x:0,z:0},dodging:false,waitTime:0};
   });
-  const traffic=Array.from({length:5},(_,i)=>{
-    const path=i>=3?INNER_TRAFFIC:TRAFFIC_LOOP,travel=createTraveler(path,i%4,i>=3?6:5);
+  const traffic=Array.from({length:7},(_,i)=>{
+    const motorcycle=i===3||i===4;
+    const path=i>=3?INNER_TRAFFIC:TRAFFIC_LOOP,travel=createTraveler(path,i%4,motorcycle?6:4.5+i%3*.4);
     for(let j=0;j<i*50;j++)advanceTraveler(travel,path,.05);
-    return {id:`traffic${i}`,path,travel,state:{...travel},motorcycle:i>=3};
+    return {id:`traffic${i}`,path,travel,state:{...travel},motorcycle};
   });
   const dogs=[1,4].map((resident,i)=>{
     const home={x:RESIDENTS[resident].x-3,z:RESIDENTS[resident].z+4};
@@ -31,8 +32,11 @@ export function createSimulation(s:CourierState){
   activity.residents.forEach(p=>{physics.add(p.id,p.state,.32);physics.enable(p.id,false);});
   let didCrash=false;
   let coastSign=1;
+  // Stable references avoid rebuilding pedestrian/vehicle arrays for every car each frame.
+  const trafficBlockers=activity.traffic.map(c=>[s,...activity.pedestrians.map(p=>p.state),...activity.traffic.filter(t=>t!==c).map(t=>t.state)]);
   const collide=()=>{if(crash(s))didCrash=true;};
   function update(dt:number,direction:Point,yaw:number,brake:boolean,boost:boolean,maxDistance=Infinity){
+    return physics.batch(()=>{
     didCrash=false;
     const wet=s.weather==='rain'||s.weather==='storm',moving=Math.hypot(direction.x,direction.z)>.01;
     const top=s.riding?(wet?9:boost?13:10):3.6;
@@ -57,15 +61,17 @@ export function createSimulation(s:CourierState){
         p.offset.x+=Math.cos(yaw)*side*dt*2.7;p.offset.z-=Math.sin(yaw)*side*dt*2.7;
         const size=Math.hypot(p.offset.x,p.offset.z);if(size>2){p.offset.x*=2/size;p.offset.z*=2/size;}
       }else{p.offset.x*=Math.max(0,1-dt*1.5);p.offset.z*=Math.max(0,1-dt*1.5);}
-      advanceTraveler(p.travel,p.path,dt);
+      p.waitTime=Math.max(0,p.waitTime-dt);
+      if(p.waitTime===0||p.dodging)advanceTraveler(p.travel,p.path,dt);
       const result=physics.move(p.id,p.travel.x+p.offset.x-p.state.x,p.travel.z+p.offset.z-p.state.z);
       if(result.hits.length)Object.assign(p.travel,before);
+      else if(p.travel.segment!==before.segment&&p.path!==WALK_LOOPS[2])p.waitTime=1.5+p.travel.segment*.5;
       p.state.yaw=Math.atan2(result.x-p.state.x,result.z-p.state.z);p.state.stopped=Math.hypot(result.x-p.state.x,result.z-p.state.z)<.001;
       p.state.x=result.x;p.state.z=result.z;
     }
-    for(const c of activity.traffic){
+    for(const [index,c] of activity.traffic.entries()){
       const before={...c.travel};
-      advanceTraveler(c.travel,c.path,dt,[s,...activity.pedestrians.map(p=>p.state),...activity.traffic.filter(t=>t!==c).map(t=>t.state)],c.motorcycle?1:1.4);
+      advanceTraveler(c.travel,c.path,dt,trafficBlockers[index],c.motorcycle?1:1.4);
       const result=physics.move(c.id,c.travel.x-c.state.x,c.travel.z-c.state.z,c.travel.yaw);
       if(result.hits.includes('courier')&&!c.travel.stopped)collide();
       if(result.hits.length)Object.assign(c.travel,before);
@@ -84,6 +90,7 @@ export function createSimulation(s:CourierState){
     s.x=result.x;s.z=result.z;if(s.riding)s.bike={x:s.x,z:s.z};
     for(const dog of activity.dogs)updateDog(dog,s,dt,physics,collide);
     return {crashed:didCrash,chased:activity.dogs.some(d=>d.phase==='chase')};
+    });
   }
   function toggleBike(yaw:number){
     if(s.crashTime>0||s.speed>.6||s.completed)return false;

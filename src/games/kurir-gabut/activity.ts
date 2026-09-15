@@ -1,11 +1,12 @@
 import type { Point } from './logic';
 
-export const TRAFFIC_LOOP:Point[]=[{x:-42,z:-50},{x:42,z:-50},{x:42,z:50},{x:-42,z:50}];
+export const TRAFFIC_LOOP:Point[]=[{x:-68,z:-72},{x:68,z:-72},{x:68,z:72},{x:-68,z:72}];
 export const INNER_TRAFFIC:Point[]=[{x:-42,z:2},{x:42,z:2},{x:42,z:26},{x:-42,z:26}];
 export const WALK_LOOPS:Point[][]=[
   [{x:-39,z:-44},{x:-39,z:44},{x:39,z:44},{x:39,z:-44}],
   [{x:-12,z:-14.4},{x:16,z:-14.4},{x:16,z:2},{x:-12,z:2}],
   [{x:38,z:-15},{x:47,z:-15},{x:47,z:-13},{x:38,z:-13}],
+  [{x:-63,z:-67},{x:-63,z:67},{x:63,z:67},{x:63,z:-67}],
 ];
 export interface Traveler extends Point {segment:number;progress:number;yaw:number;speed:number;stopped:boolean}
 export function createTraveler(path:Point[],segment:number,speed:number):Traveler{

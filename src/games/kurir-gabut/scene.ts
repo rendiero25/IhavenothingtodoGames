@@ -1,5 +1,5 @@
 import * as T from 'three';
-import { BUILDINGS, HOME_BUILDINGS, RESIDENTS, STREETS,SIDEWALKS,TREES,LAMPS,paved,walkable, type CourierState, targetFor } from './logic';
+import { BUILDINGS, HOME_BUILDINGS, RESIDENTS, STREETS,SIDEWALKS,TREES,LAMPS,paved,walkable,buildingKind, type CourierState, targetFor } from './logic';
 import { createAssets } from './assets';
 import { createActivity,type Activity } from './simulation';
 
@@ -27,12 +27,19 @@ export function createVillage(activity:Activity=createActivity()) {
   // Sidewalks stop at road crossings so kerbs never run across a traffic lane.
   for(const s of SIDEWALKS){
     const vertical=s.d>s.w,length=vertical?s.d:s.w;
+    const drawSegment=(start:number,end:number)=>{
+      const segmentLength=end-start,offset=(start+end)/2;
+      const x=s.x+(vertical?0:offset),z=s.z+(vertical?offset:0);
+      mesh(streets,box,0xc1bdb0,x,.09,z,vertical?s.w:segmentLength,.18,vertical?segmentLength:s.d);
+      mesh(streets,box,0xa49f90,x+(vertical?(x<0?-.84:.84):0),.095,z+(vertical?0:(z<0?-.84:.84)),vertical?.12:segmentLength,.19,vertical?segmentLength:.12);
+    };
+    let runStart:number|null=null;
     for(let at=-length/2;at<length/2;at+=1){
       const x=s.x+(vertical?0:at+.5),z=s.z+(vertical?at+.5:0);
-      if(paved(x,z,true))continue;
-      mesh(streets,box,0xc1bdb0,x,.09,z,vertical?s.w:1,.18,vertical?1:s.d);
-      mesh(streets,box,0xa49f90,x+(vertical?(x<0?-.84:.84):0),.095,z+(vertical?0:(z<0?-.84:.84)),vertical?.12:1,.19,vertical?1:.12);
+      if(paved(x,z,true)){if(runStart!==null){drawSegment(runStart,at);runStart=null;}}
+      else if(runStart===null)runStart=at;
     }
+    if(runStart!==null)drawSegment(runStart,length/2);
   }
   for(const x of [-39,39]){
     for(let z=-40;z<=40;z+=16){
@@ -76,6 +83,41 @@ export function createVillage(activity:Activity=createActivity()) {
   const smallSphere=geometry(new T.SphereGeometry(1,8,4));
   const smallCylinder=geometry(new T.CylinderGeometry(1,1,1,6));
   for(const [i,b] of BUILDINGS.entries()){
+    const kind=buildingKind(i);
+    if(kind!=='house'){
+      // Box facades share existing materials and merge into the static city.
+      // Vary silhouettes instead of adding expensive rounded ornament.
+      const front=b.z+b.d/2,height=kind==='office'?11+i%3*2:kind==='apartment'?9:kind==='minimarket'?3.3:6.5;
+      const wall=kind==='office'?0xd8d2bf:0xe4e5de;
+      const accent=kind==='minimarket'?0x309e89:kind==='shophouse'?0xdf6944:0x596760;
+      assets.shadow(streets,b.x+.5,b.z+.5,b.w+3,b.d+3);
+      mesh(streets,box,0xd8dad3,b.x,.055,b.z,b.w+1.5,.11,b.d+1.5);
+      mesh(streets,box,wall,b.x,height/2,b.z,b.w,height,b.d);
+      mesh(collisionRoot,box,b.color,b.x,height/2,b.z,b.w,height,b.d);
+      mesh(streets,box,0x626760,b.x,height+.12,b.z,b.w+.35,.24,b.d+.35);
+      mesh(streets,box,0x7f9d9e,b.x,1.35,front+.04,b.w*.82,2.2,.08);
+      mesh(streets,box,accent,b.x,2.65,front+.12,b.w*.94,.48,.22);
+      // Keep the door array aligned with building indices; only homes animate.
+      const door=new T.Group();doorPivots.push(door);
+      mesh(streets,box,0x393e3c,b.x,1.05,front+.10,.08,2.1,.06);
+      if(kind==='minimarket'||kind==='shophouse'){
+        mesh(streets,box,accent,b.x,2.95,front+.4,b.w+.2,.15,1);
+        // Shopping-bag pictogram, readable in both locales.
+        mesh(streets,box,0xfff8e6,b.x,2.65,front+.25,.48,.30,.03);
+        for(const side of [-1,1])mesh(streets,box,0xfff8e6,b.x+side*.16,2.86,front+.25,.045,.15,.03);
+      }
+      for(let y=4.3;y<height-.7;y+=2.4){
+        for(const face of [-1,1]){
+          mesh(streets,box,0x7f9d9e,b.x,y,b.z+face*(b.d/2+.045),b.w*.82,1.35,.07);
+          for(const side of [-1,0,1])mesh(streets,box,wall,b.x+side*b.w*.27,y,b.z+face*(b.d/2+.09),.10,1.4,.05);
+          if(kind==='apartment')mesh(streets,box,0xa49f90,b.x,y-.8,b.z+face*(b.d/2+.18),b.w*.88,.14,.35);
+        }
+        for(const side of [-1,1])mesh(streets,box,0x7f9d9e,b.x+side*(b.w/2+.045),y,b.z,.07,1.35,b.d*.75);
+      }
+      mesh(streets,box,0x626760,b.x+b.w*.2,height+.4,b.z,.9,.6,1.2);
+      mesh(streets,smallSphere,0x5c7751,b.x+b.w*.36,.78,front+.48,.42,.52,.38);
+      continue;
+    }
     const trim=box;
     const foliage=smallSphere,pole=smallCylinder;
     const wall=[0xf0eee5,0xe4e5de,0xd8d2bf,0xe8ebe6][i%4];
@@ -164,7 +206,7 @@ export function createVillage(activity:Activity=createActivity()) {
     mesh(streets,foliage,0x5c7751,b.x+b.w*.36,.82,front+.48,.45,.58,.4);
   }
   collisionRoot.updateMatrixWorld(true);
-  const canopies=[0x58784f,0x6f8d5d,0x879c6b,0x58784f].map(color=>{const m=new T.InstancedMesh(foliage,material(color),TREES.length);scene.add(m);return m;});
+  const canopies=[0x58784f,0x6f8d5d,0x879c6b].map(color=>{const m=new T.InstancedMesh(foliage,material(color),TREES.length);scene.add(m);return m;});
   const treeMatrix=new T.Matrix4(),treeScale=new T.Vector3(),treePosition=new T.Vector3(),treeRotation=new T.Quaternion(),treeAxis=new T.Vector3(0,1,0);
   for(const [i,{x,z}] of TREES.entries()){
     const lean=(i%5-2)*.035;
@@ -215,7 +257,7 @@ export function createVillage(activity:Activity=createActivity()) {
     scene.add(person.group);return {...p,person};
   });
   const traffic=activity.traffic.map((c,i)=>{
-    const vehicle=assets.vehicle(c.motorcycle,[0xefbf27,0xe85d4c,0x329ccc,0x299b86,0xec8742][i]);
+    const vehicle=assets.vehicle(c.motorcycle,[0xefbf27,0xe85d4c,0x329ccc,0x299b86,0xec8742][i%5]);
     scene.add(vehicle.group);return {...c,vehicle};
   });
   const dogs=activity.dogs.map(d=>{

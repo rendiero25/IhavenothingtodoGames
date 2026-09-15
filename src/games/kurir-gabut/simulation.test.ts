@@ -31,3 +31,12 @@ it('does not move the courier while recovering from an accident',()=>{
   const x=s.x,z=s.z;for(let i=0;i<10;i++){sim.update(.05,{x:1,z:0},0,false,true);tickChallenge(s,.05);}
   expect(s.x).toBeCloseTo(x);expect(s.z).toBeCloseTo(z);sim.dispose();
 });
+it('keeps forty simulation updates inside a conservative CPU frame budget',()=>{
+  const s=createState(),sim=createSimulation(s);
+  for(let i=0;i<5;i++)sim.update(.025,{x:0,z:-1},0,false,false);
+  const started=performance.now();
+  for(let i=0;i<40;i++)sim.update(.025,{x:0,z:-1},0,false,false);
+  const elapsed=performance.now()-started;sim.dispose();
+  console.info('Courier simulation budget',{updates:40,elapsed});
+  expect(elapsed).toBeLessThan(120);
+});

@@ -1,7 +1,18 @@
 import { describe, it, expect } from 'vitest';
-import { canKnock, knock, createState, tickDelivery,tickChallenge,crash,levelBudgets,deliveryDistances, targetFor, move, walkable, RESIDENTS, BUILDINGS, STREETS, TREES, paved, routeTo, movementDirection } from './logic';
+import { canKnock, knock, createState, tickDelivery,tickChallenge,crash,levelBudgets,deliveryDistances, targetFor, move, walkable, RESIDENTS, BUILDINGS, STREETS, TREES, paved, routeTo, movementDirection,MAP_HALF_SIZE,HOME_BUILDINGS } from './logic';
 
 describe('courier delivery loop',()=>{
+  it('opens a connected 176-unit outer district for longer deliveries',()=>{
+    expect(MAP_HALF_SIZE*2).toBe(176);
+    expect(BUILDINGS.filter(b=>Math.max(Math.abs(b.x),Math.abs(b.z))>68).length).toBeGreaterThanOrEqual(12);
+    expect(RESIDENTS.filter(p=>Math.max(Math.abs(p.x),Math.abs(p.z))>60)).toHaveLength(3);
+    for(const resident of RESIDENTS){
+      const path=routeTo(createState(),resident,1,[],true);
+      expect(path.length,JSON.stringify(resident)).toBeGreaterThan(0);
+      expect(path.every(p=>paved(p.x,p.z,true))).toBe(true);
+    }
+    expect(Math.max(...deliveryDistances())).toBeGreaterThan(140);
+  });
   it('tolerates physics rounding at a driveway edge without opening the lawn',()=>{
     expect(paved(-29,21)).toBe(true);
     expect(paved(-28.9999942779541,21)).toBe(true);
@@ -17,7 +28,7 @@ describe('courier delivery loop',()=>{
   it('fills empty city blocks without obstructing roads or overlapping buildings',()=>{
     expect(BUILDINGS.length).toBeGreaterThanOrEqual(55);
     for(const [i,b] of BUILDINGS.entries()){
-      if(i<24)continue;
+      if(i<24||HOME_BUILDINGS.some(index=>index===i))continue;
       for(const road of STREETS){
         expect(Math.abs(b.x-road.x)>=(b.w+road.w)/2+.8
           || Math.abs(b.z+.45-road.z)>=(b.d+road.d)/2+1.3).toBe(true);
