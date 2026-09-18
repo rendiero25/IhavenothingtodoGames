@@ -1,6 +1,9 @@
+import { atmosphereId, atmosphereEn } from './atmosphere';
+
 export type Locale = 'id' | 'en';
 
 const id = {
+  ...atmosphereId,
   'site.name': 'ihavenothingtodo',
   'site.tagline': 'Koleksi mini-game cepat untuk jeda singkat. Tanpa onboarding, tanpa akun.',
   'a11y.mute': 'Matikan suara',
@@ -169,6 +172,7 @@ const id = {
 export type DictKey = keyof typeof id;
 
 const en: Record<DictKey, string> = {
+  ...atmosphereEn,
   'site.name': 'ihavenothingtodo',
   'site.tagline': 'A collection of quick games for a short break. No onboarding, no account.',
   'a11y.mute': 'Mute sound',

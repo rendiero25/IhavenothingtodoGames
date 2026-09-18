@@ -5,12 +5,12 @@ import { Header } from '../components/Header';
 import { EducationCard } from '../components/education/EducationCard';
 import { useI18n } from '../i18n';
 
-const EDUCATION_ENTRY = {
-  id: 'below-the-surface',
-  path: '/education/below-the-surface',
-} as const;
+const EDUCATION_ENTRIES = [
+  { id: 'below-the-surface', title: 'education.page.title', intro: 'education.page.intro', category: 'education.category.geology', how: 'education.home.item.howTo', extra: 'education.home.item.extra' },
+  { id: 'above-the-surface', title: 'sky.title', intro: 'sky.intro', category: 'sky.category', how: 'sky.how', extra: 'sky.extra' },
+] as const;
 
-function PreviewPanel({ reduceMotion }: { reduceMotion: boolean | null }) {
+function PreviewPanel({ reduceMotion, entry }: { reduceMotion: boolean | null; entry: typeof EDUCATION_ENTRIES[number] }) {
   const { t } = useI18n();
 
   return (
@@ -23,16 +23,16 @@ function PreviewPanel({ reduceMotion }: { reduceMotion: boolean | null }) {
       <div className="flex flex-1 flex-col items-center justify-center py-12 lg:py-16">
         <div className="w-full max-w-[38rem] text-left">
           <h2 className="font-pixel text-[clamp(2rem,3.4vw,4.3rem)] leading-[0.86] tracking-[-0.06em]">
-            {t('education.page.title')}
+            {t(entry.title)}
           </h2>
           <p className="mt-5 text-base leading-relaxed text-ink/75">
-            {t('education.page.intro')}
+            {t(entry.intro)}
           </p>
           <p className="mt-3 text-sm leading-relaxed text-ink/60">
-            {t('education.home.item.howTo')}
+            {t(entry.how)}
           </p>
           <p className="mt-3 max-w-[34rem] text-sm leading-relaxed text-ink/45">
-            {t('education.home.item.extra')}
+            {t(entry.extra)}
           </p>
         </div>
       </div>
@@ -44,7 +44,8 @@ export default function EducationHome() {
   const { locale, t } = useI18n();
   const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
-  const [selectedId, setSelectedId] = useState(EDUCATION_ENTRY.id);
+  const [selectedId, setSelectedId] = useState<string>(EDUCATION_ENTRIES[0].id);
+  const selectedIndex = EDUCATION_ENTRIES.findIndex(entry => entry.id === selectedId);
 
   useEffect(() => {
     document.title = `${t('nav.education')} — ${t('site.name')}`;
@@ -62,14 +63,10 @@ export default function EducationHome() {
     });
   }, [reduceMotion, selectedId]);
 
-  const selectEntry = () => {
-    setSelectedId(EDUCATION_ENTRY.id);
-    navigate(EDUCATION_ENTRY.path);
-  };
-
   const handleEducationWheel = (event: WheelEvent<HTMLElement>) => {
-    if (!event.deltaY) return;
-    event.preventDefault();
+    if (Math.abs(event.deltaY) < 12) return;
+    const index = Math.max(0, Math.min(EDUCATION_ENTRIES.length - 1, selectedIndex + Math.sign(event.deltaY)));
+    setSelectedId(EDUCATION_ENTRIES[index].id);
   };
 
   return (
@@ -92,26 +89,29 @@ export default function EducationHome() {
           <div className="wheel-viewport order-2 min-w-0 max-h-[58dvh] lg:order-1 lg:h-full lg:max-h-none">
             <div className="flex items-center justify-between py-3 font-mono text-[9px] uppercase tracking-[0.14em] text-ink">
               <span>{t('education.home.choose')}</span>
-              <span>01 / 01</span>
+              <span>{String(selectedIndex + 1).padStart(2, '0')} / 02</span>
             </div>
             <nav
               aria-label={t('education.home.choose')}
               className="wheel-scroll lg:pr-8"
               onWheel={handleEducationWheel}
             >
-              <EducationCard
-                title={t('education.page.title')}
-                categoryLabel={t('education.category.geology')}
-                index={0}
-                selected={selectedId === EDUCATION_ENTRY.id}
-                onPreview={() => setSelectedId(EDUCATION_ENTRY.id)}
-                onSelect={selectEntry}
-              />
+              {EDUCATION_ENTRIES.map((entry, index) => <EducationCard
+                key={entry.id}
+                id={entry.id}
+                title={t(entry.title)}
+                categoryLabel={t(entry.category)}
+                index={index}
+                distance={index - selectedIndex}
+                selected={selectedId === entry.id}
+                onPreview={() => setSelectedId(entry.id)}
+                onSelect={() => navigate(`/education/${entry.id}`)}
+              />)}
             </nav>
           </div>
 
           <aside className="order-1 hidden min-h-0 py-6 md:block lg:order-2 lg:min-h-0 lg:py-8 lg:pl-8" aria-live="polite">
-            <PreviewPanel reduceMotion={reduceMotion} />
+            <PreviewPanel key={selectedId} reduceMotion={reduceMotion} entry={EDUCATION_ENTRIES[selectedIndex]} />
           </aside>
         </section>
       </main>

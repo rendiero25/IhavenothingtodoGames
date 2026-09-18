@@ -1,6 +1,7 @@
 import { ArrowUpRight } from 'lucide-react';
 
 interface EducationCardProps {
+  id?: string;
   title: string;
   categoryLabel: string;
   index: number;
@@ -11,6 +12,7 @@ interface EducationCardProps {
 }
 
 export function EducationCard({
+  id = 'below-the-surface',
   title,
   categoryLabel,
   index,
@@ -27,7 +29,8 @@ export function EducationCard({
   return (
     <button
       type="button"
-      id="education-row-below-the-surface"
+      id={`education-row-${id}`}
+      onMouseEnter={onPreview}
       onFocus={onPreview}
       onClick={onSelect}
       aria-current={selected ? 'true' : undefined}
