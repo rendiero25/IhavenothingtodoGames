@@ -1,3 +1,47 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "outputDirectory": "dist",
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/daily", "destination": "/daily/index.html" },
+    { "source": "/education", "destination": "/education/index.html" },
+    {
+      "source": "/education/below-the-surface",
+      "destination": "/education/below-the-surface/index.html"
+    },
+    {
+      "source": "/education/above-the-surface",
+      "destination": "/education/above-the-surface/index.html"
+    },
+    { "source": "/weird", "destination": "/weird/index.html" },
+    { "source": "/play/tap-panic", "destination": "/play/tap-panic/index.html" },
+    { "source": "/play/quick-math", "destination": "/play/quick-math/index.html" },
+    { "source": "/play/simon", "destination": "/play/simon/index.html" },
+    {
+      "source": "/play/missing-number",
+      "destination": "/play/missing-number/index.html"
+    },
+    {
+      "source": "/play/word-scramble",
+      "destination": "/play/word-scramble/index.html"
+    },
+    {
+      "source": "/play/bubble-sniper",
+      "destination": "/play/bubble-sniper/index.html"
+    },
+    { "source": "/play/dodge", "destination": "/play/dodge/index.html" },
+    { "source": "/play/beat-tap", "destination": "/play/beat-tap/index.html" },
+    { "source": "/play/arena-fps", "destination": "/play/arena-fps/index.html" },
+    {
+      "source": "/play/stick-man-running",
+      "destination": "/play/stick-man-running/index.html"
+    },
+    { "source": "/play/kurir-gabut", "destination": "/play/kurir-gabut/index.html" },
+    {
+      "source": "/play/highway-rush",
+      "destination": "/play/highway-rush/index.html"
+    },
+    { "source": "/play/apex-rally", "destination": "/play/apex-rally/index.html" },
+    { "source": "/play/slipstream", "destination": "/play/slipstream/index.html" }
+  ]
 }

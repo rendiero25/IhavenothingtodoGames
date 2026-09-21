@@ -17,6 +17,8 @@ import {
 import type { DailyRun } from '../core/daily';
 import type { GameId, GameResult } from '../games/types';
 import { useI18n } from '../i18n';
+import { getSeoPage } from '../seo/pages';
+import { usePageSeo } from '../seo/usePageSeo';
 
 const ROUND_MS = 45_000;
 
@@ -33,6 +35,7 @@ interface StageResult {
 
 export default function Daily() {
   const { t, locale } = useI18n();
+  usePageSeo(getSeoPage('/daily'), locale);
   const nav = useNavigate();
   const availableDateKey = useCurrentDateKey();
   const availableRun = useMemo(

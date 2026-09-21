@@ -8,6 +8,8 @@ import { GAMES } from '../games/registry';
 import { useI18n } from '../i18n';
 import { sfx } from '../core/sound';
 import type { Category, GameMeta } from '../games/types';
+import { getSeoPage } from '../seo/pages';
+import { usePageSeo } from '../seo/usePageSeo';
 
 type Filter = 'all' | Category;
 
@@ -53,6 +55,7 @@ function PreviewPanel({
 
 export default function Home() {
   const { locale, t } = useI18n();
+  const seoContent = usePageSeo(getSeoPage('/'), locale);
   const reduceMotion = useReducedMotion();
   const [filter, setFilter] = useState<Filter>('all');
   const [previewId, setPreviewId] = useState(GAMES[Math.floor(GAMES.length / 2)].id);
@@ -84,13 +87,6 @@ export default function Home() {
       behavior: reduceMotion ? 'auto' : 'smooth',
     });
   }, [previewGame.id, reduceMotion]);
-
-  useEffect(() => {
-    document.title = 'ihavenothingtodo';
-    return () => {
-      document.title = 'ihavenothingtodo';
-    };
-  }, []);
 
   const launch = (game: GameMeta) => {
     sfx.unlock();
@@ -124,6 +120,8 @@ export default function Home() {
       <Header wide />
 
       <main className="mx-auto flex min-h-0 w-full max-w-[1800px] flex-1 flex-col overflow-y-auto px-4 sm:px-6 lg:overflow-hidden lg:px-8">
+        <h1 className="sr-only">{seoContent.heading}</h1>
+        <p className="sr-only">{seoContent.description}</p>
         <section className="flex min-h-12 items-center justify-between gap-4 py-2" aria-label={locale === 'id' ? 'Filter kategori' : 'Category filters'}>
           <div className="filter-scroll flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
             {filters.map((item) => {
@@ -184,7 +182,7 @@ export default function Home() {
             </nav>
           </div>
 
-          <aside className="order-1 hidden min-h-0 py-6 md:block lg:order-2 lg:min-h-0 lg:py-8 lg:pl-8" aria-live="polite">
+          <aside className="order-1 hidden min-h-0 py-6 lg:order-2 lg:block lg:min-h-0 lg:py-8 lg:pl-8" aria-live="polite">
             <PreviewPanel
               game={previewGame}
               reduceMotion={reduceMotion}

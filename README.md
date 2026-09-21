@@ -13,8 +13,14 @@ Boredom Receipt (skor bisa diunduh sebagai struk PNG).
 
 ## Deploy
 
-Build statis murni. Vercel: langsung (ada `vercel.json` untuk SPA
-rewrite). Cloudflare Pages: tambahkan `public/_redirects` berisi
-`/* /index.html 200`.
+Build statis menghasilkan halaman crawlable untuk setiap route publik, `404.html`,
+`robots.txt`, dan sitemap. Canonical default adalah `https://ihavenothingtodo.xyz`.
+Salin `.env.example` menjadi `.env.production` hanya bila domain produksi pindah, lalu
+set nilai sama di environment produksi Vercel. Nilai harus origin final, tanpa path
+route atau URL preview.
+
+Vercel: deploy langsung. Jangan tambah catch-all SPA rewrite atau `_redirects`
+fallback; route publik sudah dibuat sebagai file statis dan URL tak dikenal harus
+tetap memberi HTTP 404.
 
 Spec & plan: `docs/superpowers/`.

@@ -1,11 +1,15 @@
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Header } from '../components/Header';
 import { Mascot } from '../components/Mascot';
 import { ChunkyButton } from '../components/ChunkyButton';
 import { useI18n } from '../i18n';
+import { getNoIndexSeoPage } from '../seo/pages';
+import { usePageSeo } from '../seo/usePageSeo';
 
 export default function NotFound() {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
+  const location = useLocation();
+  usePageSeo(getNoIndexSeoPage(location.pathname, 'notFound'), locale);
   const nav = useNavigate();
   return (
     <div className="min-h-dvh">

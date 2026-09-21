@@ -6,6 +6,8 @@ import { AtmosphereArt } from '../components/education/AtmosphereArt';
 import { useAtmosphereMotion } from '../components/education/useAtmosphereMotion';
 import { ATMOSPHERE_STOPS, ascentPosition } from '../education/atmosphere';
 import { useI18n } from '../i18n';
+import { getSeoPage } from '../seo/pages';
+import { usePageSeo } from '../seo/usePageSeo';
 import '../styles/atmosphere.css';
 
 const SOURCE = 'https://science.nasa.gov/earth/earth-atmosphere/earths-atmosphere-a-multi-layered-cake/';
@@ -19,15 +21,11 @@ const SOURCES: Record<string, string> = {
 
 export default function AboveTheSurface() {
   const { t, locale, setLocale } = useI18n();
+  usePageSeo(getSeoPage('/education/above-the-surface'), locale);
   const scroller = useRef<HTMLElement>(null);
   const activeRef = useRef(0);
   const [active, setActive] = useState(0);
   const [motionPaused, setMotionPaused] = useState(false);
-
-  useLayoutEffect(() => {
-    document.title = `${t('sky.title')} · ${t('site.name')}`;
-    return () => { document.title = t('site.name'); };
-  }, [t]);
 
   useLayoutEffect(() => {
     const root = scroller.current;

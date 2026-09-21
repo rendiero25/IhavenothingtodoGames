@@ -10,9 +10,11 @@ function detectLocale(): Locale {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === 'id' || saved === 'en') return saved;
   } catch {
-    /* localStorage tidak tersedia — pakai deteksi browser */
+    /* localStorage tidak tersedia */
   }
-  return navigator.language.toLowerCase().startsWith('id') ? 'id' : 'en';
+  // The canonical public URL represents the Indonesian primary locale. Users
+  // can still choose English, and that choice is preserved when storage works.
+  return 'id';
 }
 
 interface I18nValue {

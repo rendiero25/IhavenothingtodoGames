@@ -9,6 +9,8 @@ import { GameShell } from '../shell/GameShell';
 import { GameOver } from '../shell/GameOver';
 import { Header } from '../components/Header';
 import { useI18n } from '../i18n';
+import { getGameSeo, getNoIndexSeoPage } from '../seo/pages';
+import { usePageSeo } from '../seo/usePageSeo';
 
 const sessionBests = new Map<string, number>();
 
@@ -20,6 +22,10 @@ export default function Play() {
   const [result, setResult] = useState<GameResult | null>(null);
   const isBest = useRef(false);
   const meta = getMeta(gameId ?? '');
+  const seoContent = usePageSeo(
+    meta ? getGameSeo(meta) : getNoIndexSeoPage('/', 'notFound'),
+    locale,
+  );
   const seed = useMemo(() => hashString(`free:${Date.now()}:${runId}`), [runId]);
 
   if (!meta) return <Navigate to="/" replace />;
@@ -35,6 +41,7 @@ export default function Play() {
   return (
     <div className="min-h-dvh flex flex-col">
       <Header />
+      <h1 className="sr-only">{seoContent.heading}</h1>
       {result ? (
         <GameOver
           mode="free"

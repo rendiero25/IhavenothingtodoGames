@@ -7,7 +7,8 @@ import Daily from './pages/Daily';
 import Education from './pages/Education';
 import EducationHome from './pages/EducationHome';
 import NotFound from './pages/NotFound';
-import SectionPlaceholder from './pages/SectionPlaceholder';
+import Weird from './pages/Weird';
+import { APP_ROUTES } from './seo/pages';
 
 const AboveTheSurface = lazy(() => import('./pages/AboveTheSurface'));
 
@@ -24,13 +25,13 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/play/:gameId" element={<Play />} />
-      <Route path="/daily" element={<Daily />} />
-      <Route path="/education" element={<EducationHome />} />
-      <Route path="/education/below-the-surface" element={<Education />} />
-      <Route path="/education/above-the-surface" element={<Suspense fallback={null}><AboveTheSurface /></Suspense>} />
-      <Route path="/weird" element={<SectionPlaceholder section="weird" />} />
+      <Route path={APP_ROUTES.home} element={<Home />} />
+      <Route path={APP_ROUTES.play} element={<Play />} />
+      <Route path={APP_ROUTES.daily} element={<Daily />} />
+      <Route path={APP_ROUTES.education} element={<EducationHome />} />
+      <Route path={APP_ROUTES.belowTheSurface} element={<Education />} />
+      <Route path={APP_ROUTES.aboveTheSurface} element={<Suspense fallback={null}><AboveTheSurface /></Suspense>} />
+      <Route path={APP_ROUTES.weird} element={<Weird />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

@@ -4,6 +4,8 @@ import { motion, useReducedMotion } from 'motion/react';
 import { Header } from '../components/Header';
 import { EducationCard } from '../components/education/EducationCard';
 import { useI18n } from '../i18n';
+import { getSeoPage } from '../seo/pages';
+import { usePageSeo } from '../seo/usePageSeo';
 
 const EDUCATION_ENTRIES = [
   { id: 'below-the-surface', title: 'education.page.title', intro: 'education.page.intro', category: 'education.category.geology', how: 'education.home.item.howTo', extra: 'education.home.item.extra' },
@@ -42,17 +44,11 @@ function PreviewPanel({ reduceMotion, entry }: { reduceMotion: boolean | null; e
 
 export default function EducationHome() {
   const { locale, t } = useI18n();
+  const seoContent = usePageSeo(getSeoPage('/education'), locale);
   const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
   const [selectedId, setSelectedId] = useState<string>(EDUCATION_ENTRIES[0].id);
   const selectedIndex = EDUCATION_ENTRIES.findIndex(entry => entry.id === selectedId);
-
-  useEffect(() => {
-    document.title = `${t('nav.education')} — ${t('site.name')}`;
-    return () => {
-      document.title = t('site.name');
-    };
-  }, [t]);
 
   useEffect(() => {
     const row = document.getElementById(`education-row-${selectedId}`);
@@ -74,6 +70,8 @@ export default function EducationHome() {
       <Header wide />
 
       <main className="mx-auto flex min-h-0 w-full max-w-[1800px] flex-1 flex-col overflow-y-auto px-4 sm:px-6 lg:overflow-hidden lg:px-8">
+        <h1 className="sr-only">{seoContent.heading}</h1>
+        <p className="sr-only">{seoContent.description}</p>
         <section
           className="flex min-h-12 items-center justify-between gap-4 py-2"
           aria-label={locale === 'id' ? 'Daftar education' : 'Education list'}
@@ -110,7 +108,7 @@ export default function EducationHome() {
             </nav>
           </div>
 
-          <aside className="order-1 hidden min-h-0 py-6 md:block lg:order-2 lg:min-h-0 lg:py-8 lg:pl-8" aria-live="polite">
+          <aside className="order-1 hidden min-h-0 py-6 lg:order-2 lg:block lg:min-h-0 lg:py-8 lg:pl-8" aria-live="polite">
             <PreviewPanel key={selectedId} reduceMotion={reduceMotion} entry={EDUCATION_ENTRIES[selectedIndex]} />
           </aside>
         </section>

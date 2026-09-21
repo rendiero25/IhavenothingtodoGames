@@ -1,21 +1,15 @@
-import { useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { DepthJourney } from '../components/education/DepthJourney';
 import { BELOW_THE_SURFACE_STOPS } from '../education/below-the-surface';
 import { useI18n } from '../i18n';
+import { getSeoPage } from '../seo/pages';
+import { usePageSeo } from '../seo/usePageSeo';
 
 export default function Education() {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
+  const seoContent = usePageSeo(getSeoPage('/education/below-the-surface'), locale);
   const hasStops = BELOW_THE_SURFACE_STOPS.length > 0;
-
-  useEffect(() => {
-    document.title = `${t('education.page.title')} — ${t('site.name')}`;
-
-    return () => {
-      document.title = t('site.name');
-    };
-  }, [t]);
 
   return (
     <div className="relative min-h-dvh min-w-0 overflow-x-clip bg-[#080a0a] text-ink">
@@ -34,7 +28,7 @@ export default function Education() {
 
       <main className="w-full">
         <h1 id="education-page-title" className="sr-only">
-          {t('education.page.title')}
+          {seoContent.heading}
         </h1>
         <p className="sr-only">{t('education.page.intro')}</p>
 
