@@ -14,7 +14,8 @@ export type GameId =
   | 'dodge'
   | 'beat-tap'
   | 'arena-fps'
-  | 'stick-man-running';
+  | 'stick-man-running'
+  | 'veilwalk';
 
 export type Category =
   | 'adventure'

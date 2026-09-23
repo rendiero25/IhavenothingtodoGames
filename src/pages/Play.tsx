@@ -45,7 +45,7 @@ export default function Play() {
       {result ? (
         <GameOver
           mode="free"
-          heading={t(result.endReason === 'complete' ? 'courier.complete' : 'over.title')}
+          heading={t(result.endReason === 'complete' ? meta.id === 'veilwalk' ? 'veilwalk.complete' : 'courier.complete' : 'over.title')}
           entries={[{ name: meta.name[locale], score: result.score }]}
           totalScore={result.score}
           bestCombo={result.bestCombo}

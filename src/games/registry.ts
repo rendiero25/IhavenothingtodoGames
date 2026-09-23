@@ -155,6 +155,10 @@ GAMES.push(
     name: { id: 'Slipstream', en: 'Slipstream' },
     tagline: { id: 'Ikuti rival. Isi tenaga. Salip tepat waktu.', en: 'Follow rivals. Build speed. Time the pass.' },
     howTo: { id: 'Panah kiri/kanan atau geser untuk menyetir. Ikuti mobil dari belakang untuk mengisi boost otomatis, lalu menyingkir sebelum tabrakan. Spasi atau Rem untuk melambat.', en: 'Arrow keys or drag to steer. Follow a rival to charge automatic boost, then pull out before impact. Space or Brake slows you down.' } },
+  { id: 'veilwalk', category: 'adventure', icon: 'move', accent: 'amber', viewport: 'landscape',
+    name: { id: 'Jejak Kabut', en: 'Veilwalk' },
+    tagline: { id: 'Bawa cahaya melewati hutan yang lupa jalan pulang.', en: 'Carry the light through a forest that forgot the way home.' },
+    howTo: { id: 'A/D atau panah untuk bergerak, W/spasi untuk melompat, E untuk menarik tuas. Hindari jurang dan duri. Capai pintu cahaya. Kontrol sentuh tersedia.', en: 'A/D or arrows to move, W/space to jump, E to pull the lever. Avoid gaps and thorns. Reach the door of light. Touch controls available.' } },
 );
 
 const loaders: Partial<Record<GameId, () => Promise<GameEngine>>> = {
@@ -173,6 +177,7 @@ const loaders: Partial<Record<GameId, () => Promise<GameEngine>>> = {
   'beat-tap': () => import('./beat-tap/engine').then((m) => new m.BeatTapEngine()),
   'arena-fps': () => import('./arena-fps/engine').then((m) => new m.FpsEngine()),
   'stick-man-running': () => import('./stick-man-running/engine').then((m) => new m.StickManRunningEngine()),
+  veilwalk: () => import('./veilwalk/engine').then(async (m) => { await m.prepareForest(); return new m.VeilwalkEngine(); }),
 };
 
 export function getMeta(id: string): GameMeta | undefined {

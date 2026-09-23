@@ -37,6 +37,7 @@ describe('stick-man-running registry', () => {
       'highway-rush',
       'apex-rally',
       'slipstream',
+      'veilwalk',
     ]);
     expect(new Set(ids).size).toBe(ids.length);
     expect(getMeta('stick-man-running')).toMatchObject({
@@ -50,5 +51,12 @@ describe('stick-man-running registry', () => {
     const engine = await loadEngine('stick-man-running');
 
     expect(engine.constructor.name).toBe('StickManRunningEngine');
+  });
+});
+
+describe('veilwalk registry', () => {
+  it('memuat platformer landscape secara lazy', async () => {
+    expect(getMeta('veilwalk')).toMatchObject({ category: 'adventure', viewport: 'landscape' });
+    expect((await loadEngine('veilwalk')).constructor.name).toBe('VeilwalkEngine');
   });
 });

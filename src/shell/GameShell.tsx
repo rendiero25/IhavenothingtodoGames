@@ -89,7 +89,7 @@ export function GameShell({
   const shellWidth = wide ? 'max-w-none' : 'max-w-md md:max-w-3xl lg:max-w-5xl';
   const shellPadding = immersive ? 'p-0' : wide ? 'px-3 sm:px-6 lg:px-10' : 'px-3 sm:px-5';
   const courierGame = gameId === 'kurir-gabut';
-  const landscapeGame = gameId === 'arena-fps' || gameId === 'stick-man-running';
+  const landscapeGame = gameId === 'arena-fps' || gameId === 'stick-man-running' || gameId === 'veilwalk';
 
   const setPhase = useCallback((p: Phase) => {
     phaseRef.current = p;

@@ -21,6 +21,7 @@ import { getSeoPage } from '../seo/pages';
 import { usePageSeo } from '../seo/usePageSeo';
 
 const ROUND_MS = 45_000;
+const dailyGames = GAMES.filter((g) => g.id !== 'kurir-gabut' && g.id !== 'veilwalk');
 
 type Phase =
   | { kind: 'intro' }
@@ -42,7 +43,7 @@ export default function Daily() {
     () =>
       dailyRunSnapshot(
         availableDateKey,
-        GAMES.filter((g) => g.id !== 'kurir-gabut').map((g) => g.id),
+        dailyGames.map((g) => g.id),
       ),
     [availableDateKey],
   );
@@ -66,7 +67,7 @@ export default function Daily() {
     setRun(
       dailyRunSnapshot(
         todayKey(),
-        GAMES.map((g) => g.id),
+        dailyGames.map((g) => g.id),
       ),
     );
     setPhase({ kind: 'playing', stage: 0 });

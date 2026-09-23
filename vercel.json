@@ -42,6 +42,7 @@
       "destination": "/play/highway-rush/index.html"
     },
     { "source": "/play/apex-rally", "destination": "/play/apex-rally/index.html" },
-    { "source": "/play/slipstream", "destination": "/play/slipstream/index.html" }
+    { "source": "/play/slipstream", "destination": "/play/slipstream/index.html" },
+    { "source": "/play/veilwalk", "destination": "/play/veilwalk/index.html" }
   ]
 }
