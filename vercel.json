@@ -14,6 +14,7 @@
       "destination": "/education/above-the-surface/index.html"
     },
     { "source": "/weird", "destination": "/weird/index.html" },
+    { "source": "/city", "destination": "/city/index.html" },
     { "source": "/play/tap-panic", "destination": "/play/tap-panic/index.html" },
     { "source": "/play/quick-math", "destination": "/play/quick-math/index.html" },
     { "source": "/play/simon", "destination": "/play/simon/index.html" },

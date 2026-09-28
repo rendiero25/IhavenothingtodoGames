@@ -11,6 +11,7 @@ import Weird from './pages/Weird';
 import { APP_ROUTES } from './seo/pages';
 
 const AboveTheSurface = lazy(() => import('./pages/AboveTheSurface'));
+const City = lazy(() => import('./pages/City'));
 
 export default function App() {
   useEffect(() => {
@@ -31,6 +32,7 @@ export default function App() {
       <Route path={APP_ROUTES.education} element={<EducationHome />} />
       <Route path={APP_ROUTES.belowTheSurface} element={<Education />} />
       <Route path={APP_ROUTES.aboveTheSurface} element={<Suspense fallback={null}><AboveTheSurface /></Suspense>} />
+      <Route path={APP_ROUTES.city} element={<Suspense fallback={null}><City /></Suspense>} />
       <Route path={APP_ROUTES.weird} element={<Weird />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

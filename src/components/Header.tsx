@@ -97,6 +97,7 @@ export function Header({ wide = false }: { wide?: boolean }) {
           >
             <HeaderTab label={t('nav.games')} to="/" />
             <HeaderTab label={t('nav.education')} to="/education" />
+            <HeaderTab label={t('nav.city')} to="/city" />
             <HeaderTab label={t('nav.weird')} to="/weird" />
           </nav>
         ) : (
@@ -163,6 +164,7 @@ export function Header({ wide = false }: { wide?: boolean }) {
           >
             <HeaderTab label={t('nav.games')} to="/" mobile onNavigate={() => setMobileMenuOpen(false)} />
             <HeaderTab label={t('nav.education')} to="/education" mobile onNavigate={() => setMobileMenuOpen(false)} />
+            <HeaderTab label={t('nav.city')} to="/city" mobile onNavigate={() => setMobileMenuOpen(false)} />
             <HeaderTab label={t('nav.weird')} to="/weird" mobile onNavigate={() => setMobileMenuOpen(false)} />
           </nav>
         )}

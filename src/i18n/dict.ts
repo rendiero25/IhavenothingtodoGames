@@ -1,11 +1,13 @@
 import { atmosphereId, atmosphereEn } from './atmosphere';
 import { seoCopy } from '../seo/copy';
+import { townId, townEn } from '../town/copy';
 
 export type Locale = 'id' | 'en';
 
 const id = {
   ...atmosphereId,
   ...seoCopy.id,
+  ...townId,
   'site.name': 'ihavenothingtodo',
   'site.tagline': 'Koleksi mini-game cepat untuk jeda singkat. Tanpa onboarding, tanpa akun.',
   'a11y.mute': 'Matikan suara',
@@ -23,6 +25,7 @@ const id = {
   'home.kofi': 'Buy me a Coffee',
   'nav.games': 'Games',
   'nav.education': 'Education',
+  'nav.city': 'Kota',
   'nav.weird': 'Weird',
   'nav.openMenu': 'Buka menu',
   'nav.closeMenu': 'Tutup menu',
@@ -219,6 +222,7 @@ export type DictKey = keyof typeof id;
 const en: Record<DictKey, string> = {
   ...atmosphereEn,
   ...seoCopy.en,
+  ...townEn,
   'site.name': 'ihavenothingtodo',
   'site.tagline': 'A collection of quick games for a short break. No onboarding, no account.',
   'a11y.mute': 'Mute sound',
@@ -236,6 +240,7 @@ const en: Record<DictKey, string> = {
   'home.kofi': 'Buy me a Coffee',
   'nav.games': 'Games',
   'nav.education': 'Education',
+  'nav.city': 'City',
   'nav.weird': 'Weird',
   'nav.openMenu': 'Open menu',
   'nav.closeMenu': 'Close menu',

@@ -33,6 +33,7 @@ export const APP_ROUTES = {
   education: '/education',
   belowTheSurface: '/education/below-the-surface',
   aboveTheSurface: '/education/above-the-surface',
+  city: '/city',
   weird: '/weird',
 } as const;
 
@@ -61,6 +62,7 @@ const CORE_SEO_PAGES = [
   page(APP_ROUTES.education, 'seo.education.title', 'seo.education.description', 'seo.education.heading'),
   page(APP_ROUTES.belowTheSurface, 'seo.below.title', 'seo.below.description', 'seo.below.heading'),
   page(APP_ROUTES.aboveTheSurface, 'seo.above.title', 'seo.above.description', 'seo.above.heading'),
+  page(APP_ROUTES.city, 'seo.city.title', 'seo.city.description', 'seo.city.heading'),
   page(APP_ROUTES.weird, 'seo.weird.title', 'seo.weird.description', 'seo.weird.heading'),
 ] as const;
 

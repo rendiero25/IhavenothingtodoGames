@@ -52,6 +52,7 @@ describe('SEO page registry', () => {
       APP_ROUTES.education,
       APP_ROUTES.belowTheSurface,
       APP_ROUTES.aboveTheSurface,
+      APP_ROUTES.city,
       APP_ROUTES.weird,
     ];
     const staticPaths = STATIC_SEO_PAGES.map((page) => page.path);
