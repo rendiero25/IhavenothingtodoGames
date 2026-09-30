@@ -43,6 +43,11 @@ function routeAt(points: readonly RoutePoint[], distance: number) {
 }
 
 export function createTownScene(canvas: HTMLCanvasElement, initial: TownSettings) {
+  const mapWidth = 128;
+  const mapDepth = 100;
+  const mapCenterZ = 10;
+  const avenueX = [-48, -20, 19, 47];
+  const streetZ = [-12, 15, 39];
   const scene = new T.Scene();
   const camera = new T.OrthographicCamera(-55, 55, 38, -38, .1, 260);
   const renderer = new T.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
@@ -93,42 +98,42 @@ export function createTownScene(canvas: HTMLCanvasElement, initial: TownSettings
     return mesh;
   };
 
-  // Compact square diorama: the river and beach stay at the back edge.
+  // Wider diorama: the river stays along the back, with new districts on both sides and in front.
   const groundMat = material({ color: 0x89ad55, roughness: 1 });
   const beachMat = material({ color: 0xdcc99f, roughness: 1 });
   const waterMat = material({ color: 0x4b9697, roughness: .34, metalness: .05 });
   const riverbankMat = material({ color: 0xb8ae93, roughness: 1 });
-  block(0, -1.55, 0, 80, 3.1, 78, 0x554537);
-  block(0, -.13, 0, 80.2, .26, 78.2, 0x689049);
-  makePlane(80, 78, groundMat, 0, .015, 0, true);
-  makePlane(80, 7.2, waterMat, 0, .085, -31);
-  makePlane(80, .58, riverbankMat, 0, .105, -26.95);
-  makePlane(80, .58, riverbankMat, 0, .105, -35.05);
-  makePlane(8, 6, beachMat, 44.5, .13, -25.5, true);
-  block(44.5, -1.55, -31, 9, 3.1, 16, 0x385f5e);
-  makePlane(9, 16, waterMat, 44.5, .085, -31);
-  for (let i = 0; i < 8; i++) block(46.5 + i % 2 * .9, .13, -37 + i * 1.65, .13, .02, 1.05, 0xd6e8d6);
-  block(41.5, .31, -32, 7, .38, 2.3, 0xa78560);
-  for (const x of [39, 44]) for (const z of [-33, -31]) block(x, -.32, z, .25, 1.1, .25, 0x604c3b);
+  block(0, -1.55, mapCenterZ, mapWidth, 3.1, mapDepth, 0x554537);
+  block(0, -.13, mapCenterZ, mapWidth + .2, .26, mapDepth + .2, 0x689049);
+  makePlane(mapWidth, mapDepth, groundMat, 0, .015, mapCenterZ, true);
+  makePlane(mapWidth, 7.2, waterMat, 0, .085, -31);
+  makePlane(mapWidth, .58, riverbankMat, 0, .105, -26.95);
+  makePlane(mapWidth, .58, riverbankMat, 0, .105, -35.05);
+  makePlane(8, 6, beachMat, 68.5, .13, -25.5, true);
+  block(68.5, -1.55, -31, 9, 3.1, 16, 0x385f5e);
+  makePlane(9, 16, waterMat, 68.5, .085, -31);
+  for (let i = 0; i < 8; i++) block(70.5 + i % 2 * .9, .13, -37 + i * 1.65, .13, .02, 1.05, 0xd6e8d6);
+  block(65.5, .31, -32, 7, .38, 2.3, 0xa78560);
+  for (const x of [63, 68]) for (const z of [-33, -31]) block(x, -.32, z, .25, 1.1, .25, 0x604c3b);
 
   // Asphalt roads, raised pale sidewalks, bridges, and crosswalks.
   const road = (x: number, z: number, w: number, d: number) => {
     block(x, .1, z, w + 1.25, .17, d + 1.25, 0xbebbb0);
     block(x, .205, z, w, .055, d, 0x454747);
   };
-  for (const x of [-20, 19]) {
-    road(x, 1, 5, 55);
-    for (const z of [-24, -19, -4, 1, 6, 23, 28]) block(x, .239, z, .12, .014, 2, 0xf3efe1);
+  for (const x of avenueX) {
+    road(x, mapCenterZ, 5, 94);
+    for (let z = -23; z <= 53; z += 5) block(x, .239, z, .12, .014, 2, 0xf3efe1);
   }
   for (const z of [-37, -25]) {
-    road(0, z, 78, 4.2);
-    for (const x of [-35, -29, -12, -6, 0, 6, 12, 27, 33]) block(x, .239, z, 2.25, .014, .12, 0xf3efe1);
+    road(0, z, mapWidth - 2, 4.2);
+    for (let x = -58; x <= 58; x += 6) block(x, .239, z, 2.25, .014, .12, 0xf3efe1);
   }
-  for (const z of [-12, 15]) {
-    road(0, z, 78, 5);
-    for (const x of [-35, -29, -12, -6, 0, 6, 12, 27, 33]) block(x, .239, z, 2.25, .014, .12, 0xf3efe1);
+  for (const z of streetZ) {
+    road(0, z, mapWidth - 2, 5);
+    for (let x = -58; x <= 58; x += 6) block(x, .239, z, 2.25, .014, .12, 0xf3efe1);
   }
-  for (const x of [-20, 19]) {
+  for (const x of avenueX) {
     block(x, .21, -31, 6.6, .44, 9.4, 0xaaa79b);
     block(x, .48, -31, 5, .1, 9.4, 0x494a49);
     for (const side of [-1, 1]) {
@@ -138,7 +143,7 @@ export function createTownScene(canvas: HTMLCanvasElement, initial: TownSettings
     for (const z of [-34.5, -27.5]) for (const side of [-1, 1]) block(x + side * 2.25, -.42, z, .64, 1.2, .64, 0x776b5e);
     block(x, .54, -31, .12, .014, 2, 0xf3efe1);
   }
-  for (const x of [-20, 19]) for (const z of [-12, 15]) {
+  for (const x of avenueX) for (const z of streetZ) {
     for (const direction of [-1, 1]) for (let stripe = -2; stripe <= 2; stripe++) {
       block(x + stripe * .66, .245, z + direction * 3.8, .35, .012, 1.2, 0xf5f0e4);
       block(x + direction * 3.8, .245, z + stripe * .66, 1.2, .012, .35, 0xf5f0e4);
@@ -146,20 +151,32 @@ export function createTownScene(canvas: HTMLCanvasElement, initial: TownSettings
   }
 
   const plots: Array<readonly [number, number, number, number, number, ReferenceBuildingKind]> = [
+    [-56, -19, 9, 7, 7, 'house'],
     [-31, -18.5, 9, 8, 13, 'apartment'], [-10, -18.5, 11, 8, 19, 'apartment'],
     [8, -18.5, 10, 8, 16, 'apartment'], [30, -18.5, 11, 8, 22, 'office'],
-    [-31, 0, 10, 11, 12, 'shop'], [0, 1, 16, 14, 9.5, 'restaurant'],
-    [30, 0, 11, 11, 9, 'shop'],
-    [-30, 25, 14, 10, 6, 'grocery'], [30, 25, 14, 10, 7, 'civic'],
+    [56, -19, 9, 7, 11, 'office'],
+    [-56, 0, 9, 11, 12, 'shop'], [-31, 0, 10, 11, 12, 'shop'],
+    [0, 1, 16, 14, 9.5, 'restaurant'], [30, 0, 11, 11, 9, 'shop'],
+    [56, 0, 9, 11, 14, 'apartment'],
+    [-56, 25, 9, 10, 12, 'apartment'], [-30, 25, 14, 10, 6, 'grocery'],
+    [30, 25, 14, 10, 7, 'civic'], [56, 25, 9, 10, 9, 'shop'],
+    [-56, 49, 9, 10, 7, 'house'], [-31, 49, 12, 10, 15, 'apartment'],
+    [-9, 49, 11, 10, 10, 'shop'], [9, 49, 11, 10, 13, 'apartment'],
+    [31, 49, 12, 10, 18, 'office'], [56, 49, 9, 10, 7, 'house'],
   ];
   plots.forEach((plot, index) => addReferenceBuilding(block, ...plot, index));
 
   // Clustered faceted trees and tiny street life echo the supplied diorama.
   const treePositions: Array<readonly [number, number, number]> = [
+    [-62, -23, .8], [-52, -23, .8], [51, -23, .82], [62, -23, .85],
     [-37, 8, 1.08], [-25, 8, .82], [-13, 9, 1.12], [13, 9, .95], [25, 9, .88],
+    [-62, 9, .92], [-52, 9, .78], [51, 9, .85], [62, 9, .94],
     [-37, 34, .85], [-23, 34, .78], [-15, 21, 1.05], [-13, 27, 1.1],
     [-10, 34, 1.18], [-8, 31, 1.34], [-4, 35, 1.05], [8, 21, 1.08],
     [13, 34, 1.16], [16, 31, .88], [24, 35, .8], [37, 34, .9],
+    [-62, 34, .9], [-52, 34, .78], [51, 34, .8], [62, 34, .94],
+    [-62, 57, .85], [-43, 57, .92], [-24, 57, .78], [-15, 57, .83],
+    [15, 57, .88], [24, 57, .82], [43, 57, .9], [62, 57, .86],
     [-37, -22, .76], [-25, -22, .82], [16, -22, .84], [37, -23, .9],
   ];
   treePositions.forEach(([x, z, size], i) => addReferenceTree(block, leaf, x, z, size, i));
@@ -168,17 +185,27 @@ export function createTownScene(canvas: HTMLCanvasElement, initial: TownSettings
     { kind: 'lamp', x: -16, z: -8 }, { kind: 'lamp', x: 15, z: -8 },
     { kind: 'lamp', x: -16, z: 19 }, { kind: 'lamp', x: 16, z: 19 },
     { kind: 'lamp', x: -38, z: -8 }, { kind: 'lamp', x: 38, z: 19 },
+    { kind: 'lamp', x: -44, z: -8 }, { kind: 'lamp', x: 43, z: -8 },
+    { kind: 'lamp', x: -44, z: 19 }, { kind: 'lamp', x: 43, z: 19 },
+    { kind: 'lamp', x: -44, z: 43 }, { kind: 'lamp', x: 43, z: 43 },
     { kind: 'bin', x: -37, z: 9 }, { kind: 'bin', x: 14, z: 10, index: 1 },
+    { kind: 'bin', x: -60, z: 43 }, { kind: 'bin', x: 60, z: 43, index: 1 },
     { kind: 'marketStall', x: -29, z: 33, index: 1 },
+    { kind: 'marketStall', x: 55, z: 35, index: 2 },
     { kind: 'sign', x: -23, z: 18, index: 1 }, { kind: 'sign', x: 22, z: -8 },
+    { kind: 'sign', x: -45, z: 43, index: 2 },
   ]);
   addReferenceVehicle(block, -25, 19, Math.PI / 2, 'motorcycle', 2);
   addReferenceVehicle(block, 11, 22, -.35, 'car', 0);
+  addReferenceVehicle(block, -55, 35, Math.PI / 2, 'van', 1);
+  addReferenceVehicle(block, 54, 42.5, Math.PI / 2, 'car', 4);
   for (const [x, z, angle, index] of [
     [-12, 11, .3, 0], [-8, 11, -.3, 1], [11, 10, .4, 2],
     [-35, 31, 1.1, 3], [-24, 31, -1, 4], [21, 30, .4, 5],
     [-15, 19, .7, 0], [15, 22, -.8, 1], [9, 34, .5, 2],
     [-34, 19, -.2, 3], [35, 18, .3, 4],
+    [-58, 13, .2, 5], [55, 12, -.4, 0], [-37, 45, .6, 1],
+    [-12, 44, -.2, 2], [12, 55, .3, 3], [36, 45, -.5, 4],
   ]) addReferencePerson(block, x, z, angle, index);
 
   const dummy = new T.Object3D();
@@ -207,10 +234,10 @@ export function createTownScene(canvas: HTMLCanvasElement, initial: TownSettings
   sun.position.set(-32, 58, -18);
   sun.castShadow = true;
   sun.shadow.mapSize.set(1024, 1024);
-  sun.shadow.camera.left = sun.shadow.camera.bottom = -67;
-  sun.shadow.camera.right = sun.shadow.camera.top = 67;
+  sun.shadow.camera.left = sun.shadow.camera.bottom = -92;
+  sun.shadow.camera.right = sun.shadow.camera.top = 92;
   sun.shadow.camera.near = 1;
-  sun.shadow.camera.far = 170;
+  sun.shadow.camera.far = 210;
   sun.shadow.bias = -.00035;
   scene.add(sun, sun.target);
   const sky = color(0xb39a80);
@@ -229,22 +256,22 @@ export function createTownScene(canvas: HTMLCanvasElement, initial: TownSettings
     scene.add(mesh);
     return mesh;
   };
-  const carCount = 11;
+  const carCount = 15;
   const carBody = makeDynamic(boxGeometry, dynamicMat, carCount);
   const carCabin = makeDynamic(boxGeometry, actorGlass, carCount);
   const carWheels = makeDynamic(boxGeometry, rubberMat, carCount * 4);
   const carLights = makeDynamic(boxGeometry, warmLight, carCount * 2);
-  const carColors = [0xc7624a, 0xd4d5ca, 0x587779, 0xbba765, 0x576b82, 0x88847a, 0x71926f, 0xe1cfaa, 0x5c6168, 0x925f58, 0xb5bbb7];
+  const carColors = [0xc7624a, 0xd4d5ca, 0x587779, 0xbba765, 0x576b82, 0x88847a, 0x71926f, 0xe1cfaa, 0x5c6168, 0x925f58, 0xb5bbb7, 0xd3a253, 0x678e91, 0xa35f4f, 0xd5cec1];
   carColors.forEach((tint, index) => carBody.setColorAt(index, color(tint)));
-  const motorcycleCount = 5;
+  const motorcycleCount = 7;
   const motoBody = makeDynamic(boxGeometry, dynamicMat, motorcycleCount);
   const motoRider = makeDynamic(boxGeometry, dynamicMat, motorcycleCount);
   const motoWheels = makeDynamic(boxGeometry, rubberMat, motorcycleCount * 2);
   for (let i = 0; i < motorcycleCount; i++) {
-    motoBody.setColorAt(i, color([0x455d6c, 0xc76c50, 0xc8ae63, 0x556b58, 0x4c5051][i]));
+    motoBody.setColorAt(i, color([0x455d6c, 0xc76c50, 0xc8ae63, 0x556b58, 0x4c5051][i % 5]));
     motoRider.setColorAt(i, color([0x677d78, 0xd2c6aa, 0x555f67][i % 3]));
   }
-  const personCount = 19;
+  const personCount = 25;
   const peopleBodies = makeDynamic(boxGeometry, dynamicMat, personCount);
   const peopleHeads = makeDynamic(sphereGeometry, skinMat, personCount);
   const peopleLegs = makeDynamic(boxGeometry, dynamicMat, personCount * 2);
@@ -265,7 +292,9 @@ export function createTownScene(canvas: HTMLCanvasElement, initial: TownSettings
   });
   const centerLoop: RoutePoint[] = [[-20, -12], [19, -12], [19, 15], [-20, 15]];
   const bridgeLoop: RoutePoint[] = [[-20, -37], [19, -37], [19, -12], [-20, -12]];
-  const trafficRoutes = [centerLoop, bridgeLoop, centerLoop];
+  const districtLoop: RoutePoint[] = [[-48, -12], [47, -12], [47, 39], [-48, 39]];
+  const shoreLoop: RoutePoint[] = [[-48, -37], [47, -37], [47, 39], [-48, 39]];
+  const trafficRoutes = [centerLoop, bridgeLoop, districtLoop, shoreLoop];
   const sidewalkRoutes: RoutePoint[][] = [
     [[-10, -7], [10, -7], [10, 11], [-10, 11]],
     [[-37, -7], [-25, -7], [-25, 8], [-37, 8]],
@@ -273,6 +302,11 @@ export function createTownScene(canvas: HTMLCanvasElement, initial: TownSettings
     [[-38, 19], [-23, 19], [-23, 33], [-38, 33]],
     [[22, 19], [38, 19], [38, 33], [22, 33]],
     [[-14, 21], [14, 21], [14, 35], [-14, 35]],
+    [[-61, -7], [-51.5, -7], [-51.5, 8], [-61, 8]],
+    [[51.5, -7], [61, -7], [61, 8], [51.5, 8]],
+    [[-42, 44], [-24, 44], [-24, 55], [-42, 55]],
+    [[-15, 44], [15, 44], [15, 55], [-15, 55]],
+    [[24, 44], [42, 44], [42, 55], [24, 55]],
   ];
   const aircraft = new T.Group();
   const aircraftMat = material({ color: 0xf4f2df, roughness: .42, metalness: .12 });
@@ -292,7 +326,7 @@ export function createTownScene(canvas: HTMLCanvasElement, initial: TownSettings
   const clouds = makeDynamic(sphereGeometry, cloudMat, 19);
   clouds.castShadow = false;
   const rainShape = new T.BufferGeometry();
-  const rainArray = new Float32Array(280 * 6);
+  const rainArray = new Float32Array(360 * 6);
   rainShape.setAttribute('position', new T.BufferAttribute(rainArray, 3));
   geometry.push(rainShape);
   const rainMat = new T.LineBasicMaterial({ color: 0xc7e1ee, transparent: true, opacity: .7, depthWrite: false });
@@ -301,7 +335,7 @@ export function createTownScene(canvas: HTMLCanvasElement, initial: TownSettings
   rain.frustumCulled = false;
   scene.add(rain);
   const snowShape = new T.BufferGeometry();
-  const snowArray = new Float32Array(260 * 3);
+  const snowArray = new Float32Array(340 * 3);
   snowShape.setAttribute('position', new T.BufferAttribute(snowArray, 3));
   geometry.push(snowShape);
   const snowMat = new T.PointsMaterial({ color: 0xf5faf9, size: .33, transparent: true, opacity: .9, depthWrite: false });
@@ -320,12 +354,12 @@ export function createTownScene(canvas: HTMLCanvasElement, initial: TownSettings
   scene.add(lightning);
 
   const floodMat = material({ color: 0x5194a6, roughness: .2, metalness: .1, transparent: true, opacity: .73, depthWrite: false, side: T.DoubleSide });
-  const flood = makePlane(79, 16, floodMat, 0, .36, -26);
+  const flood = makePlane(mapWidth - 1, 16, floodMat, 0, .36, -26);
   const earthquakeMat = new T.LineBasicMaterial({ color: 0x2a3434, linewidth: 2 });
   materials.push(earthquakeMat);
   const crackPoints = [
-    [-47, -10], [-36, -9], [-33, -11], [-23, -10], [-17, -8], [-10, -10], [-3, -8],
-    [4, -10], [11, -8], [17, -9], [22, -7], [32, -8],
+    [-60, -10], [-49, -9], [-42, -11], [-30, -10], [-21, -8], [-12, -10], [-3, -8],
+    [7, -10], [17, -8], [26, -9], [35, -7], [47, -8], [58, -10],
   ];
   const cracks = new T.Line(new T.BufferGeometry().setFromPoints(crackPoints.map(([x, z]) => new T.Vector3(x, .45, z))), earthquakeMat);
   geometry.push(cracks.geometry);
@@ -334,7 +368,7 @@ export function createTownScene(canvas: HTMLCanvasElement, initial: TownSettings
   for (let i = 0; i < 24; i++) {
     const piece = new T.Mesh(boxGeometry, roofMat);
     piece.material = roofMat;
-    piece.position.set(-38 + i * 2.8, .43, -9 + Math.sin(i * 7) * 1.4);
+    piece.position.set(-60 + i * 5.2, .43, -9 + Math.sin(i * 7) * 1.4);
     piece.scale.set(.24 + i % 3 * .13, .2 + i % 2 * .15, .3);
     piece.rotation.set(i * .73, i * 1.1, i * .21);
     debris.add(piece);
@@ -362,11 +396,11 @@ export function createTownScene(canvas: HTMLCanvasElement, initial: TownSettings
   const waveMat = material({ color: 0x5cacc0, roughness: .24, metalness: .06, transparent: true, opacity: .87, side: T.DoubleSide });
   const tsunami = new T.Group();
   const wave = new T.Mesh(boxGeometry, waveMat);
-  wave.scale.set(78, 7.5, 2.4);
+  wave.scale.set(mapWidth - 2, 7.5, 2.4);
   wave.position.set(0, 3.6, -36);
   tsunami.add(wave);
   const foam = new T.Mesh(boxGeometry, material({ color: 0xdaf2ea, roughness: .8, transparent: true, opacity: .92 }));
-  foam.scale.set(78, .55, 3);
+  foam.scale.set(mapWidth - 2, .55, 3);
   foam.position.set(0, 7.4, -35.5);
   tsunami.add(foam);
   scene.add(tsunami);
@@ -401,8 +435,7 @@ export function createTownScene(canvas: HTMLCanvasElement, initial: TownSettings
   let elevation = .7;
   let zoom = 1;
   const pointers = new Map<number, { x: number; y: number }>();
-  let lastPinch = 0;
-  const focus = new T.Vector3(0, 4, 0);
+  const focus = new T.Vector3(0, 4, mapCenterZ);
   const updateCamera = (shake = 0) => {
     const r = 110;
     camera.position.set(
@@ -415,7 +448,7 @@ export function createTownScene(canvas: HTMLCanvasElement, initial: TownSettings
   };
   const updateProjection = (width = Math.max(1, canvas.clientWidth), height = Math.max(1, canvas.clientHeight)) => {
     const aspect = width / height;
-    const span = aspect < .82 ? Math.max(108, 106 / aspect) : aspect < 1.2 ? 98 : 86;
+    const span = Math.max(126, 172 / aspect);
     camera.top = span / 2 / zoom;
     camera.bottom = -camera.top;
     camera.right = camera.top * aspect;
@@ -437,8 +470,15 @@ export function createTownScene(canvas: HTMLCanvasElement, initial: TownSettings
     draw(0);
   };
   const zoomCamera = (factor: number) => {
-    zoom = clamp(zoom * factor, .7, 1.75);
+    zoom = clamp(zoom * factor, .7, 2.8);
     updateProjection();
+  };
+  const panCamera = (deltaX: number, deltaY: number, redraw = true) => {
+    const horizontal = (camera.right - camera.left) / Math.max(1, canvas.clientWidth);
+    const vertical = (camera.top - camera.bottom) / Math.max(1, canvas.clientHeight) / Math.sin(elevation);
+    focus.x = clamp(focus.x - deltaX * horizontal * Math.cos(azimuth) - deltaY * vertical * Math.sin(azimuth), -52, 52);
+    focus.z = clamp(focus.z + deltaX * horizontal * Math.sin(azimuth) - deltaY * vertical * Math.cos(azimuth), -28, 48);
+    if (redraw) { updateCamera(); draw(0); }
   };
   const observer = new ResizeObserver(resize);
   observer.observe(canvas);
@@ -447,25 +487,27 @@ export function createTownScene(canvas: HTMLCanvasElement, initial: TownSettings
   const onPointerDown = (event: PointerEvent) => {
     canvas.setPointerCapture(event.pointerId);
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
-    if (pointers.size === 2) {
-      const pair = [...pointers.values()];
-      lastPinch = Math.hypot(pair[0].x - pair[1].x, pair[0].y - pair[1].y);
-    }
   };
   const onPointerMove = (event: PointerEvent) => {
     const previous = pointers.get(event.pointerId);
     if (!previous) return;
-    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     if (pointers.size === 2) {
-      const pair = [...pointers.values()];
-      const pinch = Math.hypot(pair[0].x - pair[1].x, pair[0].y - pair[1].y);
-      if (lastPinch > 0) zoomCamera(pinch / lastPinch);
-      lastPinch = pinch;
+      const before = [...pointers.values()];
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      const after = [...pointers.values()];
+      const priorDistance = Math.hypot(before[0].x - before[1].x, before[0].y - before[1].y);
+      const distance = Math.hypot(after[0].x - after[1].x, after[0].y - after[1].y);
+      panCamera((after[0].x + after[1].x - before[0].x - before[1].x) / 2,
+        (after[0].y + after[1].y - before[0].y - before[1].y) / 2, false);
+      if (priorDistance > 0) zoomCamera(distance / priorDistance);
+      else { updateCamera(); draw(0); }
     } else {
-      rotateCamera(-(event.clientX - previous.x) * .006, (event.clientY - previous.y) * .004);
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (event.shiftKey) panCamera(event.clientX - previous.x, event.clientY - previous.y);
+      else rotateCamera(-(event.clientX - previous.x) * .006, (event.clientY - previous.y) * .004);
     }
   };
-  const onPointerUp = (event: PointerEvent) => { pointers.delete(event.pointerId); lastPinch = 0; };
+  const onPointerUp = (event: PointerEvent) => { pointers.delete(event.pointerId); };
   const onWheel = (event: WheelEvent) => { event.preventDefault(); zoomCamera(Math.exp(-event.deltaY * .001)); };
   const onVisibility = () => { lastFrame = performance.now(); if (!document.hidden) draw(0); };
   const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -562,7 +604,7 @@ export function createTownScene(canvas: HTMLCanvasElement, initial: TownSettings
     }
     carLights.visible = night || settings.weather === 'storm' || settings.weather === 'fog';
     for (let i = 0; i < motorcycleCount; i++) {
-      const p = routeAt(trafficRoutes[(i + 1) % 3], i * 43 + 8 + trafficProgress * 5.2);
+      const p = routeAt(trafficRoutes[(i + 1) % trafficRoutes.length], i * 43 + 8 + trafficProgress * 5.2);
       const center = offset(p.x, p.z, i % 2 ? -.48 : .48, 0, p.angle);
       const bridgeLift = center.z < -26 && center.z > -36 ? .3 : 0;
       const rider = offset(center.x, center.z, 0, -.12, p.angle);
@@ -588,18 +630,18 @@ export function createTownScene(canvas: HTMLCanvasElement, initial: TownSettings
     peopleLegs.count = visiblePeople * 2;
     for (const mesh of [carBody, carCabin, carWheels, carLights, motoBody, motoRider, motoWheels, peopleBodies, peopleHeads, peopleLegs]) mesh.instanceMatrix.needsUpdate = true;
     const skyTime = elapsed;
-    aircraft.position.set(-53 + ((skyTime * 2.8 + 27) % 110), 31, -30 + ((skyTime * 1.05 + 20) % 34));
+    aircraft.position.set(-72 + ((skyTime * 2.8 + 27) % 144), 31, -34 + ((skyTime * 1.05 + 20) % 90));
     aircraft.rotation.y = Math.PI / 2.6;
     aircraft.visible = settings.weather !== 'storm' && settings.disaster !== 'tornado' && settings.disaster !== 'tsunami';
     for (let i = 0; i < 19; i++) {
-      const x = -46 + i * 5.7 + elapsed * .18 % 10;
-      setPose(clouds, i, x, 25 + i % 3 * 3, -22 + i % 5 * 15, 4 + i % 3, 1.2 + i % 2, 2.8 + i % 4, 0);
+      const x = -68 + i * 7.4 + elapsed * .18 % 10;
+      setPose(clouds, i, x, 25 + i % 3 * 3, -26 + i % 5 * 20, 4 + i % 3, 1.2 + i % 2, 2.8 + i % 4, 0);
     }
     clouds.instanceMatrix.needsUpdate = true;
     clouds.visible = settings.weather !== 'clear' || settings.disaster === 'tornado';
     if (rain.visible) {
-      for (let i = 0; i < 280; i++) {
-        const x = -50 + (i * 17.13 % 102), z = -34 + (i * 11.71 % 68);
+      for (let i = 0; i < 360; i++) {
+        const x = -63 + (i * 17.13 % 126), z = -39 + (i * 11.71 % 98);
         const y = ((i * 3.71 - elapsed * 15) % 17 + 17) % 17;
         const j = i * 6;
         rainArray[j] = x; rainArray[j + 1] = y + 1; rainArray[j + 2] = z;
@@ -608,11 +650,11 @@ export function createTownScene(canvas: HTMLCanvasElement, initial: TownSettings
       rainShape.attributes.position.needsUpdate = true;
     }
     if (snow.visible) {
-      for (let i = 0; i < 260; i++) {
+      for (let i = 0; i < 340; i++) {
         const j = i * 3;
-        snowArray[j] = -50 + (i * 13.27 + elapsed * .7) % 102;
+        snowArray[j] = -63 + (i * 13.27 + elapsed * .7) % 126;
         snowArray[j + 1] = ((i * 4.13 - elapsed * 2.2) % 17 + 17) % 17 + .3;
-        snowArray[j + 2] = -34 + (i * 19.43 % 68);
+        snowArray[j + 2] = -39 + (i * 19.43 % 98);
       }
       snowShape.attributes.position.needsUpdate = true;
     }
@@ -653,7 +695,7 @@ export function createTownScene(canvas: HTMLCanvasElement, initial: TownSettings
     updateSettings(next: TownSettings) { settings = { ...next }; applySettings(); draw(0); },
     rotateCamera,
     zoomCamera,
-    resetCamera() { azimuth = Math.PI / 4; elevation = .7; zoom = 1; updateProjection(); },
+    resetCamera() { azimuth = Math.PI / 4; elevation = .7; zoom = 1; focus.set(0, 4, mapCenterZ); updateProjection(); },
     getStats() { return { drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles }; },
     destroy() {
       if (destroyed) return;

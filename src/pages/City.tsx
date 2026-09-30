@@ -255,6 +255,7 @@ export default function City() {
                 <button type="button" className="city-choice city-camera-button" aria-label={t('town.zoomOut')} onClick={() => sceneRef.current?.zoomCamera?.(1 / 1.15)}><span aria-hidden="true">−</span></button>
               </div>
             </fieldset>
+            <p className="city-simulation-note">{t('town.gesture')}</p>
 
             <ChoiceGroup title={t('town.weather')} choices={weatherChoices} value={settings.weather} onChange={(weather) => setSettings((current) => ({ ...current, weather }))} t={t} />
             <ChoiceGroup title={t('town.disaster')} choices={disasterChoices} value={settings.disaster} onChange={(disaster) => setSettings((current) => ({ ...current, disaster }))} t={t} />
